@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>오늘의 설거지 당번</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF3E7;
+    --plate:#FFFDF9;
+    --charcoal:#2B2620;
+    --husband:#3B6E71;
+    --husband-dark:#2A5052;
+    --wife:#E8735C;
+    --wife-dark:#C85742;
+    --gold:#D9A441;
+    --line:#E4D8C4;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100dvh;
+    background:
+      radial-gradient(circle at 20% 10%, #FFFDF6 0%, transparent 45%),
+      radial-gradient(circle at 85% 90%, #F6E9D3 0%, transparent 50%),
+      var(--cream);
+    font-family:'Noto Sans KR', sans-serif;
+    color:var(--charcoal);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    padding:24px 16px 40px;
+  }
+  .app{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    z-index:2;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.35em;
+    color:var(--husband-dark);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Gowun Batang', serif;
+    font-size:28px;
+    font-weight:700;
+    margin:0 0 4px;
+    text-align:center;
+    line-height:1.35;
+  }
+  .subtitle{
+    font-size:13px;
+    color:#8A7F6E;
+    margin-bottom:28px;
+    text-align:center;
+  }
+
+  .plate-wrap{
+    position:relative;
+    width:280px;
+    height:280px;
+    margin-bottom:14px;
+  }
+  .plate-shadow{
+    position:absolute;
+    inset:-14px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(0,0,0,0.06), transparent 70%);
+    filter:blur(2px);
+  }
+  .plate-rim{
+    position:absolute;
+    inset:-14px;
+    border-radius:50%;
+    background:var(--plate);
+    box-shadow:
+      0 18px 30px -12px rgba(43,38,32,0.35),
+      inset 0 0 0 2px #F1E5CF,
+      inset 0 0 0 10px #FFFEFB;
+  }
+  .pointer{
+    position:absolute;
+    top:-16px;
+    left:50%;
+    transform:translateX(-50%);
+    width:0; height:0;
+    border-left:12px solid transparent;
+    border-right:12px solid transparent;
+    border-top:20px solid var(--gold);
+    z-index:5;
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,0.25));
+  }
+  .pointer::after{
+    content:'';
+    position:absolute;
+    top:-20px; left:-6px;
+    width:12px; height:12px;
+    border-radius:50%;
+    background:var(--gold);
+  }
+  .wheel{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    overflow:hidden;
+    background: conic-gradient(from 0deg,
+      var(--husband) 0deg 324deg,
+      var(--wife) 324deg 360deg);
+    transition: transform 4.2s cubic-bezier(0.13, 0.83, 0.09, 1);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.25);
+  }
+  .seg-label{
+    position:absolute;
+    top:50%; left:50%;
+    width:0; height:0;
+    transform-origin:0 0;
+  }
+  .seg-label span{
+    position:absolute;
+    display:inline-block;
+    color:#fff;
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:0.02em;
+    text-shadow:0 1px 3px rgba(0,0,0,0.25);
+    transform:translate(-50%,-50%);
+    white-space:nowrap;
+  }
+  .hub{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:54px; height:54px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, #F1E5CF 70%);
+    box-shadow:0 3px 8px rgba(0,0,0,0.2), inset 0 0 0 2px #EADCC1;
+    z-index:4;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+  }
+
+  .legend{
+    display:flex;
+    gap:18px;
+    font-size:12.5px;
+    color:#8A7F6E;
+    margin-bottom:26px;
+  }
+  .legend span{display:flex; align-items:center; gap:6px; font-weight:500;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.h{background:var(--husband);}
+  .dot.w{background:var(--wife);}
+
+  button#spinBtn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    background:linear-gradient(180deg, var(--gold), #C6903A);
+    color:#fff;
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight:900;
+    font-size:17px;
+    padding:16px 44px;
+    border-radius:999px;
+    box-shadow:0 10px 20px -8px rgba(201,143,50,0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
+    letter-spacing:0.02em;
+  }
+  button#spinBtn:active{ transform:scale(0.96); }
+  button#spinBtn:disabled{
+    opacity:0.55;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  .result{
+    margin-top:22px;
+    text-align:center;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity 0.4s ease, transform 0.4s ease;
+    min-height:70px;
+  }
+  .result.show{ opacity:1; transform:translateY(0); }
+  .result .badge{
+    display:inline-block;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--wife-dark);
+    background:#FCE7E0;
+    padding:4px 12px;
+    border-radius:999px;
+    margin-bottom:8px;
+  }
+  .result .badge.h{ color:var(--husband-dark); background:#E1EDEC; }
+  .result .message{
+    font-family:'Gowun Batang', serif;
+    font-size:22px;
+    font-weight:700;
+  }
+
+  canvas#fx{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:10;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .wheel{ transition-duration:0.6s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="eyebrow">DISHWASHING ROULETTE</div>
+  <h1>오늘의 설거지 당번은?</h1>
+  <div class="subtitle">버튼을 누르면 접시가 돌아갑니다</div>
+
+  <div class="plate-wrap">
+    <div class="plate-shadow"></div>
+    <div class="plate-rim"></div>
+    <div class="pointer"></div>
+    <div class="wheel" id="wheel">
+      <div class="seg-label" style="transform:rotate(162deg);">
+        <span style="left:96px; top:0;">남편</span>
+      </div>
+      <div class="seg-label" style="transform:rotate(342deg);">
+        <span style="left:112px; top:0; font-size:15px;">아내</span>
+      </div>
+    </div>
+    <div class="hub">🧽</div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot h"></i>남편 90%</span>
+    <span><i class="dot w"></i>아내 10%</span>
+  </div>
+
+  <button id="spinBtn">설거지 당번 뽑기</button>
+
+  <div class="result" id="result">
+    <div class="badge" id="badge">RESULT</div>
+    <div class="message" id="message"></div>
+  </div>
+</div>
+
+<canvas id="fx"></canvas>
+
+<script>
+  const wheel = document.getElementById('wheel');
+  const spinBtn = document.getElementById('spinBtn');
+  const resultBox = document.getElementById('result');
+  const badge = document.getElementById('badge');
+  const message = document.getElementById('message');
+  const canvas = document.getElementById('fx');
+  const ctx = canvas.getContext('2d');
+
+  let currentRotation = 0;
+  let spinning = false;
+
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const HUSBAND_RANGE = 324; // 0~324deg = 남편(90%)
+  const FULL = 360;
+
+  function spin(){
+    if(spinning) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    resultBox.classList.remove('show');
+
+    // 0~360 사이 균일 난수 → 부채꼴 크기가 곧 확률이 되도록 함
+    const targetAngle = Math.random() * FULL;
+    const isHusband = targetAngle < HUSBAND_RANGE;
+
+    const extraSpins = 6 + Math.floor(Math.random() * 3); // 6~8바퀴
+    const delta = (FULL - targetAngle) % FULL;
+    currentRotation += extraSpins * FULL + delta - (currentRotation % FULL);
+
+    wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      showResult(isHusband);
+      spinning = false;
+      spinBtn.disabled = false;
+      spinBtn.textContent = '다시 돌리기';
+    }, 4300);
+  }
+
+  function showResult(isHusband){
+    if(isHusband){
+      badge.textContent = 'HUSBAND';
+      badge.className = 'badge h';
+      message.textContent = '오늘 설거지는 남편입니다!';
+    } else {
+      badge.textContent = 'WIFE';
+      badge.className = 'badge';
+      message.textContent = '오늘 설거지는 아내입니다!';
+    }
+    resultBox.classList.add('show');
+    burstConfetti(isHusband);
+  }
+
+  // ---- 축하 효과: 비눗방울 느낌의 컨페티 ----
+  const palette = ['#3B6E71', '#E8735C', '#D9A441', '#F1E5CF', '#FFFFFF'];
+
+  function burstConfetti(isHusband){
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight * 0.35;
+    const particles = [];
+    const count = 90;
+
+    for(let i = 0; i < count; i++){
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 7;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 3,
+        r: 3 + Math.random() * 6,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        life: 1,
+        spin: Math.random() * Math.PI,
+        bubble: Math.random() > 0.5
+      });
+    }
+
+    let frame = 0;
+    const maxFrames = 140;
+
+    function tick(){
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
+
+      particles.forEach(p => {
+        p.vy += 0.12; // 중력
+        p.vx *= 0.99;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life = Math.max(0, 1 - frame / maxFrames);
+
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        if(p.bubble){
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.25)';
+          ctx.fill();
+        } else {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.spin + frame * 0.05);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r);
+          ctx.restore();
+        }
+      });
+      ctx.globalAlpha = 1;
+
+      if(frame < maxFrames){
+        requestAnimationFrame(tick);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    tick();
+  }
+
+  spinBtn.addEventListener('click', spin);
+</script>
+
+</body>
+</html>
