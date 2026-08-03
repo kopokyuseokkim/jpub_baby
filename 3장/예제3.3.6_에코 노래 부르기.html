@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>에코 노래 부르기 🎵</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{height:100%;overflow:hidden;background:#F3F0FF;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;}
+
+/* START */
+#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:14px;overflow-y:auto;}
+.sttl{font-size:24px;font-weight:900;color:#1a1a1a;text-align:center;line-height:1.35;}
+.ssub{font-size:13px;color:#666;text-align:center;line-height:1.7;}
+.bnotes{display:flex;gap:8px;justify-content:center;}
+.bn{font-size:30px;animation:nFl ease-in-out infinite;}
+@keyframes nFl{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.sbtn{background:#7C6BFF;color:#fff;border:none;border-radius:20px;padding:14px 50px;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #3C2BC9;}
+.sbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #3C2BC9;}
+.diff-row{display:flex;gap:8px;}
+.dbtn{padding:9px 18px;border:2px solid #ccc;border-radius:12px;background:#f5f5f5;color:#666;font-size:13px;font-weight:700;cursor:pointer;}
+.dbtn.on{background:#7C6BFF;color:#fff;border-color:#7C6BFF;}
+
+/* GAME */
+#gs{display:none;flex:1;flex-direction:column;gap:6px;padding:8px 8px 10px;min-height:0;}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:0 2px;flex-shrink:0;}
+.hlvl{font-size:12px;font-weight:700;background:#EDE7FF;color:#5E35B1;border-radius:8px;padding:3px 10px;}
+.hscore{font-size:12px;font-weight:700;color:#666;}
+#status{text-align:center;font-size:16px;font-weight:900;min-height:42px;line-height:42px;border-radius:12px;color:#666;flex-shrink:0;}
+#status.pl{color:#5E35B1;background:#EDE7FF;border:2px solid #B39DDB;}
+#status.li{color:#1E8C3A;background:#EAFAF1;border:2px solid #52C97A;}
+#status.ok{color:#1E8C3A;background:#EAFAF1;border:2px solid #52C97A;animation:sPop .35s ease;}
+#status.ng{color:#C62828;background:#FFEBEE;border:2px solid #EF9A9A;animation:sPop .3s ease;}
+@keyframes sPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
+#dots-wrap{background:#f0eeff;border-radius:14px;padding:9px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+#dots-lbl{font-size:10px;font-weight:700;color:#666;}
+#dots-row{display:flex;gap:8px;justify-content:center;min-height:28px;align-items:center;}
+.mdot{width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid #ccc;}
+.mdot.pd{background:#BBAAFF;border-color:#7C6BFF;transform:scale(1.25);}
+.mdot.ok{background:#52C97A;border-color:#2EA85A;}
+.mdot.ng{background:#FF6B6B;border-color:#CC3A3A;animation:wShake .3s ease;}
+@keyframes wShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+/* 음표 그리드 — 남은 공간 모두 차지 */
+#note-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;flex:1;min-height:0;}
+.nb{border:none;border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-bottom:5px solid rgba(0,0,0,.2);padding:6px 4px;}
+.nb:active{transform:scale(.88);border-bottom-width:2px;filter:brightness(.82);}
+.nb.playing{transform:scale(1.12);filter:brightness(1.28);box-shadow:0 0 14px rgba(255,255,255,.55);border-bottom-width:3px;}
+.nb.pressed{transform:scale(.9);border-bottom-width:2px;}
+.ne{font-size:20px;line-height:1;}
+.nn{font-size:16px;font-weight:900;color:rgba(255,255,255,.95);text-shadow:0 1px 3px rgba(0,0,0,.3);line-height:1;}
+/* 하단 컨트롤 */
+#ctrl-row{display:flex;gap:6px;flex-shrink:0;}
+.cbtn{flex:1;padding:10px 4px;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid rgba(0,0,0,.18);}
+.cbtn:active{transform:translateY(2px);border-bottom-width:1px;}
+.cbtn.off{opacity:.45;cursor:not-allowed;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ss">
+    <div class="bnotes">
+      <span class="bn" style="animation-duration:1.8s;animation-delay:0s">🎵</span>
+      <span class="bn" style="animation-duration:2.1s;animation-delay:.3s">🎶</span>
+      <span class="bn" style="animation-duration:1.9s;animation-delay:.6s">🎵</span>
+      <span class="bn" style="animation-duration:2.3s;animation-delay:.9s">🎶</span>
+      <span class="bn" style="animation-duration:2s;animation-delay:1.2s">🎵</span>
+    </div>
+    <div class="sttl">🎵 에코 노래 부르기!</div>
+    <div class="ssub">들려주는 음을 잘 듣고<br>같은 순서로 눌러봐요!</div>
+    <div class="diff-row">
+      <button class="dbtn on" id="btn-easy" onclick="setDiff(true)">🌱 쉬운 모드</button>
+      <button class="dbtn"    id="btn-norm" onclick="setDiff(false)">🎵 보통 모드</button>
+    </div>
+    <button class="sbtn" onclick="startGame()">▶ 시작!</button>
+  </div>
+
+  <div id="gs">
+    <div id="hud">
+      <span class="hlvl" id="hlvl">레벨 1</span>
+      <span class="hscore" id="hscore">⭐ 0번 성공</span>
+    </div>
+    <div id="status">🎵 준비됐나요?</div>
+    <div id="dots-wrap">
+      <div id="dots-lbl">멜로디 따라 부르기</div>
+      <div id="dots-row"></div>
+    </div>
+    <div id="note-grid"></div>
+    <div id="ctrl-row">
+      <button class="cbtn off" id="btn-replay" onclick="replayMelody()" style="background:#EDE7FF;color:#5E35B1;border-color:#B39DDB;">🔁 다시 듣기</button>
+      <button class="cbtn" id="btn-tdiff" onclick="toggleDiff()" style="background:#E8F5E9;color:#2E7D32;border-color:#A5D6A7;">🌱 쉬운 모드</button>
+    </div>
+  </div>
+</div>
+<script>
+var NOTES=[
+  {n:'도',f:261.63,c:'#FF6B6B',d:'#C93A3A',e:'🍎'},{n:'레',f:293.66,c:'#FF9F43',d:'#C96F00',e:'🍊'},
+  {n:'미',f:329.63,c:'#FFC048',d:'#C48A00',e:'🌟'},{n:'파',f:349.23,c:'#55E87B',d:'#1DA04A',e:'🍀'},
+  {n:'솔',f:392.00,c:'#43B8FF',d:'#0079C9',e:'🐬'},{n:'라',f:440.00,c:'#7C6BFF',d:'#3C2BC9',e:'🍇'},
+  {n:'시',f:493.88,c:'#EE6BDF',d:'#A82BA0',e:'🌸'},{n:'도↑',f:523.25,c:'#FF8FAF',d:'#C93A6A',e:'🎀'}
+];
+var EASY_IDX=[0,1,2,4];
+var AC=null,melody=[],playerInput=[];
+var state='idle',level=1,score=0,isEasy=true,replayOK=false;
+var NOTE_DUR=440,NOTE_GAP=130;
+function initAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}
+function getMelLen(){if(level<=2)return 2;if(level<=4)return 3;if(level<=6)return 4;if(level<=9)return 5;return 6;}
+function genMelody(){var pool=isEasy?EASY_IDX:[0,1,2,3,4,5,6,7];var len=isEasy?Math.min(getMelLen(),4):getMelLen();melody=[];for(var i=0;i<len;i++)melody.push(pool[Math.floor(Math.random()*pool.length)]);}
+function playNoteAC(idx,startSec){
+  var nt=NOTES[idx],d=NOTE_DUR/1000;
+  var o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=nt.f;
+  g.gain.setValueAtTime(0.001,startSec);g.gain.linearRampToValueAtTime(0.38,startSec+0.01);g.gain.setValueAtTime(0.36,startSec+d*0.55);g.gain.exponentialRampToValueAtTime(0.001,startSec+d);
+  o.connect(g);g.connect(AC.destination);o.start(startSec);o.stop(startSec+d);
+  var o2=AC.createOscillator(),g2=AC.createGain();o2.type='sine';o2.frequency.value=nt.f*2;
+  g2.gain.setValueAtTime(0.1,startSec);g2.gain.exponentialRampToValueAtTime(0.001,startSec+d*0.4);
+  o2.connect(g2);g2.connect(AC.destination);o2.start(startSec);o2.stop(startSec+d*0.4);
+}
+function doPlayMelody(msg){
+  state='playing';replayOK=false;setReplayBtn(false);setStatus(msg||'🎵 잘 들어봐요!','pl');setAllDots('');
+  var now=AC.currentTime,step=NOTE_DUR+NOTE_GAP;
+  melody.forEach(function(nIdx,i){
+    var startSec=now+i*(step/1000);playNoteAC(nIdx,startSec);
+    (function(ni,si){
+      var delay=i*step;
+      setTimeout(function(){hlBtn(ni,true);setDot(si,'pd');setStatus('🎵 '+NOTES[ni].n,'pl');},delay);
+      setTimeout(function(){hlBtn(ni,false);setDot(si,'');},delay+NOTE_DUR*0.86);
+    })(nIdx,i);
+  });
+  setTimeout(function(){state='listening';playerInput=[];setStatus('🎹 이제 따라 눌러봐요!','li');setAllDots('');replayOK=true;setReplayBtn(true);},melody.length*step+280);
+}
+function replayMelody(){if(!replayOK||state==='playing')return;doPlayMelody('🎵 다시 들어봐요!');}
+function onNotePress(idx){
+  if(state!=='listening')return;
+  var expected=melody[playerInput.length];
+  var now2=AC.currentTime,d=NOTE_DUR/1000*0.75;
+  var o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=NOTES[idx].f;
+  g.gain.setValueAtTime(0.001,now2);g.gain.linearRampToValueAtTime(0.35,now2+0.008);g.gain.exponentialRampToValueAtTime(0.001,now2+d);
+  o.connect(g);g.connect(AC.destination);o.start(now2);o.stop(now2+d);
+  var btn=document.getElementById('nb-'+idx);if(btn){btn.classList.add('pressed');setTimeout(function(){btn.classList.remove('pressed');},200);}
+  playerInput.push(idx);var pos=playerInput.length-1;
+  if(idx!==expected){
+    state='fail';replayOK=false;setReplayBtn(false);setDot(pos,'ng');
+    setTimeout(function(){var wt=AC.currentTime;[{f:200,t:0},{f:150,t:0.15}].forEach(function(ws){var tt=wt+ws.t;var wo=AC.createOscillator(),wg=AC.createGain();wo.type='square';wo.frequency.value=ws.f;wg.gain.setValueAtTime(0.1,tt);wg.gain.exponentialRampToValueAtTime(0.001,tt+0.18);wo.connect(wg);wg.connect(AC.destination);wo.start(tt);wo.stop(tt+0.2);});setStatus('다시 해봐요! 💪','ng');},100);
+    setTimeout(function(){playerInput=[];doPlayMelody('🎵 다시 들어봐요!');},1600);return;
+  }
+  setDot(pos,'ok');
+  if(playerInput.length===melody.length){
+    state='success';score++;level++;replayOK=false;setReplayBtn(false);
+    var t=AC.currentTime;[523,659,784,1047].forEach(function(f,i){var so=AC.createOscillator(),sg=AC.createGain();so.type='triangle';so.frequency.value=f;sg.gain.setValueAtTime(0.18,t+i*.1);sg.gain.exponentialRampToValueAtTime(0.001,t+i*.1+0.35);so.connect(sg);sg.connect(AC.destination);so.start(t+i*.1);so.stop(t+i*.1+0.4);});
+    var pr=['귀가 정말 좋네요! 🎵','천재 음악가예요! ⭐','완벽해요! 🌟','멜로디 마스터! 🎶','최고예요! 🏆'];
+    setStatus(pr[Math.floor(Math.random()*pr.length)],'ok');updateHUD();
+    setTimeout(function(){genMelody();buildDots();doPlayMelody();},2000);
+  }
+}
+function buildGrid(){var grid=document.getElementById('note-grid');grid.innerHTML='';NOTES.forEach(function(nt,i){var btn=document.createElement('button');btn.className='nb';btn.id='nb-'+i;btn.style.background=nt.c;btn.style.borderBottomColor=nt.d;btn.innerHTML='<span class="ne">'+nt.e+'</span><span class="nn">'+nt.n+'</span>';(function(idx){btn.onclick=function(){onNotePress(idx);};})(i);grid.appendChild(btn);});}
+function buildDots(){var row=document.getElementById('dots-row');row.innerHTML='';melody.forEach(function(_,i){var d=document.createElement('div');d.className='mdot';d.id='dot-'+i;row.appendChild(d);});}
+function setDot(i,cls){var d=document.getElementById('dot-'+i);if(d)d.className='mdot'+(cls?' '+cls:'');}
+function setAllDots(cls){melody.forEach(function(_,i){setDot(i,cls);});}
+function setStatus(txt,cls){var s=document.getElementById('status');s.textContent=txt;s.className=cls||'';}
+function updateHUD(){document.getElementById('hlvl').textContent='레벨 '+level;document.getElementById('hscore').textContent='⭐ '+score+'번 성공';}
+function hlBtn(idx,on){var b=document.getElementById('nb-'+idx);if(b){if(on)b.classList.add('playing');else b.classList.remove('playing');}}
+function setReplayBtn(on){var b=document.getElementById('btn-replay');if(on)b.classList.remove('off');else b.classList.add('off');}
+function updateDiffBtn(){var b=document.getElementById('btn-tdiff');if(isEasy){b.textContent='🌱 쉬운 모드';b.style.background='#E8F5E9';b.style.color='#2E7D32';b.style.borderColor='#A5D6A7';}else{b.textContent='🎵 보통 모드';b.style.background='#EDE7FF';b.style.color='#5E35B1';b.style.borderColor='#B39DDB';}}
+function setDiff(easy){isEasy=easy;document.getElementById('btn-easy').classList.toggle('on',easy);document.getElementById('btn-norm').classList.toggle('on',!easy);}
+function toggleDiff(){isEasy=!isEasy;updateDiffBtn();if(state==='listening'||state==='idle'){genMelody();buildDots();if(state==='listening')doPlayMelody();}}
+function startGame(){initAC();document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='flex';level=1;score=0;updateHUD();buildGrid();updateDiffBtn();genMelody();buildDots();setTimeout(function(){doPlayMelody('🎵 잘 들어봐요!');},700);}
+</script>
+</body>
+</html>

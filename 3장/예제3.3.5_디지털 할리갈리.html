@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>할리갈리 🔔</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{height:100%;overflow:hidden;background:#FFF9F0;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;padding:8px 8px 10px;}
+/* START */
+#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.sttl{font-size:26px;font-weight:900;text-align:center;color:#1a1a1a;line-height:1.35;}
+.ssub{font-size:13px;color:#666;text-align:center;line-height:1.6;}
+.sbtn{background:#FF6B6B;color:#fff;border:none;border-radius:22px;padding:14px 52px;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #CC3A3A;}
+.sbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #CC3A3A;}
+.bell-anim{font-size:56px;animation:bellSway .8s ease-in-out infinite alternate;}
+@keyframes bellSway{from{transform:rotate(-12deg);}to{transform:rotate(12deg);}}
+/* GAME */
+#gs{display:none;flex:1;flex-direction:column;gap:7px;min-height:0;}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:0 2px;flex-shrink:0;}
+.hnum{font-size:22px;font-weight:900;}
+#snum{color:#FF6B6B;}
+#tnum{color:#7C6BFF;}
+#tnum.urg{color:#FF2020;animation:turg .45s ease-in-out infinite alternate;}
+@keyframes turg{from{transform:scale(1);}to{transform:scale(1.22);}}
+#wnum{color:#FF9999;font-size:16px;font-weight:700;}
+/* 카드+합계 영역 — 남은 공간 채움 */
+#mid{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px;}
+#cards-area{flex:1;min-height:0;display:flex;gap:7px;justify-content:center;align-items:stretch;background:#F5F0FF;border-radius:16px;padding:10px 8px;}
+.gc{flex:1;max-width:110px;border-radius:14px;border:3px solid;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 5px 6px;animation:cPop .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cPop{0%{transform:scale(.4) rotate(-8deg);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.gc-emj{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;flex:1;width:100%;}
+.gc-emj span{font-size:24px;line-height:1;}
+.gc-lbl{font-size:11px;font-weight:800;margin-top:4px;}
+.empty-slot{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:#aaa;}
+#totals{display:flex;gap:4px;background:#F5F0FF;border-radius:13px;padding:8px 6px;flex-shrink:0;}
+.ti{flex:1;text-align:center;border-radius:9px;padding:5px 2px;transition:background .2s,transform .2s;}
+.ti.hit{background:#FFD700;transform:scale(1.08);animation:hPop .32s ease;}
+@keyframes hPop{0%,100%{transform:scale(1.08);}50%{transform:scale(1.2);}}
+.ti.over{opacity:.4;}
+.ti-e{font-size:18px;line-height:1;}
+.ti-n{font-size:22px;font-weight:900;line-height:1.2;}
+.ti-lbl{font-size:10px;color:#666;font-weight:600;}
+#msg{text-align:center;font-size:16px;font-weight:900;min-height:38px;line-height:38px;border-radius:12px;color:#666;flex-shrink:0;}
+#msg.ok{color:#1E8C3A;background:#EAFAF1;border:2px solid #52C97A;animation:mPop .32s ease;}
+#msg.wr{color:#E65100;background:#FFF3E0;border:2px solid #FFB74D;animation:mPop .28s ease;}
+@keyframes mPop{0%{transform:scale(.88);}55%{transform:scale(1.06);}100%{transform:scale(1);}}
+/* 종 버튼 — 하단 고정 */
+#bell{flex-shrink:0;height:86px;background:#FFD700;color:#5D3A00;border:none;border-radius:20px;font-size:28px;font-weight:900;cursor:pointer;box-shadow:0 6px 0 #C8A000;display:flex;align-items:center;justify-content:center;gap:10px;touch-action:manipulation;}
+#bell:active{transform:translateY(5px);box-shadow:0 1px 0 #C8A000;}
+#bell.ring{animation:bRing .4s ease;}
+@keyframes bRing{0%,100%{transform:rotate(0);}20%{transform:rotate(-15deg);}40%{transform:rotate(15deg);}60%{transform:rotate(-9deg);}80%{transform:rotate(9deg);}}
+/* END */
+#es{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+.eemj{font-size:64px;animation:ejb .7s ease infinite alternate;}
+@keyframes ejb{from{transform:scale(1);}to{transform:scale(1.1);}}
+.escore{font-size:56px;font-weight:900;color:#FF6B6B;line-height:1;}
+.epraise{font-size:18px;font-weight:900;text-align:center;color:#1a1a1a;}
+.esub{font-size:13px;color:#666;text-align:center;background:#FFF0E8;border-radius:12px;padding:8px 16px;max-width:260px;}
+.cf{position:fixed;pointer-events:none;z-index:9999;animation:cff linear forwards;}
+@keyframes cff{0%{transform:translateY(-10px) rotate(0);opacity:1;}100%{transform:translateY(110vh) rotate(700deg);opacity:0;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ss">
+    <div class="bell-anim">🔔</div>
+    <div class="sttl">🍓 할리갈리!</div>
+    <div class="ssub">같은 과일 합이 5개가 되면<br>빠르게 🔔 종을 눌러봐요!</div>
+    <div style="display:flex;gap:6px;font-size:26px;padding:2px 0">🍓🍌🍇🍎</div>
+    <div style="font-size:13px;background:#FFF3E8;border-radius:10px;padding:8px 16px;color:#666;text-align:center;line-height:1.6">예) 🍎2개 + 🍎3개 = <b style="color:#FF6B6B">5개!</b> → 종 누르기 ✅</div>
+    <button class="sbtn" onclick="startGame()">▶ 시작!</button>
+  </div>
+  <div id="gs">
+    <div id="hud">
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:18px">⭐</span><span class="hnum" id="snum">0</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><span class="hnum" id="tnum">60</span><span style="font-size:18px">⏰</span></div>
+      <span id="wnum">❌ 0</span>
+    </div>
+    <div id="mid">
+      <div id="cards-area"><div class="empty-slot">곧 카드가 나와요!</div></div>
+      <div id="totals"></div>
+    </div>
+    <div id="msg">🔔 과일이 5개가 되면 종을 눌러요!</div>
+    <button id="bell" onclick="ringBell()"><span>🔔</span><span>딩 동!</span></button>
+  </div>
+  <div id="es">
+    <div class="eemj" id="eemj">🎉</div>
+    <div style="font-size:13px;font-weight:700;color:#888">최종 점수</div>
+    <div class="escore" id="escore">0</div>
+    <div class="epraise" id="epraise">잘 했어요!</div>
+    <div class="esub" id="esub">다음엔 더 빨리 눌러봐요!</div>
+    <button class="sbtn" onclick="startGame()">🔔 다시 하기!</button>
+  </div>
+</div>
+<script>
+var FR=[
+  {id:'s',e:'🍓',n:'딸기',color:'#FF4B6E',bg:'#FFF0F2'},
+  {id:'b',e:'🍌',n:'바나나',color:'#F9A825',bg:'#FFFDE7'},
+  {id:'g',e:'🍇',n:'포도',color:'#8E24AA',bg:'#F3E5F5'},
+  {id:'a',e:'🍎',n:'사과',color:'#2E7D32',bg:'#E8F5E9'}
+];
+var totals={s:0,b:0,g:0,a:0};
+var cards=[],MAXC=3,score=0,wrongs=0,tLeft=60;
+var active=false,cardTmr=null,timeTmr=null,msgTmr=null;
+var INTERVAL=3500,cardCount=0;
+function clearTotals(){totals={s:0,b:0,g:0,a:0};}
+function hasAny5(){for(var k in totals)if(totals[k]===5)return true;return false;}
+function tryForce5(){
+  var pred={};for(var k in totals)pred[k]=totals[k];
+  if(cards.length>=MAXC){var old=cards[0];pred[old.fruit.id]-=old.count;if(pred[old.fruit.id]<0)pred[old.fruit.id]=0;}
+  var shuf=FR.slice().sort(function(){return Math.random()-.5;});
+  for(var i=0;i<shuf.length;i++){var f=shuf[i];var need=5-pred[f.id];if(need>=1&&need<=5)return{fruit:f,count:need};}
+  return null;
+}
+function addCard(){
+  if(!active)return;cardCount++;
+  var card=(cardCount%4===0)?tryForce5()||mk():{};if(!card.fruit)card=mk();
+  if(cards.length>=MAXC){var rem=cards.shift();totals[rem.fruit.id]-=rem.count;if(totals[rem.fruit.id]<0)totals[rem.fruit.id]=0;}
+  cards.push(card);totals[card.fruit.id]+=card.count;
+  renderCards();renderTotals();
+  if(active)cardTmr=setTimeout(addCard,INTERVAL);
+}
+function mk(){return{fruit:FR[Math.floor(Math.random()*4)],count:Math.floor(Math.random()*5)+1};}
+function renderCards(){
+  var a=document.getElementById('cards-area');a.innerHTML='';
+  if(!cards.length){var d=document.createElement('div');d.className='empty-slot';d.textContent='곧 카드가 나와요!';a.appendChild(d);return;}
+  cards.forEach(function(c){
+    var div=document.createElement('div');div.className='gc';div.style.borderColor=c.fruit.color;div.style.background=c.fruit.bg;
+    var emj=document.createElement('div');emj.className='gc-emj';
+    for(var i=0;i<c.count;i++){var sp=document.createElement('span');sp.textContent=c.fruit.e;emj.appendChild(sp);}
+    var lbl=document.createElement('div');lbl.className='gc-lbl';lbl.style.color=c.fruit.color;lbl.textContent=c.fruit.n+' '+c.count+'개';
+    div.appendChild(emj);div.appendChild(lbl);a.appendChild(div);
+  });
+}
+function renderTotals(){
+  var t=document.getElementById('totals');t.innerHTML='';
+  FR.forEach(function(f){
+    var item=document.createElement('div');item.className='ti';var v=totals[f.id];
+    if(v===5)item.classList.add('hit');else if(v>5)item.classList.add('over');
+    var e=document.createElement('div');e.className='ti-e';e.textContent=f.e;
+    var n=document.createElement('div');n.className='ti-n';n.style.color=f.color;n.textContent=v;
+    var l=document.createElement('div');l.className='ti-lbl';l.textContent=f.n;
+    item.appendChild(e);item.appendChild(n);item.appendChild(l);t.appendChild(item);
+  });
+}
+function setMsg(txt,cls){var m=document.getElementById('msg');m.textContent=txt;m.className=cls||'';}
+function playBeep(type){
+  try{var AC=new(window.AudioContext||window.webkitAudioContext)();var t=AC.currentTime;
+    if(type==='ok'){[1200,900,1500].forEach(function(f,i){var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.32,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.45);o.connect(g);g.connect(AC.destination);o.start(t+i*.1);o.stop(t+i*.1+.5);});}
+    else{var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=280;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.2);}
+  }catch(e){}
+}
+function ringBell(){
+  if(!active)return;
+  var btn=document.getElementById('bell');btn.classList.remove('ring');void btn.offsetWidth;btn.classList.add('ring');
+  btn.addEventListener('animationend',function(){btn.classList.remove('ring');},{once:true});
+  if(hasAny5()){
+    score++;document.getElementById('snum').textContent=score;
+    var hits=[];FR.forEach(function(f){if(totals[f.id]===5)hits.push(f.n);});
+    setMsg('딩동댕! 🔔 '+hits.join(', ')+'가 5개!','ok');playBeep('ok');confetti();
+    clearTimeout(cardTmr);cards=[];clearTotals();renderCards();renderTotals();
+    INTERVAL=Math.max(2200,3500-score*80);
+    clearTimeout(msgTmr);
+    msgTmr=setTimeout(function(){setMsg('🔔 과일이 5개가 되면 종을 눌러요!','');if(active)cardTmr=setTimeout(addCard,1000);},1500);
+  }else{
+    wrongs++;document.getElementById('wnum').textContent='❌ '+wrongs;
+    setMsg('조금 더 세어볼까요? 🤔','wr');playBeep('wr');
+    clearTimeout(msgTmr);msgTmr=setTimeout(function(){setMsg('🔔 과일이 5개가 되면 종을 눌러요!','');},1200);
+  }
+}
+function confetti(){
+  var cols=['#FF6B6B','#FFD54F','#66BB6A','#42A5F5','#AB47BC','#fff'];
+  for(var i=0;i<40;i++){(function(){var c=document.createElement('div');c.className='cf';var sz=5+Math.random()*8,dur=1+Math.random()*1.5;c.style.cssText='left:'+(Math.random()*100)+'vw;top:-10px;width:'+sz+'px;height:'+sz+'px;background:'+cols[Math.floor(Math.random()*cols.length)]+';border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-duration:'+dur+'s;animation-delay:'+(Math.random()*.3)+'s;';document.body.appendChild(c);c.addEventListener('animationend',function(){c.remove();});})();}
+}
+function endGame(){
+  active=false;clearTimeout(cardTmr);clearInterval(timeTmr);
+  document.getElementById('gs').style.display='none';document.getElementById('es').style.display='flex';
+  document.getElementById('escore').textContent=score;
+  var p;
+  if(score<=3)p={e:'😊',t:'잘 했어요! 👏',s:'연습하면 더 빨라질 거예요!'};
+  else if(score<=6)p={e:'🌟',t:'멋져요! 🌟',s:'종 치는 솜씨가 늘었어요!'};
+  else if(score<=10)p={e:'🎉',t:'대단해요! 🎉',s:'숫자 세기 천재예요!'};
+  else p={e:'🏆',t:'할리갈리 챔피언! 🏆',s:'최고의 반응 속도예요!'};
+  document.getElementById('eemj').textContent=p.e;document.getElementById('epraise').textContent=p.t;document.getElementById('esub').textContent=p.s;
+  confetti();
+}
+function startGame(){
+  score=0;wrongs=0;tLeft=60;active=true;cardCount=0;cards=[];clearTotals();INTERVAL=3500;
+  document.getElementById('ss').style.display='none';document.getElementById('es').style.display='none';document.getElementById('gs').style.display='flex';
+  document.getElementById('snum').textContent='0';document.getElementById('tnum').textContent='60';
+  document.getElementById('tnum').classList.remove('urg');document.getElementById('wnum').textContent='❌ 0';
+  renderCards();renderTotals();setMsg('🔔 과일이 5개가 되면 종을 눌러요!','');
+  clearTimeout(cardTmr);clearInterval(timeTmr);
+  cardTmr=setTimeout(addCard,1200);
+  timeTmr=setInterval(function(){tLeft--;document.getElementById('tnum').textContent=tLeft;if(tLeft<=10)document.getElementById('tnum').classList.add('urg');if(tLeft<=0)endGame();},1000);
+}
+</script>
+</body>
+</html>

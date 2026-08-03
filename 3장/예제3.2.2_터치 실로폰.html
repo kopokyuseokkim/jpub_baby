@@ -1,0 +1,348 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+  #app{font-family:'Segoe UI',sans-serif;padding:10px 8px 20px;max-width:420px;margin:0 auto;min-height:100vh;background:transparent;user-select:none;}
+
+  /* START SCREEN */
+  #start-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;gap:16px;}
+  #start-title{font-size:26px;font-weight:800;color:var(--color-text-primary);text-align:center;line-height:1.3;}
+  #start-sub{font-size:15px;color:var(--color-text-secondary);text-align:center;}
+  #start-btn{background:linear-gradient(135deg,#FF6B6B,#FF9F43);color:#fff;border:none;border-radius:20px;padding:16px 44px;font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px #FF9F4344;transition:transform .1s;}
+  #start-btn:active{transform:scale(0.95);}
+  .start-bars{display:flex;gap:7px;align-items:flex-end;margin-bottom:4px;}
+  .sb{width:30px;border-radius:8px 8px 12px 12px;animation:idleFloat 2s ease-in-out infinite;}
+  @keyframes idleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+
+  /* MAIN GAME */
+  #game-screen{display:none;flex-direction:column;gap:10px;}
+
+  /* MODE TABS */
+  #mode-tabs{display:flex;gap:8px;background:var(--color-background-secondary);border-radius:14px;padding:4px;}
+  .tab{flex:1;padding:9px 0;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--color-text-secondary);transition:all .15s;}
+  .tab.active{background:var(--color-background-primary);color:var(--color-text-primary);box-shadow:0 1px 6px rgba(0,0,0,.08);}
+
+  /* STATUS / MISSION BOX */
+  #status-box{border-radius:16px;padding:11px 14px;min-height:64px;border:2.5px solid #F9C440;background:#FFF9E6;}
+  #status-label{font-size:11px;font-weight:700;color:#C47F00;margin-bottom:4px;letter-spacing:.5px;}
+  #status-text{font-size:16px;font-weight:800;color:#7A5000;line-height:1.4;}
+  #seq-display{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;}
+  .seq-dot{width:30px;height:30px;border-radius:50%;border:3px solid rgba(0,0,0,.15);transition:transform .2s,opacity .2s;opacity:.45;}
+  .seq-dot.done{opacity:1;transform:scale(1.15);box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,.15);}
+  .seq-dot.current{opacity:1;transform:scale(1.25);box-shadow:0 0 0 3px #fff,0 0 0 5px #F9C440;animation:pulse .7s infinite alternate;}
+  @keyframes pulse{from{box-shadow:0 0 0 3px #fff,0 0 0 5px #F9C440;}to{box-shadow:0 0 0 3px #fff,0 0 0 8px #FF9F43;}}
+
+  #new-mission-btn{display:none;width:100%;padding:11px;background:#7C6BFF;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s,background .1s;}
+  #new-mission-btn:active{transform:scale(0.97);background:#5C4BDF;}
+
+  /* SUCCESS */
+  #success-banner{display:none;text-align:center;font-size:20px;font-weight:800;color:#1E8C3A;background:#EAFAF1;border:2.5px solid #52C97A;border-radius:14px;padding:10px 8px;animation:bounceIn .5s ease;}
+  #success-banner.show{display:block;}
+  @keyframes bounceIn{0%{transform:scale(.7);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+
+  /* STARS */
+  #stars-row{display:flex;align-items:center;gap:8px;}
+  #stars-lbl{font-size:13px;font-weight:600;color:var(--color-text-secondary);}
+  #stars-wrap{display:flex;flex-wrap:wrap;gap:3px;}
+  .star-icon{font-size:22px;animation:popStar .4s ease;}
+  @keyframes popStar{0%{transform:scale(0) rotate(-20deg);}70%{transform:scale(1.3) rotate(5deg);}100%{transform:scale(1);}}
+
+  /* XYLOPHONE */
+  #xylo-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px 4px;}
+  .bar-row{display:flex;align-items:center;gap:8px;width:100%;}
+  .bar-label{font-size:13px;font-weight:800;color:var(--color-text-secondary);width:20px;text-align:right;flex-shrink:0;}
+  .bar{flex:1;border-radius:10px 10px 16px 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:rgba(255,255,255,.95);text-shadow:0 1px 4px rgba(0,0,0,.25);border:none;border-bottom:6px solid rgba(0,0,0,.18);transition:transform .08s,filter .08s;position:relative;overflow:visible;}
+  .bar:active,.bar.hit{transform:scaleY(.88) scaleX(1.04);filter:brightness(.82);border-bottom-width:2px;}
+  .bar.bounce{animation:barBounce .35s ease;}
+  @keyframes barBounce{0%{transform:scaleY(1);}20%{transform:scaleY(.82) scaleX(1.05);}50%{transform:scaleY(1.12) scaleX(.96);}75%{transform:scaleY(.96);}100%{transform:scaleY(1);}}
+  .bar-name{position:absolute;bottom:7px;font-size:15px;font-weight:900;letter-spacing:1px;}
+  .bar-emoji{position:absolute;top:7px;font-size:18px;}
+
+  /* CONFETTI */
+  .confetti{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;animation:fall linear forwards;z-index:9999;}
+  @keyframes fall{0%{transform:translateY(-10px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+  /* NOTE FLASH */
+  #note-flash{text-align:center;font-size:46px;font-weight:900;min-height:64px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:2.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);transition:all .15s;color:var(--color-text-primary);}
+</style>
+
+<div id="app">
+  <h2 class="sr-only">어린이 실로폰 게임 — 막대를 눌러 소리를 내보세요!</h2>
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <div class="start-bars">
+      <div class="sb" style="height:70px;background:#FF6B6B;animation-delay:0s;"></div>
+      <div class="sb" style="height:80px;background:#FF9F43;animation-delay:.15s;"></div>
+      <div class="sb" style="height:90px;background:#FFC048;animation-delay:.3s;"></div>
+      <div class="sb" style="height:100px;background:#55E87B;animation-delay:.45s;"></div>
+      <div class="sb" style="height:110px;background:#43B8FF;animation-delay:.6s;"></div>
+      <div class="sb" style="height:95px;background:#7C6BFF;animation-delay:.75s;"></div>
+      <div class="sb" style="height:82px;background:#EE6BDF;animation-delay:.9s;"></div>
+      <div class="sb" style="height:68px;background:#FF6B6B;animation-delay:1.05s;"></div>
+    </div>
+    <div id="start-title">🎵 알록달록<br>실로폰 놀이터!</div>
+    <div id="start-sub">막대를 두드려 신나는 음악을 만들어요!</div>
+    <button id="start-btn">▶ 시작하기</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen">
+    <div id="mode-tabs">
+      <button class="tab active" id="tab-free">🎵 자유 연주</button>
+      <button class="tab" id="tab-mission">🎯 미션 모드</button>
+    </div>
+
+    <div id="note-flash">🎵 눌러보세요!</div>
+
+    <div id="success-banner">🎉 참 잘했어요! 최고예요! 🌟</div>
+
+    <div id="status-box">
+      <div id="status-label">🎵 자유 연주 모드</div>
+      <div id="status-text">마음껏 두드려 보세요!</div>
+      <div id="seq-display"></div>
+    </div>
+
+    <button id="new-mission-btn">🎲 새 미션 받기</button>
+
+    <div id="stars-row">
+      <span id="stars-lbl">⭐ 모은 별:</span>
+      <div id="stars-wrap"></div>
+      <span id="star-cnt" style="font-size:13px;font-weight:700;color:var(--color-text-secondary);"></span>
+    </div>
+
+    <div id="xylo-wrap"></div>
+  </div>
+</div>
+
+<script>
+const BARS = [
+  {name:'도', color:'#FF6B6B', shadow:'#C93A3A', emoji:'🍎', freq:261.63},
+  {name:'레', color:'#FF9F43', shadow:'#C96F00', emoji:'🍊', freq:293.66},
+  {name:'미', color:'#FFC048', shadow:'#C48A00', emoji:'🌟', freq:329.63},
+  {name:'파', color:'#55E87B', shadow:'#1DA04A', emoji:'🍀', freq:349.23},
+  {name:'솔', color:'#43B8FF', shadow:'#0079C9', emoji:'🐬', freq:392.00},
+  {name:'라', color:'#7C6BFF', shadow:'#3C2BC9', emoji:'🍇', freq:440.00},
+  {name:'시', color:'#EE6BDF', shadow:'#A82BA0', emoji:'🌸', freq:493.88},
+  {name:'도↑', color:'#FF8FAF', shadow:'#C93A6A', emoji:'🎀', freq:523.25},
+];
+const HEIGHTS = [54,60,66,74,80,86,92,98];
+
+let audioCtx = null;
+let mode = 'free';
+let stars = 0;
+let mission = [];
+let missionStep = 0;
+let missionActive = false;
+let successTimer = null;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq) {
+  const ac = audioCtx;
+  const osc = ac.createOscillator();
+  const osc2 = ac.createOscillator();
+  const gain = ac.createGain();
+  const gain2 = ac.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+  gain.gain.setValueAtTime(0.5, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.5);
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.start(); osc.stop(ac.currentTime + 1.5);
+
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(freq * 2, ac.currentTime);
+  gain2.gain.setValueAtTime(0.18, ac.currentTime);
+  gain2.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.9);
+  osc2.connect(gain2); gain2.connect(ac.destination);
+  osc2.start(); osc2.stop(ac.currentTime + 0.9);
+}
+
+function buildXylo() {
+  const wrap = document.getElementById('xylo-wrap');
+  wrap.innerHTML = '';
+  BARS.forEach((b, i) => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-label';
+    lbl.textContent = b.name === '도↑' ? '도' : b.name;
+
+    const bar = document.createElement('button');
+    bar.className = 'bar';
+    bar.dataset.idx = i;
+    bar.style.height = HEIGHTS[i] + 'px';
+    bar.style.background = b.color;
+    bar.style.borderBottomColor = b.shadow;
+    bar.setAttribute('aria-label', b.name);
+    bar.innerHTML = `<span class="bar-emoji">${b.emoji}</span><span class="bar-name">${b.name}</span>`;
+
+    bar.addEventListener('pointerdown', (e) => { e.preventDefault(); onBarPress(i); });
+
+    row.appendChild(lbl);
+    row.appendChild(bar);
+    wrap.appendChild(row);
+  });
+}
+
+function onBarPress(idx) {
+  const b = BARS[idx];
+  playTone(b.freq);
+  animateBar(idx);
+  flashNote(b);
+
+  if (mode === 'mission' && missionActive) {
+    const expected = mission[missionStep];
+    if (idx === expected) {
+      missionStep++;
+      updateMissionUI();
+      if (missionStep >= mission.length) {
+        missionActive = false;
+        onMissionSuccess();
+      }
+    } else if (missionStep > 0) {
+      missionStep = 0;
+      document.getElementById('status-text').innerHTML = '❗ 처음부터 다시 눌러보세요! 💪';
+      setTimeout(updateMissionUI, 900);
+    }
+  }
+}
+
+function animateBar(idx) {
+  const bar = document.querySelector(`.bar[data-idx="${idx}"]`);
+  if (!bar) return;
+  bar.classList.remove('bounce');
+  void bar.offsetWidth;
+  bar.classList.add('bounce');
+  bar.addEventListener('animationend', () => bar.classList.remove('bounce'), {once:true});
+}
+
+function flashNote(b) {
+  const d = document.getElementById('note-flash');
+  d.textContent = b.emoji + ' ' + b.name;
+  d.style.background = b.color + '22';
+  d.style.borderColor = b.color;
+  d.style.color = b.color;
+  clearTimeout(d._t);
+  d._t = setTimeout(() => {
+    d.textContent = '🎵 눌러보세요!';
+    d.style.background = '';
+    d.style.borderColor = '';
+    d.style.color = '';
+  }, 1200);
+}
+
+const MISSIONS = [
+  [0,1,2],[2,3,4],[4,5,6],[0,2,4],[1,3,5],
+  [0,1,2,3],[3,4,5,6],[0,3,6],[2,4,2],[5,4,3,2],
+  [0,2,4,6],[1,2,3,4,5],[6,5,4],[0,1,0,1],
+];
+
+function startMission() {
+  const m = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+  mission = m;
+  missionStep = 0;
+  missionActive = true;
+  document.getElementById('success-banner').classList.remove('show');
+  document.getElementById('new-mission-btn').style.display = 'none';
+  updateMissionUI();
+}
+
+function updateMissionUI() {
+  const box = document.getElementById('status-box');
+  document.getElementById('status-label').textContent = '🎯 미션 모드';
+
+  const nameStr = mission.map(i => BARS[i].name).join(' → ');
+  document.getElementById('status-text').textContent = `${nameStr} 순서대로 눌러보세요!`;
+
+  const seq = document.getElementById('seq-display');
+  seq.innerHTML = '';
+  mission.forEach((barIdx, si) => {
+    const dot = document.createElement('div');
+    dot.className = 'seq-dot' + (si < missionStep ? ' done' : si === missionStep ? ' current' : '');
+    dot.style.background = BARS[barIdx].color;
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:10px;font-weight:800;color:#fff;text-align:center;line-height:30px;text-shadow:0 1px 2px rgba(0,0,0,.3);';
+    lbl.textContent = BARS[barIdx].name;
+    dot.appendChild(lbl);
+    seq.appendChild(dot);
+  });
+}
+
+function onMissionSuccess() {
+  addStar();
+  document.getElementById('success-banner').classList.add('show');
+  launchConfetti();
+  document.getElementById('new-mission-btn').style.display = 'block';
+  document.getElementById('status-text').textContent = '🎉 성공! 새 미션을 받아보세요!';
+  document.getElementById('seq-display').innerHTML = '';
+  if (successTimer) clearTimeout(successTimer);
+  successTimer = setTimeout(() => {
+    document.getElementById('success-banner').classList.remove('show');
+  }, 3500);
+}
+
+function addStar() {
+  stars++;
+  const wrap = document.getElementById('stars-wrap');
+  const s = document.createElement('span');
+  s.className = 'star-icon'; s.textContent = '⭐';
+  wrap.appendChild(s);
+  document.getElementById('star-cnt').textContent = stars + '개';
+}
+
+function launchConfetti() {
+  const colors = ['#FF6B6B','#FF9F43','#FFC048','#55E87B','#43B8FF','#7C6BFF','#EE6BDF','#fff'];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.cssText = `
+      left:${Math.random()*100}vw;
+      top:-12px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      animation-duration:${1.2+Math.random()*1.6}s;
+      animation-delay:${Math.random()*.6}s;
+    `;
+    document.body.appendChild(c);
+    c.addEventListener('animationend', () => c.remove());
+  }
+}
+
+function setFreeMode() {
+  mode = 'free';
+  missionActive = false;
+  document.getElementById('status-label').textContent = '🎵 자유 연주 모드';
+  document.getElementById('status-text').textContent = '마음껏 두드려 보세요!';
+  document.getElementById('seq-display').innerHTML = '';
+  document.getElementById('new-mission-btn').style.display = 'none';
+  document.getElementById('success-banner').classList.remove('show');
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  initAudio();
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  buildXylo();
+});
+
+document.getElementById('tab-free').addEventListener('click', () => {
+  document.getElementById('tab-free').classList.add('active');
+  document.getElementById('tab-mission').classList.remove('active');
+  setFreeMode();
+});
+
+document.getElementById('tab-mission').addEventListener('click', () => {
+  document.getElementById('tab-mission').classList.add('active');
+  document.getElementById('tab-free').classList.remove('active');
+  mode = 'mission';
+  startMission();
+});
+
+document.getElementById('new-mission-btn').addEventListener('click', startMission);
+</script>

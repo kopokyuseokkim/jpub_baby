@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>얼굴 꾸미기 🎨</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: #FFF5FB; font-family: 'Segoe UI','Apple SD Gothic Neo',sans-serif; display: flex; justify-content: center; }
+  #app { width: 100%; max-width: 480px; height: 100dvh; display: flex; flex-direction: column; overflow-y: auto; padding: 8px 8px 14px; }
+
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scaleIn  { from{transform:scale(.75);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes starBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-8px) rotate(5deg)} }
+  @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  @keyframes cfDrop   { 0%{transform:translateY(-12px) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeUp .35s ease; }
+
+  /* start screen */
+  #start-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; overflow-y: auto; }
+  #start-screen .deco { display: flex; gap: 10px; font-size: 40px; }
+  #start-screen h1 { font-size: 26px; font-weight: 900; color: #FF3366; }
+  #start-screen p { font-size: 14px; color: #AA6688; text-align: center; line-height: 1.6; }
+  #start-btn {
+    margin-top: 8px; border: none; border-radius: 18px;
+    padding: 15px 48px; font-size: 20px; font-weight: 900;
+    cursor: pointer; color: white;
+    background: linear-gradient(135deg, #FF6B9E, #FF3366);
+    box-shadow: 0 5px 0 #C93054;
+  }
+  #start-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #C93054; }
+
+  /* game screen */
+  .title-area { text-align: center; margin-bottom: 8px; }
+  .title-area h2 { font-size: 22px; font-weight: 900; color: #333; }
+  .title-area p  { font-size: 11px; color: #AAA; margin-top: 2px; }
+
+  .face-display {
+    background: linear-gradient(135deg, #FFF9F0, #FFF0F8);
+    border-radius: 22px; padding: 10px 8px 6px;
+    border: 2px solid #F5DEC8; margin-bottom: 8px;
+    position: relative; text-align: center;
+  }
+  #face-hint { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 11px; color: #CCC; font-weight: 600; }
+
+  .cat-tabs { display: flex; gap: 4px; margin-bottom: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-btn {
+    flex: 0 0 auto; border: none; border-radius: 12px;
+    padding: 7px 11px; font-size: 13px; font-weight: 800;
+    cursor: pointer; white-space: nowrap; position: relative;
+    background: #F2F2F2; color: #777;
+    transition: all .15s;
+  }
+  .cat-btn.done   { }
+  .cat-btn.active { color: white; }
+  .cat-btn .check {
+    position: absolute; top: -3px; right: -3px;
+    font-size: 10px; line-height: 14px;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-weight: 900;
+  }
+
+  .items-grid-wrap { border-radius: 18px; padding: 10px 8px 8px; margin-bottom: 10px; }
+  .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .item-btn {
+    border: 2.5px solid transparent; border-radius: 14px; cursor: pointer;
+    padding: 8px 4px 7px; display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.7);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    min-height: 72px; justify-content: center;
+    transition: all .16s cubic-bezier(.34,1.56,.64,1);
+  }
+  .item-btn.selected { background: white; transform: scale(1.06); }
+  .item-dot { width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid rgba(0,0,0,0.12); flex-shrink: 0; transition: box-shadow .15s; }
+  .item-emoji { font-size: 34px; line-height: 1; }
+  .item-label { font-size: 10px; font-weight: 700; text-align: center; line-height: 1.3; white-space: pre-wrap; color: #666; }
+  .item-label.selected { }
+  .grid-hint { text-align: center; font-size: 9.5px; color: #BBB; margin-top: 6px; }
+
+  #complete-btn {
+    width: 100%; border: none; border-radius: 18px;
+    padding: 15px; font-size: 20px; font-weight: 900;
+    cursor: pointer; color: white;
+    background: linear-gradient(135deg, #DDD, #CCC);
+    box-shadow: 0 5px 0 #AAA;
+    transition: background .3s, box-shadow .3s;
+  }
+  #complete-btn.ready {
+    background: linear-gradient(135deg, #FF6B9E, #FF3366);
+    box-shadow: 0 5px 0 #C93054;
+    animation: pulse 2s ease infinite;
+  }
+  #complete-btn:active { transform: translateY(4px); }
+
+  /* complete screen */
+  #complete-screen { display: none; flex: 1; flex-direction: column; align-items: center; gap: 14px; animation: fadeUp .4s ease; overflow-y: auto; }
+  .star-row { display: flex; gap: 6px; font-size: 30px; }
+  .star-row span:nth-child(1) { animation: starBounce 1s 0s ease-in-out infinite; display: inline-block; }
+  .star-row span:nth-child(2) { animation: starBounce 1s 0.2s ease-in-out infinite; display: inline-block; }
+  .star-row span:nth-child(3) { animation: starBounce 1s 0.4s ease-in-out infinite; display: inline-block; }
+  .complete-face {
+    background: linear-gradient(135deg, #FFF9F0, #FFF0F8);
+    border-radius: 26px; padding: 14px 12px 10px;
+    border: 3.5px solid #FF6B9E;
+    box-shadow: 0 10px 30px rgba(255,107,158,0.28);
+    width: 100%; text-align: center;
+    animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  .praise-box {
+    font-size: 17px; font-weight: 900; text-align: center; color: #FF3366;
+    background: linear-gradient(135deg, #FFF0F5, #FFF9F0);
+    border-radius: 18px; padding: 14px 24px;
+    border: 2px solid #FFB6C1; max-width: 290px; line-height: 1.5;
+    animation: scaleIn .5s .1s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .sel-summary { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; animation: fadeUp .4s .2s ease both; }
+  .sel-tag { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 4px 10px; }
+  #reset-btn {
+    border: none; border-radius: 18px; padding: 14px 44px;
+    font-size: 18px; font-weight: 900; cursor: pointer; color: white;
+    background: linear-gradient(135deg, #7C6BFF, #5B4BDF);
+    box-shadow: 0 5px 0 #3C2BC9;
+    animation: fadeUp .4s .3s ease both;
+  }
+  #reset-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #3C2BC9; }
+
+  /* confetti */
+  #confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; display: none; }
+  .cf { position: absolute; top: -14px; animation: cfDrop linear forwards; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <div class="deco">🎨✨💕</div>
+    <h1>얼굴 꾸미기</h1>
+    <p>머리부터 리본까지<br>나만의 귀여운 얼굴을 만들어 보아요!</p>
+    <button id="start-btn">시작하기 🎨</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <div class="title-area">
+      <h2>얼굴 꾸미기 🎨</h2>
+      <p id="progress-text">아이템을 눌러 얼굴을 꾸며봐요! (0/6 완성)</p>
+    </div>
+    <div class="face-display">
+      <svg id="face-svg" viewBox="0 0 240 270" width="200" height="225" style="display:block;margin:0 auto;overflow:visible"></svg>
+      <div id="face-hint">↓ 아래에서 아이템을 골라봐요!</div>
+    </div>
+    <div class="cat-tabs" id="cat-tabs"></div>
+    <div class="items-grid-wrap" id="items-wrap">
+      <div class="items-grid" id="items-grid"></div>
+      <div class="grid-hint">같은 버튼을 다시 누르면 취소돼요</div>
+    </div>
+    <button id="complete-btn">아이템을 먼저 골라봐요 😊</button>
+  </div>
+
+  <!-- COMPLETE SCREEN -->
+  <div id="complete-screen" class="screen">
+    <div class="star-row"><span>🌟</span><span>⭐</span><span>🌟</span></div>
+    <div class="complete-face">
+      <svg id="face-svg2" viewBox="0 0 240 270" width="210" height="236" style="display:block;margin:0 auto;overflow:visible"></svg>
+    </div>
+    <div class="praise-box" id="praise-box"></div>
+    <div class="sel-summary" id="sel-summary"></div>
+    <button id="reset-btn">🎨 다시 꾸미기!</button>
+  </div>
+
+</div>
+<div id="confetti-layer"></div>
+
+<script>
+const PRAISES = [
+  "와! 세상에서 제일 귀여운 얼굴이에요! 💕",
+  "우리 아이 천재 아티스트예요! 🎨",
+  "정말 멋진 작품이에요! 박수 짝짝! 👏",
+  "너무 귀여워서 사랑에 빠졌어요! 🥰",
+  "완벽한 캐릭터가 탄생했어요! 🌟",
+  "대단해요! 진짜 화가 같아요! 🏆",
+];
+
+const CATS = [
+  { id:"hair",    label:"머리", accent:"#D4845A" },
+  { id:"eyes",    label:"눈",   accent:"#5A8FD4" },
+  { id:"nose",    label:"코",   accent:"#D45AA0" },
+  { id:"mouth",   label:"입",   accent:"#5AD480" },
+  { id:"glasses", label:"안경", accent:"#9A5AD4" },
+  { id:"ribbon",  label:"리본", accent:"#D45A5A" },
+];
+
+const ITEMS = {
+  hair:[
+    {id:"h1",label:"단발",    color:"#8B4513"},
+    {id:"h2",label:"양갈래",  color:"#3D2008"},
+    {id:"h3",label:"긴 머리", color:"#D4A017"},
+    {id:"h4",label:"헝클머리",color:"#555555"},
+  ],
+  eyes:[
+    {id:"e1",label:"동그란 눈",emoji:"👁️"},
+    {id:"e2",label:"별 눈",   emoji:"⭐"},
+    {id:"e3",label:"반달 눈", emoji:"🌙"},
+    {id:"e4",label:"윙크",    emoji:"😉"},
+  ],
+  nose:[
+    {id:"n1",label:"동글 코", emoji:"🔴"},
+    {id:"n2",label:"하트 코", emoji:"❤️"},
+    {id:"n3",label:"별 코",   emoji:"⭐"},
+    {id:"n4",label:"점 코",   emoji:"⚫"},
+  ],
+  mouth:[
+    {id:"m1",label:"웃는 입",emoji:"😊"},
+    {id:"m2",label:"방긋 입",emoji:"😁"},
+    {id:"m3",label:"삐죽 입",emoji:"😛"},
+    {id:"m4",label:"오~ 입", emoji:"😮"},
+  ],
+  glasses:[
+    {id:"g1",label:"동그란\n안경",emoji:"🥽"},
+    {id:"g2",label:"하트\n안경",  emoji:"💗"},
+    {id:"g3",label:"별 안경",     emoji:"✨"},
+  ],
+  ribbon:[
+    {id:"r1",label:"분홍 리본",color:"#FF69B4"},
+    {id:"r2",label:"파랑 리본",color:"#4169E1"},
+    {id:"r3",label:"노랑 리본",color:"#FFD700"},
+    {id:"r4",label:"빨강 리본",color:"#FF4444"},
+  ],
+};
+
+const HC = {h1:"#8B4513",h2:"#3D2008",h3:"#D4A017",h4:"#555"};
+const RF = {r1:"#FF69B4",r2:"#4169E1",r3:"#FFD700",r4:"#FF4444"};
+const RD = {r1:"#C93074",r2:"#1E40AF",r3:"#B08A0A",r4:"#BB2020"};
+const RL = {r1:"#FFD6EA",r2:"#BFD4FF",r3:"#FFF3B0",r4:"#FFCDD2"};
+
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, children) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k,v] of Object.entries(attrs||{})) e.setAttribute(k,v);
+  for (const c of (children||[])) e.appendChild(c);
+  return e;
+}
+function path(d, attrs){ return el("path", {d,...attrs}); }
+function circle(cx,cy,r,attrs){ return el("circle",{cx,cy,r,...attrs}); }
+function rect(x,y,w,h,attrs){ return el("rect",{x,y,width:w,height:h,...attrs}); }
+function line(x1,y1,x2,y2,attrs){ return el("line",{x1,y1,x2,y2,...attrs}); }
+function poly(pts,attrs){ return el("polygon",{points:pts,...attrs}); }
+function ellipse(cx,cy,rx,ry,attrs){ return el("ellipse",{cx,cy,rx,ry,...attrs}); }
+
+function buildFace(sel, svg) {
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const {hair:h,eyes:e,nose:n,mouth:m,glasses:g,ribbon:r} = sel;
+
+  // HAIR BACK
+  if(h==="h1"){
+    svg.append(
+      path("M29 152 Q26 30 120 20 Q214 30 211 152 Q204 80 172 60 Q148 45 120 43 Q92 45 68 60 Q36 80 29 152Z",{fill:HC.h1}),
+      rect(16,126,18,76,{rx:9,fill:HC.h1}),
+      rect(206,126,18,76,{rx:9,fill:HC.h1})
+    );
+  } else if(h==="h2"){
+    svg.append(
+      path("M60 140 Q57 52 120 38 Q183 52 180 140 Q174 84 155 67 Q137 54 120 52 Q103 54 85 67 Q66 84 60 140Z",{fill:HC.h2}),
+      ellipse(36,130,22,27,{fill:HC.h2,transform:"rotate(-12,36,130)"}),
+      ellipse(204,130,22,27,{fill:HC.h2,transform:"rotate(12,204,130)"})
+    );
+  } else if(h==="h3"){
+    svg.append(
+      path("M27 152 Q24 28 120 18 Q216 28 213 152 Q207 77 173 56 Q149 41 120 39 Q91 41 67 56 Q33 77 27 152Z",{fill:HC.h3}),
+      path("M25 152 Q15 200 19 264 Q29 272 40 262 Q40 215 37 160Z",{fill:HC.h3}),
+      path("M215 152 Q225 200 221 264 Q211 272 200 262 Q200 215 203 160Z",{fill:HC.h3})
+    );
+  } else if(h==="h4"){
+    svg.append(
+      path("M47 136 Q44 56 120 38 Q196 56 193 136 Q188 80 166 62 Q145 49 120 47 Q95 49 74 62 Q52 80 47 136Z",{fill:HC.h4}),
+      path("M74 62 Q72 33 70 27 Q78 40 80 54Z",{fill:HC.h4}),
+      path("M100 48 Q100 19 104 13 Q110 29 108 44Z",{fill:HC.h4}),
+      path("M120 47 Q119 16 123 11 Q129 26 126 44Z",{fill:HC.h4}),
+      path("M142 48 Q144 19 148 13 Q153 30 150 45Z",{fill:HC.h4}),
+      path("M166 62 Q170 33 176 27 Q174 42 168 57Z",{fill:HC.h4})
+    );
+  }
+
+  // FACE BASE
+  svg.append(
+    ellipse(120,150,94,108,{fill:"#FFE4BC",stroke:"#E0A070","stroke-width":"2.5"}),
+    ellipse(63,170,22,13,{fill:"#FFB6C1",opacity:"0.52"}),
+    ellipse(177,170,22,13,{fill:"#FFB6C1",opacity:"0.52"})
+  );
+
+  // EYEBROWS
+  svg.append(
+    path("M72 104 Q86 97 100 104",{stroke:"#8B5E3C","stroke-width":"2.8",fill:"none","stroke-linecap":"round"}),
+    path("M140 104 Q154 97 168 104",{stroke:"#8B5E3C","stroke-width":"2.8",fill:"none","stroke-linecap":"round"})
+  );
+
+  // EYES
+  if(e==="e1"){
+    svg.append(
+      circle(86,122,14,{fill:"white",stroke:"#333","stroke-width":"2"}),
+      circle(154,122,14,{fill:"white",stroke:"#333","stroke-width":"2"}),
+      circle(89,120,7,{fill:"#1a1a1a"}),
+      circle(157,120,7,{fill:"#1a1a1a"}),
+      circle(92,117,3,{fill:"white"}),
+      circle(160,117,3,{fill:"white"})
+    );
+  } else if(e==="e2"){
+    svg.append(
+      poly("86,107 89,116 99,116 91,122 94,131 86,125 78,131 81,122 73,116 83,116",{fill:"#FFD700",stroke:"#FFA500","stroke-width":"1.5"}),
+      poly("154,107 157,116 167,116 159,122 162,131 154,125 146,131 149,122 141,116 151,116",{fill:"#FFD700",stroke:"#FFA500","stroke-width":"1.5"})
+    );
+  } else if(e==="e3"){
+    svg.append(
+      path("M72 124 Q86 108 100 124",{stroke:"#1a1a1a","stroke-width":"4",fill:"none","stroke-linecap":"round"}),
+      path("M140 124 Q154 108 168 124",{stroke:"#1a1a1a","stroke-width":"4",fill:"none","stroke-linecap":"round"})
+    );
+  } else if(e==="e4"){
+    svg.append(
+      circle(86,122,14,{fill:"white",stroke:"#333","stroke-width":"2"}),
+      circle(89,120,7,{fill:"#1a1a1a"}),
+      circle(92,117,3,{fill:"white"}),
+      path("M140 120 Q154 110 168 120",{stroke:"#1a1a1a","stroke-width":"4",fill:"none","stroke-linecap":"round"}),
+      path("M148 117 Q149 112 152 110",{stroke:"#1a1a1a","stroke-width":"2",fill:"none","stroke-linecap":"round"}),
+      path("M155 115 Q156 110 159 108",{stroke:"#1a1a1a","stroke-width":"2",fill:"none","stroke-linecap":"round"}),
+      path("M162 117 Q164 112 167 110",{stroke:"#1a1a1a","stroke-width":"2",fill:"none","stroke-linecap":"round"})
+    );
+  }
+
+  // NOSE
+  if(n==="n1"){
+    svg.append(
+      circle(120,153,9,{fill:"#FFB6C1",stroke:"#FF8FAB","stroke-width":"1.5"}),
+      circle(117,150,3,{fill:"white",opacity:"0.6"})
+    );
+  } else if(n==="n2"){
+    svg.append(path("M120 162 Q108 150 108 143 Q108 135 114 135 Q117 135 120 140 Q123 135 126 135 Q132 135 132 143 Q132 150 120 162Z",{fill:"#FF6B88"}));
+  } else if(n==="n3"){
+    svg.append(poly("120,141 123,149 131,149 124,154 127,162 120,157 113,162 116,154 109,149 117,149",{fill:"#FFD700",stroke:"#FFA500","stroke-width":"1.2"}));
+  } else if(n==="n4"){
+    svg.append(circle(113,153,4.5,{fill:"#C4A0A0"}), circle(127,153,4.5,{fill:"#C4A0A0"}));
+  }
+
+  // MOUTH
+  if(m==="m1"){
+    svg.append(path("M97 181 Q120 201 143 181",{stroke:"#1a1a1a","stroke-width":"3.5",fill:"none","stroke-linecap":"round"}));
+  } else if(m==="m2"){
+    svg.append(
+      path("M93 177 Q120 210 147 177",{stroke:"#CC3355","stroke-width":"2.5",fill:"#FF8FAB","stroke-linecap":"round"}),
+      rect(104,176,32,12,{rx:2,fill:"white",stroke:"#eee","stroke-width":"0.5"}),
+      line(120,176,120,188,{stroke:"#eee","stroke-width":"0.5"})
+    );
+  } else if(m==="m3"){
+    svg.append(
+      path("M99 177 Q120 194 141 177",{stroke:"#1a1a1a","stroke-width":"3",fill:"none","stroke-linecap":"round"}),
+      ellipse(120,191,12,9,{fill:"#FF6B88"}),
+      line(120,185,120,199,{stroke:"#FF4466","stroke-width":"2"})
+    );
+  } else if(m==="m4"){
+    svg.append(
+      ellipse(120,185,14,12,{fill:"#222"}),
+      ellipse(120,186,10,9,{fill:"#CC4466"})
+    );
+  }
+
+  // GLASSES
+  if(g==="g1"){
+    svg.append(
+      circle(86,122,19,{fill:"rgba(135,206,250,0.22)",stroke:"#7B5030","stroke-width":"2.5"}),
+      circle(154,122,19,{fill:"rgba(135,206,250,0.22)",stroke:"#7B5030","stroke-width":"2.5"}),
+      line(105,122,135,122,{stroke:"#7B5030","stroke-width":"2.5"}),
+      line(67,117,52,113,{stroke:"#7B5030","stroke-width":"2.5"}),
+      line(173,117,188,113,{stroke:"#7B5030","stroke-width":"2.5"})
+    );
+  } else if(g==="g2"){
+    svg.append(
+      path("M86 132 Q74 121 74 114 Q74 107 79 107 Q82 107 86 111 Q90 107 93 107 Q98 107 98 114 Q98 121 86 132Z",{fill:"rgba(255,105,180,0.25)",stroke:"#FF69B4","stroke-width":"2.5"}),
+      path("M154 132 Q142 121 142 114 Q142 107 147 107 Q150 107 154 111 Q158 107 161 107 Q166 107 166 114 Q166 121 154 132Z",{fill:"rgba(255,105,180,0.25)",stroke:"#FF69B4","stroke-width":"2.5"}),
+      line(98,116,142,116,{stroke:"#FF69B4","stroke-width":"2"}),
+      line(66,114,51,110,{stroke:"#FF69B4","stroke-width":"2"}),
+      line(174,114,189,110,{stroke:"#FF69B4","stroke-width":"2"})
+    );
+  } else if(g==="g3"){
+    svg.append(
+      poly("86,107 89,116 99,116 91,122 94,131 86,126 78,131 81,122 73,116 83,116",{fill:"rgba(255,215,0,0.28)",stroke:"#FFA500","stroke-width":"2"}),
+      poly("154,107 157,116 167,116 159,122 162,131 154,126 146,131 149,122 141,116 151,116",{fill:"rgba(255,215,0,0.28)",stroke:"#FFA500","stroke-width":"2"}),
+      line(99,118,141,118,{stroke:"#FFA500","stroke-width":"2"}),
+      line(67,114,52,110,{stroke:"#FFA500","stroke-width":"2"}),
+      line(173,114,188,110,{stroke:"#FFA500","stroke-width":"2"})
+    );
+  }
+
+  // RIBBON
+  if(r){
+    svg.append(
+      path("M162 48 Q152 36 142 48 Q152 60 162 48Z",{fill:RF[r],stroke:RD[r],"stroke-width":"1.5"}),
+      path("M182 48 Q192 36 202 48 Q192 60 182 48Z",{fill:RF[r],stroke:RD[r],"stroke-width":"1.5"}),
+      ellipse(172,48,10,9,{fill:RD[r]}),
+      ellipse(172,48,6,5.5,{fill:RL[r]})
+    );
+  }
+}
+
+// STATE
+let sel = {hair:null,eyes:null,nose:null,mouth:null,glasses:null,ribbon:null};
+let activeCat = "hair";
+
+function countDone(){ return Object.values(sel).filter(v=>v!==null).length; }
+function hasAny(){ return countDone()>0; }
+
+function renderGameFace(){
+  buildFace(sel, document.getElementById("face-svg"));
+}
+function renderCompleteFace(){
+  buildFace(sel, document.getElementById("face-svg2"));
+}
+
+function renderCatTabs(){
+  const tabs = document.getElementById("cat-tabs");
+  tabs.innerHTML = "";
+  CATS.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "cat-btn" + (activeCat===c.id?" active":"") + (sel[c.id]?" done":"");
+    btn.textContent = c.label;
+    btn.style.background = activeCat===c.id ? c.accent : sel[c.id] ? c.accent+"28" : "#F2F2F2";
+    btn.style.color      = activeCat===c.id ? "white"   : sel[c.id] ? c.accent    : "#777";
+    btn.style.boxShadow  = activeCat===c.id ? `0 3px 0 ${c.accent}AA` : "none";
+    if(sel[c.id]){
+      const chk = document.createElement("span");
+      chk.className = "check";
+      chk.textContent = "✓";
+      chk.style.background = activeCat===c.id ? "white" : c.accent;
+      chk.style.color      = activeCat===c.id ? c.accent : "white";
+      btn.appendChild(chk);
+    }
+    btn.addEventListener("pointerdown", ()=>{ activeCat=c.id; renderCatTabs(); renderItems(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderItems(){
+  const catDef = CATS.find(c=>c.id===activeCat);
+  const wrap = document.getElementById("items-wrap");
+  const grid = document.getElementById("items-grid");
+  wrap.style.background = catDef.accent+"18";
+  wrap.style.border = `1.5px solid ${catDef.accent}40`;
+  grid.innerHTML = "";
+  ITEMS[activeCat].forEach(item => {
+    const selected = sel[activeCat]===item.id;
+    const btn = document.createElement("button");
+    btn.className = "item-btn" + (selected?" selected":"");
+    btn.style.border = selected ? `2.5px solid ${catDef.accent}` : "2.5px solid transparent";
+    btn.style.boxShadow = selected ? `0 4px 12px ${catDef.accent}44` : "0 2px 6px rgba(0,0,0,0.06)";
+    if(item.color){
+      const dot = document.createElement("div");
+      dot.className = "item-dot";
+      dot.style.background = item.color;
+      dot.style.boxShadow = selected ? `0 0 0 3px white, 0 0 0 5px ${catDef.accent}` : "none";
+      btn.appendChild(dot);
+    } else {
+      const em = document.createElement("span");
+      em.className = "item-emoji";
+      em.textContent = item.emoji;
+      btn.appendChild(em);
+    }
+    const lbl = document.createElement("span");
+    lbl.className = "item-label" + (selected?" selected":"");
+    lbl.style.color = selected ? catDef.accent : "#666";
+    lbl.textContent = item.label;
+    btn.appendChild(lbl);
+    btn.addEventListener("pointerdown", ()=>{
+      sel[activeCat] = (sel[activeCat]===item.id) ? null : item.id;
+      renderItems(); renderCatTabs(); renderGameFace(); updateCompleteBtn(); updateHint(); updateProgress();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function updateCompleteBtn(){
+  const btn = document.getElementById("complete-btn");
+  if(hasAny()){
+    btn.className = "ready"; btn.textContent = "✨ 완성!";
+  } else {
+    btn.className = ""; btn.textContent = "아이템을 먼저 골라봐요 😊";
+  }
+}
+function updateHint(){ document.getElementById("face-hint").style.display = hasAny()?"none":"block"; }
+function updateProgress(){ document.getElementById("progress-text").textContent = `아이템을 눌러 얼굴을 꾸며봐요! (${countDone()}/6 완성)`; }
+
+function showScreen(id){
+  document.getElementById("start-screen").style.display  = "none";
+  document.getElementById("game-screen").style.display   = "none";
+  document.getElementById("complete-screen").style.display = "none";
+  document.getElementById(id).style.display = (id==="game-screen"||id==="complete-screen") ? "flex" : "flex";
+  if(id==="game-screen"){ document.getElementById(id).style.flexDirection="column"; }
+  if(id==="complete-screen"){ document.getElementById(id).style.flexDirection="column"; }
+}
+
+function launchConfetti(){
+  const layer = document.getElementById("confetti-layer");
+  layer.innerHTML = ""; layer.style.display = "block";
+  const cols = ["#FF6B9E","#FFD54F","#34C779","#43B8FF","#9A6BFF","#FF9A6B"];
+  for(let i=0;i<50;i++){
+    const d = document.createElement("div");
+    d.className = "cf";
+    const size = 5+Math.random()*8;
+    const dur  = 1.3+Math.random()*1.5;
+    const del  = Math.random()*0.5;
+    d.style.cssText = `left:${Math.random()*100}vw;width:${size}px;height:${size}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?"50%":"2px"};animation-duration:${dur}s;animation-delay:${del}s;`;
+    layer.appendChild(d);
+  }
+  setTimeout(()=>{ layer.style.display="none"; layer.innerHTML=""; }, 3000);
+}
+
+// EVENTS
+document.getElementById("start-btn").addEventListener("pointerdown", ()=>{
+  document.getElementById("start-screen").style.display = "none";
+  const gs = document.getElementById("game-screen");
+  gs.style.display = "flex"; gs.style.flexDirection = "column";
+  renderCatTabs(); renderItems(); renderGameFace(); updateCompleteBtn(); updateHint(); updateProgress();
+});
+
+document.getElementById("complete-btn").addEventListener("pointerdown", ()=>{
+  if(!hasAny()) return;
+  renderCompleteFace();
+  // praise
+  document.getElementById("praise-box").textContent = PRAISES[Math.floor(Math.random()*PRAISES.length)];
+  // summary
+  const sum = document.getElementById("sel-summary"); sum.innerHTML="";
+  CATS.forEach(c=>{
+    if(!sel[c.id]) return;
+    const item = ITEMS[c.id].find(i=>i.id===sel[c.id]);
+    const tag = document.createElement("span");
+    tag.className = "sel-tag";
+    tag.style.background = c.accent+"22"; tag.style.color = c.accent;
+    tag.style.border = `1.5px solid ${c.accent}44`;
+    tag.textContent = c.label+": "+(item?.label||"").replace("\n"," ");
+    sum.appendChild(tag);
+  });
+  document.getElementById("game-screen").style.display = "none";
+  const cs = document.getElementById("complete-screen");
+  cs.style.display = "flex"; cs.style.flexDirection = "column"; cs.style.alignItems = "center"; cs.style.gap = "14px";
+  launchConfetti();
+});
+
+document.getElementById("reset-btn").addEventListener("pointerdown", ()=>{
+  sel = {hair:null,eyes:null,nose:null,mouth:null,glasses:null,ribbon:null};
+  activeCat = "hair";
+  document.getElementById("complete-screen").style.display = "none";
+  const gs = document.getElementById("game-screen");
+  gs.style.display = "flex"; gs.style.flexDirection = "column";
+  renderCatTabs(); renderItems(); renderGameFace(); updateCompleteBtn(); updateHint(); updateProgress();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+  body { background: transparent; font-family: 'Segoe UI', sans-serif; user-select: none; }
+  #app { padding: 12px 8px 20px; max-width: 420px; margin: 0 auto; }
+
+  #note-display {
+    text-align: center;
+    height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px; font-weight: 700; letter-spacing: 2px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    background: var(--color-background-secondary);
+    border: 2px solid var(--color-border-tertiary);
+    transition: all 0.2s;
+    color: var(--color-text-primary);
+  }
+  #note-display.flash { transform: scale(1.08); }
+
+  #mission-box {
+    background: #FFF9E6;
+    border: 2.5px solid #F9C440;
+    border-radius: 16px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    min-height: 58px;
+  }
+  #mission-label { font-size: 11px; font-weight: 600; color: #C47F00; margin-bottom: 3px; letter-spacing: 0.5px; }
+  #mission-text { font-size: 17px; font-weight: 700; color: #7A5000; line-height: 1.4; }
+  #mission-progress { font-size: 13px; color: #A07020; margin-top: 4px; }
+
+  #stars-row {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 12px; padding: 0 2px;
+  }
+  #stars-label { font-size: 13px; color: var(--color-text-secondary); font-weight: 500; }
+  #stars-container { display: flex; gap: 4px; flex-wrap: wrap; }
+  .star { font-size: 22px; animation: popIn 0.4s ease; }
+  @keyframes popIn { 0%{transform:scale(0) rotate(-20deg);} 70%{transform:scale(1.3) rotate(5deg);} 100%{transform:scale(1) rotate(0);} }
+
+  #success-banner {
+    display: none; text-align: center;
+    font-size: 22px; font-weight: 700; color: #1E8C3A;
+    background: #EAFAF1; border: 2px solid #52C97A;
+    border-radius: 14px; padding: 10px;
+    margin-bottom: 10px;
+    animation: bounceIn 0.5s ease;
+  }
+  @keyframes bounceIn { 0%{transform:scale(0.7);opacity:0;} 70%{transform:scale(1.1);} 100%{transform:scale(1);opacity:1;} }
+  #success-banner.show { display: block; }
+
+  #piano-wrap {
+    display: flex; gap: 5px; justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .key {
+    flex: 1; min-width: 36px; max-width: 52px;
+    height: 140px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding-bottom: 10px;
+    font-size: 18px; font-weight: 800;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.1s, filter 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    border-bottom: 5px solid rgba(0,0,0,0.2);
+  }
+  .key:active, .key.pressed { transform: scale(0.92); filter: brightness(0.88); border-bottom-width: 2px; }
+
+  .key-do   { background: #FF6B6B; }
+  .key-re   { background: #FF9F43; }
+  .key-mi   { background: #FFC048; }
+  .key-fa   { background: #55E87B; }
+  .key-sol  { background: #43B8FF; }
+  .key-la   { background: #7C6BFF; }
+  .key-si   { background: #EE6BDF; }
+  .key-do2  { background: #FF6B6B; border: 3px solid #fff; }
+
+  .key .key-emoji { font-size: 20px; margin-bottom: 2px; }
+  .key .key-name  { font-size: 16px; line-height: 1; }
+
+  #new-mission-btn {
+    display: block; width: 100%; padding: 12px;
+    background: #7C6BFF; color: white;
+    border: none; border-radius: 14px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: transform 0.1s, background 0.1s;
+    letter-spacing: 0.5px;
+  }
+  #new-mission-btn:active { transform: scale(0.97); background: #5C4BDF; }
+</style>
+
+<div id="app">
+  <h2 class="sr-only">어린이 피아노 게임 — 건반을 눌러 소리를 들어보세요!</h2>
+
+  <div id="note-display">🎵 눌러보세요!</div>
+
+  <div id="success-banner">🎉 참 잘했어요! 🌟</div>
+
+  <div id="mission-box">
+    <div id="mission-label">🎯 오늘의 미션</div>
+    <div id="mission-text">아무 건반이나 눌러보세요!</div>
+    <div id="mission-progress"></div>
+  </div>
+
+  <div id="stars-row">
+    <span id="stars-label">⭐ 모은 별:</span>
+    <div id="stars-container"></div>
+    <span id="star-count" style="font-size:13px;color:var(--color-text-secondary);font-weight:600;"></span>
+  </div>
+
+  <div id="piano-wrap">
+    <button class="key key-do"  data-note="도" aria-label="도"><span class="key-emoji">🍎</span><span class="key-name">도</span></button>
+    <button class="key key-re"  data-note="레" aria-label="레"><span class="key-emoji">🍊</span><span class="key-name">레</span></button>
+    <button class="key key-mi"  data-note="미" aria-label="미"><span class="key-emoji">🌟</span><span class="key-name">미</span></button>
+    <button class="key key-fa"  data-note="파" aria-label="파"><span class="key-emoji">🍀</span><span class="key-name">파</span></button>
+    <button class="key key-sol" data-note="솔" aria-label="솔"><span class="key-emoji">🐬</span><span class="key-name">솔</span></button>
+    <button class="key key-la"  data-note="라" aria-label="라"><span class="key-emoji">🍇</span><span class="key-name">라</span></button>
+    <button class="key key-si"  data-note="시" aria-label="시"><span class="key-emoji">🌸</span><span class="key-name">시</span></button>
+    <button class="key key-do2" data-note="도(높은)" data-mission-note="도2" aria-label="높은 도"><span class="key-emoji">🎀</span><span class="key-name">도</span></button>
+  </div>
+
+  <button id="new-mission-btn">🎲 새 미션 받기</button>
+</div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+function getCtx() { if (!ctx) ctx = new AudioCtx(); return ctx; }
+
+const freqs = { '도': 261.63, '레': 293.66, '미': 329.63, '파': 349.23, '솔': 392.00, '라': 440.00, '시': 493.88, '도2': 523.25 };
+const noteColors = { '도': '#FF6B6B', '레': '#FF9F43', '미': '#FFC048', '파': '#55E87B', '솔': '#43B8FF', '라': '#7C6BFF', '시': '#EE6BDF', '도2': '#FF6B6B', '도(높은)': '#FF6B6B' };
+
+function playNote(noteKey) {
+  const ac = getCtx();
+  const freq = freqs[noteKey] || freqs['도'];
+  const osc = ac.createOscillator();
+  const gainNode = ac.createGain();
+  const osc2 = ac.createOscillator();
+  const gain2 = ac.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+  gainNode.gain.setValueAtTime(0.45, ac.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.4);
+  osc.connect(gainNode);
+  gainNode.connect(ac.destination);
+  osc.start(); osc.stop(ac.currentTime + 1.4);
+
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(freq * 2, ac.currentTime);
+  gain2.gain.setValueAtTime(0.15, ac.currentTime);
+  gain2.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.8);
+  osc2.connect(gain2);
+  gain2.connect(ac.destination);
+  osc2.start(); osc2.stop(ac.currentTime + 0.8);
+}
+
+const missions = [
+  ['도','레','미'],
+  ['미','파','솔'],
+  ['솔','라','시'],
+  ['도','미','솔'],
+  ['레','미','파'],
+  ['도','레','미','파','솔'],
+  ['솔','미','도'],
+  ['미','레','도'],
+  ['도','도2'],
+  ['라','솔','파','미'],
+];
+
+let stars = 0;
+let currentMission = null;
+let missionStep = 0;
+let missionActive = false;
+let successTimer = null;
+
+function startMission() {
+  const m = missions[Math.floor(Math.random() * missions.length)];
+  currentMission = m;
+  missionStep = 0;
+  missionActive = true;
+  document.getElementById('success-banner').classList.remove('show');
+  updateMissionUI();
+}
+
+function updateMissionUI() {
+  if (!currentMission) return;
+  const label = currentMission.map((n, i) => {
+    const display = n === 'do2' ? '도' : n;
+    return i < missionStep
+      ? `<span style="color:#1E8C3A;font-weight:900;">${display}✔</span>`
+      : `<span>${display}</span>`;
+  }).join(' → ');
+  document.getElementById('mission-text').innerHTML = `🎹 ${label} 를 눌러보세요!`;
+  document.getElementById('mission-progress').textContent = missionStep > 0 ? `(${missionStep} / ${currentMission.length} 완료)` : '';
+}
+
+function addStar() {
+  stars++;
+  const c = document.getElementById('stars-container');
+  const s = document.createElement('span');
+  s.className = 'star';
+  s.textContent = '⭐';
+  c.appendChild(s);
+  document.getElementById('star-count').textContent = `${stars}개`;
+}
+
+function showNoteDisplay(noteName, color) {
+  const d = document.getElementById('note-display');
+  d.textContent = noteName;
+  d.style.background = color + '22';
+  d.style.borderColor = color;
+  d.style.color = color;
+  d.classList.add('flash');
+  setTimeout(() => d.classList.remove('flash'), 200);
+}
+
+function handleNotePress(noteRaw) {
+  const missionKey = noteRaw === '도(높은)' ? '도2' : noteRaw;
+  const displayName = missionKey === '도2' ? '도 ↑' : missionKey;
+  const color = noteColors[missionKey] || '#888';
+
+  playNote(missionKey);
+  showNoteDisplay(displayName, color);
+
+  if (missionActive && currentMission) {
+    const expected = currentMission[missionStep];
+    if (missionKey === expected || (expected === '도2' && missionKey === '도2')) {
+      missionStep++;
+      updateMissionUI();
+      if (missionStep >= currentMission.length) {
+        missionActive = false;
+        addStar();
+        document.getElementById('success-banner').classList.add('show');
+        document.getElementById('mission-text').innerHTML = '🎉 미션 성공! 새 미션을 받아보세요!';
+        document.getElementById('mission-progress').textContent = '';
+        if (successTimer) clearTimeout(successTimer);
+        successTimer = setTimeout(() => {
+          document.getElementById('success-banner').classList.remove('show');
+        }, 3000);
+      }
+    } else if (missionStep > 0) {
+      missionStep = 0;
+      document.getElementById('mission-progress').textContent = '다시 처음부터 눌러보세요! 💪';
+      setTimeout(updateMissionUI, 1000);
+    }
+  }
+}
+
+document.querySelectorAll('.key').forEach(btn => {
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    btn.classList.add('pressed');
+    handleNotePress(btn.dataset.note);
+  });
+  btn.addEventListener('pointerup', () => btn.classList.remove('pressed'));
+  btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
+});
+
+document.getElementById('new-mission-btn').addEventListener('click', startMission);
+
+startMission();
+</script>

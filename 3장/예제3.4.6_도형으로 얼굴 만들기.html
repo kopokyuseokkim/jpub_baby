@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>도형으로 얼굴 만들기 🎨</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: #FFF5FB; font-family: 'Segoe UI','Apple SD Gothic Neo',sans-serif; display: flex; justify-content: center; }
+  #app { width: 100%; max-width: 480px; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scaleIn { from{transform:scale(.78);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes jig     { 0%,100%{transform:rotate(0)} 30%{transform:rotate(-6deg)} 70%{transform:rotate(6deg)} }
+
+  /* ── START ── */
+  #screen-start {
+    flex: 1; display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; padding: 16px; overflow-y: auto;
+    animation: fadeUp .35s ease;
+  }
+  .start-icon { font-size: 52px; animation: float 2s ease-in-out infinite; }
+  .start-h1   { font-size: 24px; font-weight: 900; color: #333; text-align: center; }
+  .start-desc { font-size: 13px; color: #888; text-align: center; line-height: 1.75; }
+  .start-preview { background: #FFFDF8; border-radius: 18px; border: 2px solid #EEE; padding: 4px 2px; width: 100%; overflow: hidden; }
+  .start-tip  { font-size: 12px; color: #BBB; text-align: center; background: #F5F5F5; border-radius: 12px; padding: 8px 18px; line-height: 1.7; }
+  #start-btn  {
+    background: linear-gradient(135deg,#FF6B9E,#FF3366); color: white;
+    border: none; border-radius: 22px; padding: 15px 56px;
+    font-size: 21px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 5px 0 #C93054;
+  }
+  #start-btn:active { filter: brightness(.88); }
+
+  /* ── GAME ── */
+  #screen-game {
+    flex: 1; display: none; flex-direction: column;
+    min-height: 0; animation: fadeUp .3s ease;
+  }
+  /* 상단 헤더 */
+  .game-header { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 8px 8px 4px; }
+  .back-btn {
+    background: #F0F0F0; border: none; border-radius: 10px;
+    padding: 7px 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; color: #666; flex-shrink: 0;
+  }
+  .back-btn:active { filter: brightness(.88); }
+  .game-title { flex: 1; text-align: center; font-size: 16px; font-weight: 900; color: #333; }
+  .undo-btn {
+    background: #F5F5F5; border: none; border-radius: 10px;
+    padding: 7px 10px; font-size: 12px; font-weight: 700;
+    cursor: default; color: #CCC; flex-shrink: 0;
+  }
+  .undo-btn.on { background: #FFF3E0; color: #FF8C00; cursor: pointer; }
+  .undo-btn.on:active { filter: brightness(.88); }
+
+  /* 상태바 */
+  .status-bar {
+    flex-shrink: 0; display: flex; align-items: center; gap: 7px;
+    padding: 5px 10px; background: #F9F9F9;
+    border-radius: 12px; margin: 0 8px 4px; border: 1px solid #EEE;
+  }
+  .status-label { font-size: 11px; color: #AAA; font-weight: 600; flex-shrink: 0; }
+  .status-name  { font-size: 12px; font-weight: 700; color: #555; flex-shrink: 0; }
+  .status-dot   { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+  .status-hint  { font-size: 11px; color: #CCC; margin-left: auto; flex-shrink: 0; }
+
+  /* 캔버스 — 남은 공간 모두 차지 */
+  .canvas-wrap {
+    flex: 1; min-height: 0; margin: 0 8px;
+    background: white; border-radius: 16px;
+    border: 2px solid #EBEBEB; overflow: hidden;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+  }
+  .canvas-wrap svg { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: manipulation; }
+
+  /* 하단 컨트롤 고정 */
+  .game-bottom { flex-shrink: 0; padding: 6px 8px 10px; display: flex; flex-direction: column; gap: 6px; background: #FFF5FB; }
+
+  /* 탭 */
+  .tabs { display: flex; gap: 5px; }
+  .tab-btn {
+    flex: 1; border: none; border-radius: 11px; padding: 9px 4px;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    background: #F0F0F0; color: #777; transition: all .15s;
+  }
+  .tab-btn.on { background: #FF6B9E; color: white; box-shadow: 0 3px 0 #C93054; }
+  .tab-btn:active { filter: brightness(.9); }
+
+  /* 탭 콘텐츠 */
+  .tab-content { background: #F8F8F8; border-radius: 14px; padding: 8px 6px; }
+
+  /* 도형 탭 */
+  .shape-grid { display: flex; gap: 5px; }
+  .shape-btn {
+    flex: 1; border-radius: 13px; padding: 7px 3px 5px;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; border: 2.5px solid transparent;
+    background: rgba(255,255,255,.75); box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    transition: all .16s;
+  }
+  .shape-btn.on { background: white; border-color: #FF6B9E; box-shadow: 0 3px 12px rgba(255,107,158,.3); transform: scale(1.06); }
+  .shape-btn span { font-size: 10px; font-weight: 700; color: #999; }
+  .shape-btn.on span { color: #FF6B9E; }
+  .shape-btn:active { filter: brightness(.9); }
+
+  /* 색상 탭 */
+  .color-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .color-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    cursor: pointer; padding: 0; flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .color-btn.on { transform: scale(1.18); box-shadow: 0 0 0 3px white,0 0 0 5.5px #FF6B9E; }
+  .color-btn:active { filter: brightness(.88); }
+
+  /* 크기 탭 */
+  .size-grid { display: flex; gap: 8px; }
+  .size-btn {
+    flex: 1; border-radius: 13px; padding: 7px 4px 5px;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; border: 2.5px solid transparent;
+    background: rgba(255,255,255,.75); box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    transition: all .16s;
+  }
+  .size-btn.on { background: white; border-color: #FF6B9E; box-shadow: 0 3px 12px rgba(255,107,158,.3); transform: scale(1.05); }
+  .size-btn span { font-size: 11px; font-weight: 700; color: #999; }
+  .size-btn.on span { color: #FF6B9E; }
+  .size-btn:active { filter: brightness(.9); }
+
+  /* 액션 버튼 */
+  .action-row { display: flex; gap: 8px; }
+  .action-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 13px;
+    font-size: 14px; font-weight: 800; cursor: default;
+    background: #F5F5F5; color: #CCC;
+  }
+  .action-btn.on { cursor: pointer; }
+  .action-btn.on:active { filter: brightness(.88); }
+  #clear-btn.on  { background: #FFF3E0; color: #FF8C00; box-shadow: 0 4px 0 #CC6600AA; }
+  #done-btn.on   { background: linear-gradient(135deg,#FF6B9E,#FF3366); color: white; box-shadow: 0 4px 0 #C93054; }
+
+  /* ── COMPLETE ── */
+  #screen-complete {
+    flex: 1; display: none; flex-direction: column;
+    align-items: center; gap: 12px; padding: 14px 10px;
+    overflow-y: auto; animation: fadeUp .4s ease;
+  }
+  .star-row { display: flex; gap: 8px; font-size: 28px; flex-shrink: 0; }
+  .star-row span:nth-child(1){animation:jig 1.3s 0s ease-in-out infinite;display:inline-block}
+  .star-row span:nth-child(2){animation:jig 1.3s .2s ease-in-out infinite;display:inline-block}
+  .star-row span:nth-child(3){animation:jig 1.3s .4s ease-in-out infinite;display:inline-block}
+  .complete-title { font-size: 22px; font-weight: 900; color: #333; flex-shrink: 0; }
+  .artwork {
+    background: #FFFDF8; border-radius: 22px; padding: 10px 6px;
+    width: 100%; border: 3px solid #FF69B4;
+    box-shadow: 0 8px 24px rgba(255,105,180,.22);
+    animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1);
+    flex-shrink: 0;
+  }
+  .artwork svg { display: block; width: 100%; }
+  .shape-count { font-size: 13px; color: #AAA; font-weight: 600; flex-shrink: 0; }
+  .praise-box {
+    font-size: 16px; font-weight: 900; color: #FF3366;
+    background: #FFF0F5; border-radius: 16px;
+    padding: 13px 22px; border: 2px solid #FFB6C1;
+    text-align: center; width: 100%; flex-shrink: 0;
+  }
+  .complete-btns { display: flex; gap: 8px; width: 100%; flex-shrink: 0; }
+  .more-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 13px;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    background: #FFF3E0; color: #FF8C00; box-shadow: 0 4px 0 #CC6600AA;
+  }
+  .more-btn:active { filter: brightness(.88); }
+  .restart-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 13px;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg,#7C6BFF,#5B4BDF); color: white;
+    box-shadow: 0 4px 0 #3C2BC9;
+  }
+  .restart-btn:active { filter: brightness(.88); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START -->
+  <div id="screen-start">
+    <div class="start-icon">🎨</div>
+    <div class="start-h1">도형으로 얼굴 만들기!</div>
+    <div class="start-desc">동그라미, 세모, 네모, 하트, 별로<br>나만의 얼굴을 만들어봐요! 🌟</div>
+    <div class="start-preview">
+      <svg id="preview-svg" viewBox="0 0 355 130" width="100%" style="display:block"></svg>
+    </div>
+    <div class="start-tip">🔷 도형 선택 → 🎨 색깔 선택 → 📏 크기 선택<br>👆 캔버스를 눌러 도형 배치!</div>
+    <button id="start-btn">▶ 시작!</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game">
+    <div class="game-header">
+      <button class="back-btn" id="game-back">← 뒤로</button>
+      <span class="game-title">도형으로 얼굴 만들기 🎨</span>
+      <button class="undo-btn" id="undo-btn">↩ 되돌리기</button>
+    </div>
+    <div class="status-bar">
+      <span class="status-label">선택:</span>
+      <svg id="status-preview" width="24" height="24" viewBox="0 0 44 44" style="flex-shrink:0"></svg>
+      <span class="status-name" id="status-name"></span>
+      <div class="status-dot" id="status-dot"></div>
+      <span class="status-hint">눌러서 배치! 👆</span>
+    </div>
+    <!-- 캔버스 (가운데, 늘어남) -->
+    <div class="canvas-wrap">
+      <svg id="face-canvas" style="width:100%;height:100%;display:block;cursor:crosshair;touch-action:manipulation;"></svg>
+    </div>
+    <!-- 하단 컨트롤 (고정) -->
+    <div class="game-bottom">
+      <div class="tabs">
+        <button class="tab-btn on" data-tab="shape">🔷 도형</button>
+        <button class="tab-btn" data-tab="color">🎨 색깔</button>
+        <button class="tab-btn" data-tab="size">📏 크기</button>
+      </div>
+      <div class="tab-content">
+        <div id="tab-shape" class="shape-grid"></div>
+        <div id="tab-color" class="color-grid" style="display:none"></div>
+        <div id="tab-size" class="size-grid" style="display:none"></div>
+      </div>
+      <div class="action-row">
+        <button class="action-btn" id="clear-btn">🗑️ 전체 지우기</button>
+        <button class="action-btn" id="done-btn">✨ 완성!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETE -->
+  <div id="screen-complete">
+    <div class="star-row"><span>🌟</span><span>⭐</span><span>🌟</span></div>
+    <div class="complete-title">완성! 🎉</div>
+    <div class="artwork"><svg id="artwork-svg" viewBox="0 0 320 215" style="display:block;width:100%;height:100%;"></svg></div>
+    <div class="shape-count" id="shape-count"></div>
+    <div class="praise-box" id="praise-box"></div>
+    <div class="complete-btns">
+      <button class="more-btn" id="more-btn">🎨 더 꾸미기</button>
+      <button class="restart-btn" id="restart-btn">🔄 처음부터 다시!</button>
+    </div>
+  </div>
+
+</div>
+<script>
+let CW=320, CH=215;
+const NS="http://www.w3.org/2000/svg";
+
+const SHAPES=[
+  {id:"circle",  name:"동그라미"},
+  {id:"triangle",name:"세모"},
+  {id:"square",  name:"네모"},
+  {id:"heart",   name:"하트"},
+  {id:"star",    name:"별"},
+];
+const PALETTE=[
+  "#FF4444","#FF8C00","#FFD700","#7CFC00",
+  "#22C55E","#87CEEB","#4169E1","#9B59B6",
+  "#FF69B4","#8B4513","#333333","#FFFFFF",
+];
+const SIZES=[
+  {id:"S",label:"소 (작게)",r:14},
+  {id:"M",label:"중 (보통)",r:26},
+  {id:"L",label:"대 (크게)",r:42},
+];
+const PRAISES=[
+  "와! 정말 창의적인 얼굴이에요! 🌟",
+  "도형으로 이런 얼굴을 만들다니 천재예요! 🎨",
+  "세상에 하나뿐인 나만의 얼굴 완성! 💕",
+  "도형 마법사예요! 정말 최고예요! ✨",
+  "완벽한 예술 작품이에요! 박수! 🏆",
+  "우리 아이 진짜 화가예요! 👏",
+];
+const START_SHAPES=[
+  {type:"circle",  cx:40, cy:65, r:30, color:"#FF69B4"},
+  {type:"triangle",cx:115,cy:70, r:32, color:"#FFD700"},
+  {type:"square",  cx:190,cy:65, r:28, color:"#87CEEB"},
+  {type:"heart",   cx:260,cy:65, r:28, color:"#FF4444"},
+  {type:"star",    cx:315,cy:70, r:30, color:"#9B59B6"},
+];
+
+/* ── SVG helpers ── */
+function svgEl(tag,attrs){
+  const e=document.createElementNS(NS,tag);
+  for(const[k,v]of Object.entries(attrs||{}))e.setAttribute(k,v);
+  return e;
+}
+function heartPath(cx,cy,r){
+  return[`M${cx},${cy+r}`,
+    `C${cx-r*.05},${cy+r*.8} ${cx-r},${cy+r*.5} ${cx-r},${cy-r*.1}`,
+    `C${cx-r},${cy-r*.6} ${cx-r*.5},${cy-r} ${cx},${cy-r*.3}`,
+    `C${cx+r*.5},${cy-r} ${cx+r},${cy-r*.6} ${cx+r},${cy-r*.1}`,
+    `C${cx+r},${cy+r*.5} ${cx+r*.05},${cy+r*.8} ${cx},${cy+r}Z`].join(" ");
+}
+function starPts(cx,cy,r){
+  return Array.from({length:10},(_,i)=>{
+    const a=i*Math.PI/5-Math.PI/2, d=i%2===0?r:r*0.42;
+    return`${cx+Math.cos(a)*d},${cy+Math.sin(a)*d}`;
+  }).join(" ");
+}
+function makeShape(type,cx,cy,r,color,sw=1.8){
+  const p={fill:color,stroke:"#2D2D2D","stroke-width":sw};
+  if(type==="circle")   return svgEl("circle",{cx,cy,r,...p});
+  if(type==="square")   return svgEl("rect",{x:cx-r,y:cy-r,width:r*2,height:r*2,...p});
+  if(type==="triangle") return svgEl("polygon",{points:`${cx},${cy-r} ${cx-r*.87},${cy+r*.5} ${cx+r*.87},${cy+r*.5}`,...p});
+  if(type==="heart")    return svgEl("path",{d:heartPath(cx,cy,r),...p});
+  if(type==="star")     return svgEl("polygon",{points:starPts(cx,cy,r),...p});
+}
+
+/* ── State ── */
+let shapes=[], aShape="circle", aColor="#FF69B4", aSize="M", activeTab="shape";
+
+function getR(){ return SIZES.find(s=>s.id===aSize).r; }
+function hasAny(){ return shapes.length>0; }
+
+/* ── Preview SVG (start screen) ── */
+(function(){
+  const svg=document.getElementById("preview-svg");
+  svg.setAttribute("viewBox","0 0 355 130");
+  START_SHAPES.forEach(s=>{
+    const g=document.createElementNS(NS,"g");
+    g.style.animation=`float 2s ease-in-out infinite`;
+    g.appendChild(makeShape(s.type,s.cx,s.cy,s.r,s.color,2));
+    svg.appendChild(g);
+  });
+})();
+
+/* ── Shape tab ── */
+(function(){
+  const wrap=document.getElementById("tab-shape");
+  SHAPES.forEach(sh=>{
+    const btn=document.createElement("button");
+    btn.className="shape-btn"+(sh.id===aShape?" on":"");
+    btn.dataset.id=sh.id;
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("width","36");svg.setAttribute("height","36");svg.setAttribute("viewBox","0 0 44 44");
+    svg.appendChild(makeShape(sh.id,22,22,18,sh.id===aShape?aColor:"#CCCCCC",1.5));
+    const lbl=document.createElement("span");lbl.textContent=sh.name;
+    btn.appendChild(svg);btn.appendChild(lbl);
+    btn.addEventListener("pointerdown",()=>{
+      aShape=sh.id;
+      updateShapeTab(); updateStatusBar(); updateSizeTab();
+    });
+    wrap.appendChild(btn);
+  });
+})();
+
+function updateShapeTab(){
+  document.querySelectorAll(".shape-btn").forEach(b=>{
+    const on=b.dataset.id===aShape;
+    b.classList.toggle("on",on);
+    const svg=b.querySelector("svg");
+    svg.innerHTML="";
+    svg.appendChild(makeShape(b.dataset.id,22,22,18,on?aColor:"#CCCCCC",1.5));
+  });
+}
+
+/* ── Color tab ── */
+(function(){
+  const wrap=document.getElementById("tab-color");
+  PALETTE.forEach(c=>{
+    const btn=document.createElement("button");
+    btn.className="color-btn"+(c===aColor?" on":"");
+    btn.dataset.hex=c;
+    btn.style.background=c;
+    if(c==="#FFFFFF")btn.style.outline="1.5px solid #DDD";
+    btn.addEventListener("pointerdown",()=>{
+      aColor=c;
+      updateColorTab(); updateShapeTab(); updateSizeTab(); updateStatusBar();
+    });
+    wrap.appendChild(btn);
+  });
+})();
+
+function updateColorTab(){
+  document.querySelectorAll(".color-btn").forEach(b=>b.classList.toggle("on",b.dataset.hex===aColor));
+  document.getElementById("status-dot").style.background=aColor;
+  const dot=document.getElementById("status-dot");
+  dot.style.outline=aColor==="#FFFFFF"?"1px solid #CCC":"none";
+}
+
+/* ── Size tab ── */
+(function(){
+  const wrap=document.getElementById("tab-size");
+  SIZES.forEach(sz=>{
+    const btn=document.createElement("button");
+    btn.className="size-btn"+(sz.id===aSize?" on":"");
+    btn.dataset.id=sz.id;
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("width","50");svg.setAttribute("height","50");svg.setAttribute("viewBox","0 0 100 100");
+    svg.appendChild(makeShape(aShape,50,50,sz.r,sz.id===aSize?aColor:"#CCCCCC",1.5));
+    const lbl=document.createElement("span");lbl.textContent=sz.label;
+    btn.appendChild(svg);btn.appendChild(lbl);
+    btn.addEventListener("pointerdown",()=>{
+      aSize=sz.id; updateSizeTab(); updateStatusBar();
+    });
+    wrap.appendChild(btn);
+  });
+})();
+
+function updateSizeTab(){
+  document.querySelectorAll(".size-btn").forEach(b=>{
+    const on=b.dataset.id===aSize;
+    b.classList.toggle("on",on);
+    const svg=b.querySelector("svg");svg.innerHTML="";
+    const sz=SIZES.find(s=>s.id===b.dataset.id);
+    svg.appendChild(makeShape(aShape,50,50,sz.r,on?aColor:"#CCCCCC",1.5));
+  });
+}
+
+/* ── Tabs ── */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("pointerdown",()=>{
+    activeTab=btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("on",b.dataset.tab===activeTab));
+    document.querySelectorAll("#tab-shape,#tab-color,#tab-size").forEach(el=>{
+      el.style.display=el.id==="tab-"+activeTab?"flex":"none";
+    });
+  });
+});
+document.getElementById("tab-shape").style.display="flex";
+
+/* ── Status bar ── */
+function updateStatusBar(){
+  const svg=document.getElementById("status-preview");
+  svg.innerHTML="";
+  svg.appendChild(makeShape(aShape,22,22,20,aColor,1.5));
+  document.getElementById("status-name").textContent=SHAPES.find(s=>s.id===aShape).name;
+  const dot=document.getElementById("status-dot");
+  dot.style.background=aColor;
+  dot.style.outline=aColor==="#FFFFFF"?"1px solid #CCC":"none";
+}
+updateStatusBar();
+
+/* ── Canvas ── */
+function syncCanvasSize(){
+  const svg=document.getElementById("face-canvas");
+  const r=svg.getBoundingClientRect();
+  if(r.width>0 && r.height>0){
+    CW=Math.round(r.width);
+    CH=Math.round(r.height);
+    svg.setAttribute("viewBox","0 0 "+CW+" "+CH);
+  }
+}
+function redrawCanvas(){
+  const svg=document.getElementById("face-canvas");
+  syncCanvasSize();
+  svg.innerHTML="";
+  // background
+  const bg=svgEl("rect",{width:CW,height:CH,fill:"#FFFDF8"});
+  svg.appendChild(bg);
+  // empty hint
+  if(!hasAny()){
+    const g=document.createElementNS(NS,"g");
+    g.style.pointerEvents="none";
+    const el=svgEl("ellipse",{cx:CW/2,cy:CH/2,rx:CW*.35,ry:CH*.42,fill:"none",stroke:"#E8E8E8","stroke-width":"2.5","stroke-dasharray":"9,5"});
+    const t1=svgEl("text",{x:CW/2,y:CH/2-8,"text-anchor":"middle",fill:"#D0D0D0","font-size":"13","font-family":"sans-serif"});
+    t1.textContent="👆 여기를 눌러서";
+    const t2=svgEl("text",{x:CW/2,y:CH/2+12,"text-anchor":"middle",fill:"#D0D0D0","font-size":"13","font-family":"sans-serif"});
+    t2.textContent="도형을 놓아봐요!";
+    g.append(el,t1,t2); svg.appendChild(g);
+  }
+  shapes.forEach(s=>{
+    const sz=SIZES.find(sz=>sz.id===s.size);
+    svg.appendChild(makeShape(s.type,s.x,s.y,sz.r,s.color));
+  });
+  updateActionBtns();
+}
+
+function updateActionBtns(){
+  const cb=document.getElementById("clear-btn"),db=document.getElementById("done-btn");
+  const ub=document.getElementById("undo-btn");
+  cb.classList.toggle("on",hasAny()); db.classList.toggle("on",hasAny());
+  ub.classList.toggle("on",hasAny());
+}
+
+document.getElementById("face-canvas").addEventListener("pointerdown",function(e){
+  e.preventDefault();
+  syncCanvasSize();
+  const rect=this.getBoundingClientRect();
+  const x=Math.round(((e.clientX-rect.left)/rect.width)*CW);
+  const y=Math.round(((e.clientY-rect.top)/rect.height)*CH);
+  shapes.push({id:Date.now()+Math.random(),type:aShape,x,y,size:aSize,color:aColor});
+  redrawCanvas();
+});
+
+document.getElementById("undo-btn").addEventListener("pointerdown",()=>{
+  if(!hasAny())return; shapes.pop(); redrawCanvas();
+});
+document.getElementById("clear-btn").addEventListener("pointerdown",()=>{
+  if(!hasAny())return; shapes=[]; redrawCanvas();
+});
+document.getElementById("done-btn").addEventListener("pointerdown",()=>{
+  if(!hasAny())return;
+  // build artwork svg
+  const svg=document.getElementById("artwork-svg");
+  svg.setAttribute("viewBox","0 0 "+CW+" "+CH);
+  svg.innerHTML="";
+  svg.appendChild(svgEl("rect",{width:CW,height:CH,fill:"#FFFDF8",rx:10}));
+  shapes.forEach(s=>{
+    const sz=SIZES.find(sz=>sz.id===s.size);
+    svg.appendChild(makeShape(s.type,s.x,s.y,sz.r,s.color));
+  });
+  document.getElementById("shape-count").textContent=`🔷 ${shapes.length}개의 도형으로 완성한 나만의 얼굴!`;
+  document.getElementById("praise-box").textContent=PRAISES[Math.floor(Math.random()*PRAISES.length)];
+  showScreen("complete");
+});
+document.getElementById("more-btn").addEventListener("pointerdown",()=>showScreen("game"));
+document.getElementById("restart-btn").addEventListener("pointerdown",()=>{shapes=[];redrawCanvas();showScreen("start");});
+document.getElementById("start-btn").addEventListener("pointerdown",()=>showScreen("game"));
+document.getElementById("game-back").addEventListener("pointerdown",()=>showScreen("start"));
+
+/* ── Screen control ── */
+function showScreen(name){
+  ["start","game","complete"].forEach(n=>{
+    const el=document.getElementById("screen-"+n);
+    el.style.display=n===name?"flex":"none";
+  });
+  if(name==="game"){ requestAnimationFrame(function(){ redrawCanvas(); }); }
+}
+window.addEventListener("resize",function(){ if(document.getElementById("screen-game").style.display!=="none") redrawCanvas(); });
+showScreen("start");
+</script>
+</body>
+</html>

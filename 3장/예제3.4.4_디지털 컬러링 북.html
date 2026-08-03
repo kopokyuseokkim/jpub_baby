@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>색칠 놀이 🎨</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: #FFF8FC; font-family: 'Segoe UI','Apple SD Gothic Neo',sans-serif; display: flex; justify-content: center; }
+  #app { width: 100%; max-width: 480px; height: 100dvh; display: flex; flex-direction: column; overflow-y: auto; padding: 8px 8px 14px; }
+
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scaleIn { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes jiggle  { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-8px) rotate(-5deg)} 60%{transform:translateY(-5px) rotate(5deg)} }
+
+  .screen { display: none; }
+
+  /* ── START ── */
+  #screen-start {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; padding: 14px 0; animation: fadeUp .35s ease;
+  }
+  .start-emoji { font-size: 58px; animation: jiggle 2s ease-in-out infinite; }
+  .start-emojis span { display: inline-block; font-size: 44px; }
+  .start-emojis span:nth-child(1){animation:jiggle 2s 0s ease-in-out infinite}
+  .start-emojis span:nth-child(2){animation:jiggle 2s .25s ease-in-out infinite}
+  .start-emojis span:nth-child(3){animation:jiggle 2s .5s ease-in-out infinite}
+  .start-emojis span:nth-child(4){animation:jiggle 2s .75s ease-in-out infinite}
+  .start-title { font-size: 25px; font-weight: 900; color: #333; }
+  .start-desc  { font-size: 13px; color: #888; text-align: center; line-height: 1.7; }
+  .start-tip   { font-size: 12px; color: #AAA; text-align: center; background: #F8F8F8; border-radius: 12px; padding: 8px 18px; }
+  #start-btn {
+    background: linear-gradient(135deg,#FF6B9E,#FF3366); color: white;
+    border: none; border-radius: 22px; padding: 15px 56px;
+    font-size: 21px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 5px 0 #C93054;
+  }
+  #start-btn:active { transform: translateY(3px); box-shadow: none; }
+
+  /* ── SELECT ── */
+  #screen-select { flex: 1; display: none; flex-direction: column; gap: 10px; animation: fadeUp .3s ease; overflow-y: auto; }
+  .select-header { display: flex; align-items: center; margin-bottom: 12px; }
+  .back-btn {
+    background: #F0F0F0; border: none; border-radius: 10px;
+    padding: 7px 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; color: #555;
+  }
+  .back-btn:active { transform: translateY(2px); }
+  .select-title { flex: 1; text-align: center; font-size: 17px; font-weight: 900; color: #333; }
+  .pic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pic-btn {
+    border: none; border-radius: 20px; padding: 22px 12px;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+  }
+  .pic-btn:active { transform: translateY(3px); box-shadow: none !important; }
+  .pic-btn .pic-emoji { font-size: 54px; }
+  .pic-btn .pic-name  { font-size: 18px; font-weight: 900; color: #333; }
+  .pic-btn .pic-hint  { font-size: 11px; color: #BBB; font-weight: 600; }
+
+  /* ── COLOR ── */
+  #screen-color { flex: 1; display: none; flex-direction: column; gap: 6px; min-height: 0; animation: fadeUp .3s ease; }
+  .color-header { display: flex; align-items: center; gap: 4px; }
+  .undo-btn {
+    background: #F5F5F5; border: none; border-radius: 10px;
+    padding: 7px 10px; font-size: 12px; font-weight: 700;
+    cursor: default; color: #CCC; flex-shrink: 0;
+  }
+  .undo-btn.on { background: #FFF3E0; color: #FF8C00; cursor: pointer; }
+  .color-header-title { flex: 1; text-align: center; font-size: 16px; font-weight: 900; color: #333; }
+  .active-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 10px; background: #F9F9F9;
+    border-radius: 12px; border: 1px solid #EEE;
+  }
+  .active-bar-label { font-size: 12px; color: #999; font-weight: 600; flex-shrink: 0; }
+  .active-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .active-hint { font-size: 11px; color: #BBB; }
+  .canvas-wrap {
+    flex: 1; min-height: 0;
+    background: white; border-radius: 18px;
+    border: 2px solid #E8E8E8; margin: 0;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .palette { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 4px 0; }
+  .pal-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: none;
+    cursor: pointer; padding: 0; flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,.2);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .pal-btn.active { transform: scale(1.18); box-shadow: 0 0 0 3px white,0 0 0 5.5px #333; }
+  .action-row { display: flex; gap: 8px; }
+  .action-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 14px;
+    font-size: 14px; font-weight: 800; cursor: default;
+    background: #F5F5F5; color: #CCC;
+  }
+  .action-btn.on { cursor: pointer; }
+  .action-btn.on:active { transform: translateY(3px); box-shadow: none !important; }
+  #clear-btn.on  { background: #FFF3E0; color: #FF8C00; box-shadow: 0 4px 0 #CC6600AA; }
+  #done-btn.on   { background: linear-gradient(135deg,#FF6B9E,#FF3366); color: white; box-shadow: 0 4px 0 #C93054; }
+
+  /* ── COMPLETE ── */
+  #screen-complete {
+    display: none; flex-direction: column; align-items: center;
+    gap: 14px; animation: fadeUp .35s ease;
+  }
+  .star-row { display: flex; gap: 8px; font-size: 28px; }
+  .star-row span:nth-child(1){animation:jiggle 1.4s 0s ease-in-out infinite;display:inline-block}
+  .star-row span:nth-child(2){animation:jiggle 1.4s .2s ease-in-out infinite;display:inline-block}
+  .star-row span:nth-child(3){animation:jiggle 1.4s .4s ease-in-out infinite;display:inline-block}
+  .complete-title { font-size: 22px; font-weight: 900; color: #333; }
+  .complete-canvas {
+    background: white; border-radius: 22px; padding: 12px 8px;
+    border: 3px solid #FF69B4; box-shadow: 0 8px 24px rgba(255,105,180,.22);
+    width: 100%; animation: scaleIn .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .praise-box {
+    font-size: 16px; font-weight: 800; color: #FF3366;
+    background: #FFF0F5; border-radius: 16px;
+    padding: 13px 24px; border: 2px solid #FFB6C1;
+    text-align: center; max-width: 280px;
+  }
+  .complete-btns { display: flex; gap: 8px; width: 100%; }
+  .more-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 14px;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    background: #FFF3E0; color: #FF8C00; box-shadow: 0 4px 0 #CC6600AA;
+  }
+  .more-btn:active { transform: translateY(3px); box-shadow: none; }
+  .new-btn {
+    flex: 1; border: none; border-radius: 14px; padding: 14px;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg,#7C6BFF,#5B4BDF); color: white;
+    box-shadow: 0 4px 0 #3C2BC9;
+  }
+  .new-btn:active { transform: translateY(3px); box-shadow: none; }
+
+  /* confetti */
+  #confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; display: none; }
+  @keyframes cfDrop { 0%{transform:translateY(-12px) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+  .cf { position: absolute; top: -14px; animation: cfDrop linear forwards; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START -->
+  <div id="screen-start">
+    <div class="start-emoji">🎨</div>
+    <div class="start-title">색칠 놀이!</div>
+    <div class="start-desc">좋아하는 그림을 골라서<br>예쁘게 색칠해봐요! 🖌️</div>
+    <div class="start-emojis"><span>🐰</span><span>🐱</span><span>🍎</span><span>🚗</span></div>
+    <div class="start-tip">색깔을 고른 뒤 그림을 누르면 색칠 완성! ✨</div>
+    <button id="start-btn">▶ 시작!</button>
+  </div>
+
+  <!-- SELECT -->
+  <div id="screen-select">
+    <div class="select-header">
+      <button class="back-btn" id="select-back">← 뒤로</button>
+      <span class="select-title">무슨 그림을 색칠할까요? 🤔</span>
+      <div style="width:64px"></div>
+    </div>
+    <div class="pic-grid" id="pic-grid"></div>
+  </div>
+
+  <!-- COLOR -->
+  <div id="screen-color">
+    <div class="color-header">
+      <button class="back-btn" id="color-back">← 뒤로</button>
+      <span class="color-header-title" id="color-title"></span>
+      <button class="undo-btn" id="undo-btn">↩ 되돌리기</button>
+    </div>
+    <div class="active-bar">
+      <span class="active-bar-label">선택한 색:</span>
+      <div class="active-dot" id="active-dot"></div>
+      <span class="active-hint" id="active-hint">그림을 눌러서 색칠해봐요! 👆</span>
+    </div>
+    <div class="canvas-wrap">
+      <svg id="illust-svg" viewBox="0 0 280 294" width="100%" style="max-width:230px;display:block;margin:0 auto"></svg>
+    </div>
+    <div class="palette" id="palette"></div>
+    <div class="action-row">
+      <button class="action-btn" id="clear-btn">🗑️ 전체 지우기</button>
+      <button class="action-btn" id="done-btn">✨ 완성!</button>
+    </div>
+  </div>
+
+  <!-- COMPLETE -->
+  <div id="screen-complete">
+    <div class="star-row"><span>🌟</span><span>⭐</span><span>🌟</span></div>
+    <div class="complete-title">색칠 완성! 🎉</div>
+    <div class="complete-canvas">
+      <svg id="complete-svg" viewBox="0 0 280 294" width="100%" style="max-width:230px;display:block;margin:0 auto"></svg>
+    </div>
+    <div class="praise-box" id="praise-box"></div>
+    <div class="complete-btns">
+      <button class="more-btn" id="more-btn">🎨 더 색칠하기</button>
+      <button class="new-btn" id="new-btn">🖼️ 새 그림 고르기</button>
+    </div>
+  </div>
+
+</div>
+<div id="confetti-layer"></div>
+
+<script>
+/* ── Data ── */
+const PALETTE_DATA = [
+  {hex:"#FF4444",name:"빨강"},{hex:"#FF8C00",name:"주황"},
+  {hex:"#FFD700",name:"노랑"},{hex:"#7CFC00",name:"연두"},
+  {hex:"#22C55E",name:"초록"},{hex:"#87CEEB",name:"하늘"},
+  {hex:"#4169E1",name:"파랑"},{hex:"#9B59B6",name:"보라"},
+  {hex:"#FF69B4",name:"분홍"},{hex:"#8B4513",name:"갈색"},
+  {hex:"#FFFFFF",name:"흰색"},{hex:"#BDBDBD",name:"회색"},
+];
+const PRAISES = [
+  "와! 정말 예쁜 색칠이에요! 🌟","우리 아이 최고의 화가예요! 🎨",
+  "완벽한 작품이 완성됐어요! 👏","색깔을 정말 잘 골랐어요! 💕",
+  "대단해요! 미술관에 걸어야 해요! 🏛️","천재 아티스트예요! 최고예요! 🏆",
+];
+const PICTURES = [
+  {id:"rabbit",emoji:"🐰",name:"토끼",  bg:"#FFF0F5",accent:"#FF69B4"},
+  {id:"cat",   emoji:"🐱",name:"고양이",bg:"#FFF8EE",accent:"#FF8C00"},
+  {id:"apple", emoji:"🍎",name:"사과",  bg:"#FFF0F0",accent:"#FF4444"},
+  {id:"car",   emoji:"🚗",name:"자동차",bg:"#F0F4FF",accent:"#4169E1"},
+];
+
+/* ── SVG definitions ── */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag,attrs){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs||{}))e.setAttribute(k,v);return e;}
+
+const OL_ATTRS = {stroke:"#2D2D2D","stroke-width":"3","stroke-linejoin":"round","stroke-linecap":"round"};
+
+function makeRegion(tag,attrs,fills,regionId,onFill){
+  const el=svgEl(tag,{...attrs,...OL_ATTRS,fill:fills[regionId]||"#FFFFFF",style:"cursor:pointer"});
+  el.addEventListener("pointerdown",e=>{e.preventDefault();onFill(regionId);});
+  return el;
+}
+
+function buildRabbit(svg,fills,onFill){
+  svg.setAttribute("viewBox","0 0 280 294");
+  const R=(id,tag,attrs)=>makeRegion(tag,attrs,fills,id,onFill);
+  const D=(tag,attrs)=>{const e=svgEl(tag,attrs);e.style.pointerEvents="none";return e;};
+  const G=svgEl("g"); G.style.pointerEvents="none";
+
+  svg.append(
+    R("earL","ellipse",{cx:96,cy:62,rx:23,ry:54}),
+    R("earR","ellipse",{cx:184,cy:62,rx:23,ry:54}),
+    R("earInL","ellipse",{cx:96,cy:65,rx:13,ry:38}),
+    R("earInR","ellipse",{cx:184,cy:65,rx:13,ry:38}),
+    R("body","ellipse",{cx:140,cy:232,rx:70,ry:62}),
+    R("head","circle",{cx:140,cy:150,r:68}),
+    R("belly","ellipse",{cx:140,cy:236,rx:46,ry:46}),
+    R("pawL","ellipse",{cx:86,cy:276,rx:36,ry:15}),
+    R("pawR","ellipse",{cx:194,cy:276,rx:36,ry:15})
+  );
+  G.append(
+    D("circle",{cx:116,cy:136,r:12,fill:"white",stroke:"#2D2D2D","stroke-width":2}),
+    D("circle",{cx:164,cy:136,r:12,fill:"white",stroke:"#2D2D2D","stroke-width":2}),
+    D("circle",{cx:119,cy:137,r:7,fill:"#1a1a1a"}),
+    D("circle",{cx:167,cy:137,r:7,fill:"#1a1a1a"}),
+    D("circle",{cx:122,cy:134,r:2.5,fill:"white"}),
+    D("circle",{cx:170,cy:134,r:2.5,fill:"white"}),
+    D("ellipse",{cx:140,cy:158,rx:7,ry:5.5,fill:"#FF6B88"}),
+    (()=>{const p=D("path",{d:"M132 164 Q140 173 148 164",stroke:"#2D2D2D","stroke-width":2,fill:"none","stroke-linecap":"round"});return p;})(),
+    D("ellipse",{cx:106,cy:159,rx:14,ry:9,fill:"#FFB6C1",opacity:0.45}),
+    D("ellipse",{cx:174,cy:159,rx:14,ry:9,fill:"#FFB6C1",opacity:0.45}),
+    D("line",{x1:148,y1:157,x2:175,y2:152,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:148,y1:161,x2:177,y2:161,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:132,y1:157,x2:105,y2:152,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:132,y1:161,x2:103,y2:161,stroke:"#CCC","stroke-width":1.3})
+  );
+  svg.append(G);
+}
+
+function buildCat(svg,fills,onFill){
+  svg.setAttribute("viewBox","0 0 280 285");
+  const R=(id,tag,attrs)=>makeRegion(tag,attrs,fills,id,onFill);
+  const D=(tag,attrs)=>{const e=svgEl(tag,attrs);e.style.pointerEvents="none";return e;};
+  const G=svgEl("g"); G.style.pointerEvents="none";
+  svg.append(
+    R("tail","path",{d:"M82,224 Q40,218 36,255 Q32,280 55,276 Q76,268 76,250 Q78,234 82,224Z"}),
+    R("body","ellipse",{cx:148,cy:228,rx:68,ry:58}),
+    R("belly","ellipse",{cx:148,cy:232,rx:42,ry:42}),
+    R("earL","polygon",{points:"88,108 106,42 130,92"}),
+    R("earR","polygon",{points:"150,92 174,42 192,108"}),
+    R("earInL","polygon",{points:"96,100 110,52 126,88"}),
+    R("earInR","polygon",{points:"154,88 170,52 184,100"}),
+    R("head","circle",{cx:140,cy:148,r:68})
+  );
+  G.append(
+    D("circle",{cx:114,cy:136,r:14,fill:"white",stroke:"#2D2D2D","stroke-width":2}),
+    D("circle",{cx:166,cy:136,r:14,fill:"white",stroke:"#2D2D2D","stroke-width":2}),
+    D("ellipse",{cx:114,cy:136,rx:10,ry:8,fill:"#4CAF50"}),
+    D("ellipse",{cx:166,cy:136,rx:10,ry:8,fill:"#4CAF50"}),
+    D("ellipse",{cx:114,cy:136,rx:5,ry:8,fill:"#1a1a1a"}),
+    D("ellipse",{cx:166,cy:136,rx:5,ry:8,fill:"#1a1a1a"}),
+    D("circle",{cx:116,cy:133,r:2.2,fill:"white"}),
+    D("circle",{cx:168,cy:133,r:2.2,fill:"white"}),
+    D("polygon",{points:"140,156 135,163 145,163",fill:"#FF6B88",stroke:"none"}),
+    (()=>{const p=D("path",{d:"M135 163 Q128 170 123 168",stroke:"#2D2D2D","stroke-width":1.8,fill:"none","stroke-linecap":"round"});return p;})(),
+    (()=>{const p=D("path",{d:"M145 163 Q152 170 157 168",stroke:"#2D2D2D","stroke-width":1.8,fill:"none","stroke-linecap":"round"});return p;})(),
+    D("ellipse",{cx:103,cy:157,rx:16,ry:10,fill:"#FFB6C1",opacity:0.4}),
+    D("ellipse",{cx:177,cy:157,rx:16,ry:10,fill:"#FFB6C1",opacity:0.4}),
+    D("line",{x1:148,y1:157,x2:180,y2:151,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:148,y1:162,x2:182,y2:162,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:148,y1:167,x2:180,y2:173,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:132,y1:157,x2:100,y2:151,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:132,y1:162,x2:98, y2:162,stroke:"#CCC","stroke-width":1.3}),
+    D("line",{x1:132,y1:167,x2:100,y2:173,stroke:"#CCC","stroke-width":1.3})
+  );
+  svg.append(G);
+}
+
+function buildApple(svg,fills,onFill){
+  svg.setAttribute("viewBox","0 0 280 268");
+  const R=(id,tag,attrs)=>makeRegion(tag,attrs,fills,id,onFill);
+  const D=(tag,attrs)=>{const e=svgEl(tag,attrs);e.style.pointerEvents="none";return e;};
+  const G=svgEl("g"); G.style.pointerEvents="none";
+  svg.append(
+    R("body","path",{d:"M140,62 C100,48 32,82 32,162 C32,228 86,262 140,260 C194,262 248,228 248,162 C248,82 180,48 140,62Z"}),
+    R("leaf","ellipse",{cx:174,cy:66,rx:38,ry:18,transform:"rotate(-35,174,66)"}),
+    R("stem","rect",{x:133,y:36,width:14,height:34,rx:7}),
+    R("shine","ellipse",{cx:96,cy:116,rx:22,ry:36,transform:"rotate(-15,96,116)"})
+  );
+  G.append((()=>{const p=D("path",{d:"M128 62 Q140 55 152 62",stroke:"#2D2D2D","stroke-width":2.5,fill:"none","stroke-linecap":"round"});return p;})());
+  svg.append(G);
+}
+
+function buildCar(svg,fills,onFill){
+  svg.setAttribute("viewBox","0 0 282 214");
+  svg.style.maxWidth="262px";
+  const R=(id,tag,attrs)=>makeRegion(tag,attrs,fills,id,onFill);
+  const D=(tag,attrs)=>{const e=svgEl(tag,attrs);e.style.pointerEvents="none";return e;};
+  const G=svgEl("g"); G.style.pointerEvents="none";
+  svg.append(
+    R("wheelL","circle",{cx:75,cy:175,r:33}),
+    R("wheelR","circle",{cx:205,cy:175,r:33}),
+    R("hubL","circle",{cx:75,cy:175,r:15}),
+    R("hubR","circle",{cx:205,cy:175,r:15}),
+    R("chassis","rect",{x:18,y:100,width:244,height:56,rx:12}),
+    R("cabin","path",{d:"M65,100 L92,46 L216,46 L248,100Z"}),
+    R("window","path",{d:"M106,98 L128,56 L202,56 L226,98Z"}),
+    R("headlight","rect",{x:244,y:108,width:32,height:30,rx:6})
+  );
+  G.append(
+    D("line",{x1:148,y1:100,x2:148,y2:156,stroke:"#2D2D2D","stroke-width":2.5}),
+    D("rect",{x:130,y:118,width:12,height:6,rx:3,fill:"#888"}),
+    D("line",{x1:75,y1:158,x2:75,y2:192,stroke:"#888","stroke-width":2}),
+    D("line",{x1:58,y1:175,x2:92,y2:175,stroke:"#888","stroke-width":2}),
+    D("line",{x1:205,y1:158,x2:205,y2:192,stroke:"#888","stroke-width":2}),
+    D("line",{x1:188,y1:175,x2:222,y2:175,stroke:"#888","stroke-width":2}),
+    D("rect",{x:258,y:134,width:14,height:7,rx:2,fill:"#AAA",stroke:"none"}),
+    D("rect",{x:258,y:144,width:14,height:7,rx:2,fill:"#AAA",stroke:"none"})
+  );
+  svg.append(G);
+}
+
+const BUILDERS = {rabbit:buildRabbit, cat:buildCat, apple:buildApple, car:buildCar};
+
+/* ── State ── */
+let screen      = "start";
+let pictureId   = null;
+let fills       = {};
+let activeColor = "#FF4444";
+let history     = [];
+let praiseIdx   = 0;
+
+function hasAny(){ return Object.keys(fills).length > 0; }
+function canUndo(){ return history.length > 0; }
+
+/* ── Render helpers ── */
+function rebuildSVG(svgEl){
+  while(svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  svgEl.style.maxWidth = "230px";
+  if(pictureId) BUILDERS[pictureId](svgEl, fills, handleFill);
+}
+function rebuildCompleteSVG(svgEl){
+  while(svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  svgEl.style.maxWidth = "230px";
+  if(pictureId) BUILDERS[pictureId](svgEl, fills, ()=>{});
+}
+
+function updatePalette(){
+  document.querySelectorAll(".pal-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.hex===activeColor);
+  });
+  const dot = document.getElementById("active-dot");
+  dot.style.background = activeColor;
+  dot.style.outline = activeColor==="#FFFFFF"?"1.5px solid #DDD":"none";
+}
+function updateActionBtns(){
+  const cb = document.getElementById("clear-btn");
+  const db = document.getElementById("done-btn");
+  if(hasAny()){
+    cb.classList.add("on"); db.classList.add("on");
+  } else {
+    cb.classList.remove("on"); db.classList.remove("on");
+  }
+  document.getElementById("active-hint").textContent = hasAny() ? "계속 색칠해봐요! 🖌️" : "그림을 눌러서 색칠해봐요! 👆";
+  const ub = document.getElementById("undo-btn");
+  if(canUndo()){ ub.classList.add("on"); } else { ub.classList.remove("on"); }
+}
+
+/* ── Actions ── */
+function handleFill(regionId){
+  history = [...history.slice(-9), {...fills}];
+  fills = {...fills, [regionId]: activeColor};
+  rebuildSVG(document.getElementById("illust-svg"));
+  updateActionBtns();
+}
+function handleUndo(){
+  if(!canUndo()) return;
+  fills = history[history.length-1];
+  history = history.slice(0,-1);
+  rebuildSVG(document.getElementById("illust-svg"));
+  updateActionBtns();
+}
+function handleClear(){
+  if(!hasAny()) return;
+  history = [...history.slice(-9), {...fills}];
+  fills = {};
+  rebuildSVG(document.getElementById("illust-svg"));
+  updateActionBtns();
+}
+function handleComplete(){
+  if(!hasAny()) return;
+  praiseIdx = Math.floor(Math.random()*PRAISES.length);
+  showScreen("complete");
+}
+function handleSelect(id){
+  pictureId = id; fills = {}; history = [];
+  showScreen("color");
+}
+
+/* ── Screen control ── */
+function showScreen(name){
+  screen = name;
+  const ids = ["screen-start","screen-select","screen-color","screen-complete"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(id==="screen-"+name){
+      el.style.display = (name==="color"||name==="complete") ? "flex" : "block";
+      if(name==="start") el.style.display = "flex";
+    } else {
+      el.style.display = "none";
+    }
+  });
+
+  if(name==="select"){
+    // build pic grid
+    const grid = document.getElementById("pic-grid");
+    grid.innerHTML = "";
+    PICTURES.forEach(pic=>{
+      const btn = document.createElement("button");
+      btn.className = "pic-btn";
+      btn.style.background = `linear-gradient(145deg,${pic.bg},white)`;
+      btn.style.boxShadow  = `0 5px 0 ${pic.accent}66`;
+      btn.innerHTML = `<span class="pic-emoji">${pic.emoji}</span><span class="pic-name">${pic.name}</span><span class="pic-hint">눌러서 색칠 시작!</span>`;
+      btn.addEventListener("pointerdown",()=>handleSelect(pic.id));
+      grid.appendChild(btn);
+    });
+  }
+
+  if(name==="color"){
+    const pic = PICTURES.find(p=>p.id===pictureId);
+    document.getElementById("color-title").textContent = `${pic.emoji} ${pic.name} 색칠하기`;
+    rebuildSVG(document.getElementById("illust-svg"));
+    updatePalette();
+    updateActionBtns();
+  }
+
+  if(name==="complete"){
+    rebuildCompleteSVG(document.getElementById("complete-svg"));
+    document.getElementById("praise-box").textContent = PRAISES[praiseIdx];
+    launchConfetti();
+  }
+}
+
+/* ── Palette init ── */
+(function(){
+  const pal = document.getElementById("palette");
+  PALETTE_DATA.forEach(c=>{
+    const btn = document.createElement("button");
+    btn.className = "pal-btn";
+    btn.dataset.hex = c.hex;
+    btn.title = c.name;
+    btn.style.background = c.hex;
+    if(c.hex==="#FFFFFF") btn.style.outline = "1.5px solid #DDD";
+    btn.addEventListener("pointerdown",()=>{
+      activeColor = c.hex;
+      updatePalette();
+    });
+    pal.appendChild(btn);
+  });
+})();
+
+/* ── Confetti ── */
+function launchConfetti(){
+  const layer = document.getElementById("confetti-layer");
+  layer.innerHTML = ""; layer.style.display = "block";
+  const cols = ["#FF6B9E","#FFD54F","#34C779","#43B8FF","#9A6BFF","#FF9A6B"];
+  for(let i=0;i<50;i++){
+    const d = document.createElement("div"); d.className="cf";
+    const sz=5+Math.random()*8, dur=1.3+Math.random()*1.5, del=Math.random()*.5;
+    d.style.cssText=`left:${Math.random()*100}vw;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?"50%":"2px"};animation-duration:${dur}s;animation-delay:${del}s;`;
+    layer.appendChild(d);
+  }
+  setTimeout(()=>{ layer.style.display="none"; layer.innerHTML=""; },3000);
+}
+
+/* ── Events ── */
+document.getElementById("start-btn").addEventListener("pointerdown",()=>showScreen("select"));
+document.getElementById("select-back").addEventListener("pointerdown",()=>showScreen("start"));
+document.getElementById("color-back").addEventListener("pointerdown",()=>showScreen("select"));
+document.getElementById("undo-btn").addEventListener("pointerdown",handleUndo);
+document.getElementById("clear-btn").addEventListener("pointerdown",handleClear);
+document.getElementById("done-btn").addEventListener("pointerdown",handleComplete);
+document.getElementById("more-btn").addEventListener("pointerdown",()=>showScreen("color"));
+document.getElementById("new-btn").addEventListener("pointerdown",()=>showScreen("select"));
+</script>
+</body>
+</html>

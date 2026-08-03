@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>기타 코드 튕기기 🎸</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#FDF6E8;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;}
+
+/* START */
+#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;overflow-y:auto;}
+.stit{font-size:22px;font-weight:900;text-align:center;color:#6B3A10;line-height:1.35;}
+.ssub{font-size:13px;color:#9B6A30;text-align:center;}
+#sbtn{background:#E8A040;color:#fff;border:none;border-radius:18px;padding:13px 42px;font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #A06010;}
+#sbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #A06010;}
+
+/* GAME */
+#gs{display:none;flex:1;flex-direction:column;gap:6px;padding:8px 8px 10px;min-height:0;}
+#cbrow{display:flex;gap:5px;flex-shrink:0;}
+.cb{flex:1;padding:8px 3px 6px;border:none;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:4px solid rgba(0,0,0,.18);line-height:1.4;}
+.cb:active{transform:translateY(2px);border-bottom-width:2px;}
+.cb.on{border-bottom-width:2px;filter:brightness(1.08);box-shadow:0 0 0 2.5px rgba(0,0,0,.18);}
+#cinfo{text-align:center;font-size:12px;font-weight:700;padding:7px 10px;border-radius:11px;background:#F5ECD8;color:#7A5020;flex-shrink:0;}
+
+/* 기타 SVG — 남은 공간 모두 차지 */
+#gwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;touch-action:none;}
+#gsvg{width:100%;height:100%;max-height:100%;display:block;touch-action:none;}
+
+#fb{text-align:center;font-size:15px;font-weight:700;height:34px;line-height:34px;border-radius:11px;color:#9B6A30;transition:all .2s;flex-shrink:0;}
+#fb.p{color:#6B3A10;background:#FFF4D0;border:2px solid #FFD080;animation:fpop .2s ease;}
+@keyframes fpop{0%{transform:scale(.92);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
+#cnt{font-size:11px;font-weight:600;color:#9B6A30;text-align:center;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ss">
+    <svg width="150" height="170" viewBox="0 0 340 380">
+      <rect x="153" y="10" width="34" height="85" rx="3" fill="#C8A058"/>
+      <rect x="142" y="2" width="56" height="14" rx="5" fill="#A07838"/>
+      <line x1="153" y1="26" x2="187" y2="26" stroke="#E8CC88" stroke-width="1.5"/>
+      <line x1="153" y1="44" x2="187" y2="44" stroke="#E8CC88" stroke-width="1.5"/>
+      <line x1="153" y1="62" x2="187" y2="62" stroke="#E8CC88" stroke-width="1.5"/>
+      <line x1="153" y1="78" x2="187" y2="78" stroke="#E8CC88" stroke-width="1.5"/>
+      <rect x="151" y="92" width="38" height="4" rx="2" fill="#F8ECD8"/>
+      <path d="M 170 96 C 225 96,256 121,256 153 C 256 178,236 191,226 196 C 256 210,266 238,266 266 C 266 318,226 370,170 370 C 114 370,74 318,74 266 C 74 238,84 210,114 196 C 104 191,84 178,84 153 C 84 121,115 96,170 96 Z" fill="#D4944A" stroke="#B07030" stroke-width="2"/>
+      <path d="M 170 104 C 220 104,248 126,248 155 C 248 178,230 189,220 195 C 248 210,257 235,257 262 C 257 310,220 360,170 360 C 120 360,83 310,83 262 C 83 235,92 210,120 195 C 110 191,92 180,92 155 C 92 126,120 104,170 104 Z" fill="#F0B060"/>
+      <circle cx="170" cy="228" r="32" fill="#8B4E10"/>
+      <circle cx="170" cy="228" r="28" fill="#6B3808"/>
+      <line x1="130" y1="96" x2="130" y2="312" stroke="#FFAAAA" stroke-width="1.5"/>
+      <line x1="146" y1="96" x2="146" y2="312" stroke="#FFD0A0" stroke-width="2"/>
+      <line x1="162" y1="96" x2="162" y2="312" stroke="#FFEEAA" stroke-width="2.5"/>
+      <line x1="178" y1="96" x2="178" y2="312" stroke="#AAFFC0" stroke-width="3"/>
+      <line x1="194" y1="96" x2="194" y2="312" stroke="#AAD4FF" stroke-width="3.5"/>
+      <line x1="210" y1="96" x2="210" y2="312" stroke="#DDAAFF" stroke-width="4"/>
+    </svg>
+    <div class="stit">🎸 기타 놀이터!</div>
+    <div class="ssub">줄을 튕겨서 신나는 기타 소리를 내봐요!</div>
+    <button id="sbtn" onclick="startGame()">▶ 시작하기</button>
+  </div>
+
+  <div id="gs">
+    <div id="cbrow">
+      <button class="cb on" id="cb0" onclick="setChord(0)" style="background:#FFD54F;color:#5D3E00;border-color:#CCA000;">밝은 소리<br><span style="font-size:10px;opacity:.65">C 코드</span></button>
+      <button class="cb"    id="cb1" onclick="setChord(1)" style="background:#FF8A65;color:#400A00;border-color:#CC3800;">신나는 소리<br><span style="font-size:10px;opacity:.65">G 코드</span></button>
+      <button class="cb"    id="cb2" onclick="setChord(2)" style="background:#9FA8DA;color:#111840;border-color:#3848A8;">차분한 소리<br><span style="font-size:10px;opacity:.65">Am 코드</span></button>
+    </div>
+    <div id="cinfo">✨ 밝은 소리 (C) — 밝고 행복한 느낌이에요!</div>
+    <div id="gwrap">
+      <svg id="gsvg" viewBox="0 0 340 385" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="touch-action:none;">
+        <rect x="153" y="8" width="34" height="92" rx="3" fill="#9B6E22" stroke="#7A5018" stroke-width="1"/>
+        <line x1="153" y1="24" x2="187" y2="24" stroke="#C8A058" stroke-width="1.5"/>
+        <line x1="153" y1="40" x2="187" y2="40" stroke="#C8A058" stroke-width="1.5"/>
+        <line x1="153" y1="56" x2="187" y2="56" stroke="#C8A058" stroke-width="1.5"/>
+        <line x1="153" y1="72" x2="187" y2="72" stroke="#C8A058" stroke-width="1.5"/>
+        <line x1="153" y1="86" x2="187" y2="86" stroke="#C8A058" stroke-width="1.5"/>
+        <rect x="151" y="96" width="38" height="5" rx="2" fill="#F0E0C0"/>
+        <rect x="141" y="0" width="58" height="14" rx="5" fill="#7A5018" stroke="#5A3808" stroke-width="1"/>
+        <ellipse cx="145" cy="4"  rx="5" ry="3" fill="#C8A020"/>
+        <ellipse cx="145" cy="10" rx="5" ry="3" fill="#C8A020"/>
+        <ellipse cx="195" cy="4"  rx="5" ry="3" fill="#C8A020"/>
+        <ellipse cx="195" cy="10" rx="5" ry="3" fill="#C8A020"/>
+        <path d="M 170 98 C 225 98,256 123,256 155 C 256 180,236 193,226 198 C 256 212,266 240,266 268 C 266 320,226 372,170 372 C 114 372,74 320,74 268 C 74 240,84 212,114 198 C 104 193,84 180,84 155 C 84 123,115 98,170 98 Z" fill="#D4944A" stroke="#B07030" stroke-width="2.5"/>
+        <path d="M 170 106 C 220 106,248 128,248 157 C 248 180,230 191,220 197 C 248 212,257 237,257 264 C 257 312,220 362,170 362 C 120 362,83 312,83 264 C 83 237,92 212,120 197 C 110 191,92 180,92 157 C 92 128,120 106,170 106 Z" fill="#E8A855"/>
+        <circle cx="170" cy="232" r="34" fill="#8B4E10" stroke="#6A3808" stroke-width="1.5"/>
+        <circle cx="170" cy="232" r="29" fill="#6B3808"/>
+        <circle cx="170" cy="232" r="37" fill="none" stroke="#D4A040" stroke-width="2.5" stroke-dasharray="7,5" opacity="0.8"/>
+        <rect x="118" y="318" width="104" height="13" rx="5" fill="#7A4A10" stroke="#5A3408" stroke-width="1.5"/>
+        <rect x="124" y="314" width="92" height="6" rx="3" fill="#F0E0C0"/>
+        <path id="strp0" d="M 130 98 L 130 314" stroke="#FFAAAA" stroke-width="1.5" stroke-linecap="round"/>
+        <path id="strp1" d="M 146 98 L 146 314" stroke="#FFD0A0" stroke-width="2"   stroke-linecap="round"/>
+        <path id="strp2" d="M 162 98 L 162 314" stroke="#FFEEAA" stroke-width="2.5" stroke-linecap="round"/>
+        <path id="strp3" d="M 178 98 L 178 314" stroke="#AAFFC0" stroke-width="3"   stroke-linecap="round"/>
+        <path id="strp4" d="M 194 98 L 194 314" stroke="#AAD4FF" stroke-width="3.5" stroke-linecap="round"/>
+        <path id="strp5" d="M 210 98 L 210 314" stroke="#DDAAFF" stroke-width="4"   stroke-linecap="round"/>
+        <text id="hint-txt" x="170" y="216" text-anchor="middle" font-size="11" fill="#C09040" opacity="0.8" font-family="sans-serif">← 손가락으로 쓸어보세요 →</text>
+        <rect id="strum-zone" x="116" y="96" width="112" height="222" fill="transparent" pointer-events="all" style="cursor:pointer;touch-action:none;"/>
+      </svg>
+    </div>
+    <div id="fb">🎸 줄을 튕겨보세요!</div>
+    <div id="cnt">연주 횟수: 0회</div>
+  </div>
+</div>
+<script>
+var AC=null,currentChord=0,playCount=0;
+var isDown=false,lastPlayedIdx=-1,lastStrumX=0,strumDir=0,hintRemoved=false;
+var STRING_X=[130,146,162,178,194,210];
+var STRING_LABELS=['1번줄','2번줄','3번줄','4번줄','5번줄','6번줄'];
+var CHORDS=[
+  {name:'밝은 소리',code:'C',desc:'밝고 행복한 느낌이에요!',color:'#FFD54F',freqs:[261.63,329.63,392.00,523.25,659.25,783.99]},
+  {name:'신나는 소리',code:'G',desc:'활기차고 신나는 느낌이에요!',color:'#FF8A65',freqs:[196.00,246.94,293.66,392.00,493.88,783.99]},
+  {name:'차분한 소리',code:'Am',desc:'부드럽고 차분한 느낌이에요!',color:'#9FA8DA',freqs:[220.00,329.63,440.00,523.25,659.25,880.00]}
+];
+var COLORS_BY_CHORD=[
+  ['#FFAAAA','#FFD0A0','#FFEEAA','#AAFFC0','#AAD4FF','#DDAAFF'],
+  ['#FF8080','#FFAA50','#FFD830','#60FF88','#60C8FF','#C080FF'],
+  ['#C8B0CC','#B8C0D8','#A0C8D8','#88C0D8','#8898E0','#9888D0']
+];
+var currentColors=COLORS_BY_CHORD[0].slice();
+function initAudio(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}
+function pluckString(idx){
+  if(!AC)return;
+  var freq=CHORDS[currentChord].freqs[idx],now=AC.currentTime;
+  var osc=AC.createOscillator();osc.type='triangle';osc.frequency.value=freq;
+  var g=AC.createGain();
+  g.gain.setValueAtTime(0.001,now);g.gain.linearRampToValueAtTime(0.42,now+0.004);
+  g.gain.exponentialRampToValueAtTime(0.12,now+0.12);g.gain.exponentialRampToValueAtTime(0.001,now+2.2);
+  var lp=AC.createBiquadFilter();lp.type='lowpass';
+  lp.frequency.setValueAtTime(freq*9,now);lp.frequency.exponentialRampToValueAtTime(freq*1.8,now+1.8);
+  osc.connect(lp);lp.connect(g);g.connect(AC.destination);osc.start(now);osc.stop(now+2.2);
+}
+function animateStr(idx){
+  var path=document.getElementById('strp'+idx);if(!path)return;
+  var x=STRING_X[idx],bow=(Math.random()>0.5?1:-1)*(3+Math.random()*5);
+  path.setAttribute('d','M '+x+' 98 Q '+(x+bow)+' 204 '+x+' 314');
+  path.setAttribute('stroke','#FFFFFF');
+  setTimeout(function(){path.setAttribute('d','M '+x+' 98 Q '+(x-bow*0.6)+' 204 '+x+' 314');},70);
+  setTimeout(function(){path.setAttribute('d','M '+x+' 98 L '+x+' 314');path.setAttribute('stroke',currentColors[idx]);},200);
+}
+function onPlay(idx){
+  pluckString(idx);animateStr(idx);
+  if(!hintRemoved){var h=document.getElementById('hint-txt');if(h)h.style.display='none';hintRemoved=true;}
+  playCount++;document.getElementById('cnt').textContent='연주 횟수: '+playCount+'회';
+  var c=CHORDS[currentChord],fb=document.getElementById('fb');
+  fb.textContent=STRING_LABELS[idx]+' — '+c.name+'!';
+  fb.style.background=c.color+'44';fb.style.borderColor=c.color;fb.style.color='#6B3A10';fb.className='p';
+  clearTimeout(fb._t);
+  fb._t=setTimeout(function(){fb.textContent='🎸 줄을 튕겨보세요!';fb.style.background='';fb.style.borderColor='';fb.style.color='';fb.className='';},1100);
+}
+function getSVGCoords(e){
+  var svg=document.getElementById('gsvg'),r=svg.getBoundingClientRect();
+  var cx=e.clientX||0,cy=e.clientY||0;
+  return{x:(cx-r.left)*(340/r.width),y:(cy-r.top)*(385/r.height)};
+}
+function getStrIdx(svgX){
+  if(svgX<114||svgX>218)return -1;
+  var idx=Math.round((svgX-130)/16);return Math.max(0,Math.min(5,idx));
+}
+function startGame(){
+  initAudio();
+  document.getElementById('ss').style.display='none';
+  var gs=document.getElementById('gs');gs.style.display='flex';
+  var sz=document.getElementById('strum-zone');if(!sz)return;
+  sz.addEventListener('pointerdown',function(e){
+    e.preventDefault();isDown=true;lastPlayedIdx=-1;
+    var c=getSVGCoords(e);lastStrumX=c.x;strumDir=0;
+    if(c.y>94&&c.y<320){var idx=getStrIdx(c.x);if(idx>=0){onPlay(idx);lastPlayedIdx=idx;}}
+    try{sz.setPointerCapture(e.pointerId);}catch(er){}
+  });
+  sz.addEventListener('pointermove',function(e){
+    if(!isDown)return;
+    var c=getSVGCoords(e),nd=c.x>lastStrumX?1:-1;
+    if(nd!==strumDir&&strumDir!==0)lastPlayedIdx=-1;
+    strumDir=nd;lastStrumX=c.x;
+    if(c.y>94&&c.y<320){var idx=getStrIdx(c.x);if(idx>=0&&idx!==lastPlayedIdx){onPlay(idx);lastPlayedIdx=idx;}}
+  });
+  sz.addEventListener('pointerup',function(){isDown=false;lastPlayedIdx=-1;});
+  sz.addEventListener('pointercancel',function(){isDown=false;lastPlayedIdx=-1;});
+}
+function setChord(idx){
+  currentChord=idx;currentColors=COLORS_BY_CHORD[idx].slice();
+  for(var i=0;i<6;i++){var p=document.getElementById('strp'+i);if(p)p.setAttribute('stroke',currentColors[i]);}
+  var cbs=document.querySelectorAll('.cb');
+  for(var j=0;j<cbs.length;j++){if(j===idx)cbs[j].classList.add('on');else cbs[j].classList.remove('on');}
+  var c=CHORDS[idx];document.getElementById('cinfo').textContent='✨ '+c.name+' ('+c.code+') — '+c.desc;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>토끼 달리기 🐰</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#E8F5E9;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;padding:8px 8px 10px;}
+/* START/END */
+#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#es{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.sttl{font-size:24px;font-weight:900;color:#1a1a1a;text-align:center;line-height:1.35;}
+.ssub{font-size:13px;color:#666;text-align:center;}
+.shint{font-size:13px;color:#888;text-align:center;background:#E8F5E9;border-radius:10px;padding:7px 14px;}
+.sbtn{background:#7CB342;color:#fff;border:none;border-radius:22px;padding:14px 52px;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #4A7C10;touch-action:manipulation;}
+.sbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #4A7C10;}
+/* GAME */
+#gs{display:none;flex:1;flex-direction:column;gap:6px;min-height:0;}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:0 4px;flex-shrink:0;}
+#hearts-row{font-size:22px;letter-spacing:2px;}
+#score-box{font-size:20px;font-weight:900;color:#FF7043;}
+#hi-box{font-size:11px;font-weight:700;color:#666;}
+#canvas-wrap{flex:1;min-height:0;border-radius:14px;overflow:hidden;}
+#gc{display:block;width:100%;height:100%;}
+#jump-btn{flex-shrink:0;height:76px;background:#7CB342;color:#fff;border:none;border-radius:18px;font-size:26px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #4A7C10;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:10px;}
+#jump-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #4A7C10;}
+.eemj{font-size:60px;animation:ejb .7s ease infinite alternate;}
+@keyframes ejb{from{transform:scale(1);}to{transform:scale(1.1);}}
+.eslbl{font-size:13px;font-weight:700;color:#666;}
+.escore{font-size:56px;font-weight:900;color:#FF7043;line-height:1;}
+.epraise{font-size:18px;font-weight:900;color:#1a1a1a;text-align:center;}
+.esub{font-size:13px;color:#666;text-align:center;background:#E8F5E9;border-radius:12px;padding:8px 16px;max-width:260px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ss">
+    <div style="font-size:52px;animation:ejb .9s ease infinite alternate;">🐰</div>
+    <div class="sttl">🌿 토끼 달리기!</div>
+    <div class="ssub">점프 버튼을 눌러 장애물을 피해봐요!</div>
+    <div class="shint">❤️❤️❤️ 하트 3개로 시작합니다</div>
+    <button class="sbtn" onclick="startGame()">▶ 시작!</button>
+  </div>
+  <div id="gs">
+    <div id="hud">
+      <div id="hearts-row">❤️❤️❤️</div>
+      <div id="score-box">0점</div>
+      <div id="hi-box">최고: 0점</div>
+    </div>
+    <div id="canvas-wrap"><canvas id="gc"></canvas></div>
+    <button id="jump-btn" onclick="doJump()"><span>🐰</span><span>점 프!</span></button>
+  </div>
+  <div id="es">
+    <div class="eemj" id="eemj">🎉</div>
+    <div class="eslbl">달린 점수</div>
+    <div class="escore" id="escore">0</div>
+    <div class="epraise" id="epraise">잘 달렸어요!</div>
+    <div class="esub" id="esub">토끼가 열심히 달렸어요!</div>
+    <button class="sbtn" onclick="startGame()">🐰 다시 달리기!</button>
+  </div>
+</div>
+<script>
+var GRAVITY=0.55,JUMP_V=-13.5,BASE_SPEED=4.5,INVINC=90;
+var CHAR_X=70,CHAR_W=44;
+var canvas,ctx,CW,CH,GROUND_Y;
+var score,hearts,hiScore=0;
+var charFY,charVY,onGround,invincFrames;
+var obstacles,clouds,frame,speed,spawnCD,scoreTimer;
+var gameActive=false,animId=null;
+
+function init(){canvas=document.getElementById('gc');ctx=canvas.getContext('2d');}
+
+function resize(){
+  var wrap=document.getElementById('canvas-wrap');
+  var r=wrap.getBoundingClientRect();
+  CW=Math.max(r.width||320,300);CH=Math.max(r.height||200,180);GROUND_Y=Math.round(CH*0.82);
+  canvas.width=CW;canvas.height=CH;
+}
+
+function doJump(){if(!gameActive)return;if(onGround){charVY=JUMP_V;onGround=false;playSound('jump');}}
+
+function playSound(t){
+  try{var AC=new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();
+    if(t==='jump'){o.type='sine';o.frequency.setValueAtTime(300,AC.currentTime);o.frequency.exponentialRampToValueAtTime(600,AC.currentTime+0.1);g.gain.setValueAtTime(0.2,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.15);}
+    else{o.type='square';o.frequency.setValueAtTime(200,AC.currentTime);o.frequency.exponentialRampToValueAtTime(80,AC.currentTime+0.2);g.gain.setValueAtTime(0.22,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.25);}
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.3);}catch(e){}
+}
+
+function updateHearts(){var s='';for(var i=0;i<hearts;i++)s+='❤️';for(var i=hearts;i<3;i++)s+='🤍';document.getElementById('hearts-row').innerHTML=s;}
+
+function spawnOb(){var types=[{w:28,h:32},{w:22,h:46},{w:36,h:26},{w:24,h:52}];var t=types[Math.floor(Math.random()*types.length)];obstacles.push({x:CW+t.w,w:t.w,h:t.h,y:GROUND_Y-t.h});}
+
+function checkHit(ob){var cx=CHAR_X+6,cy=charFY-48,cw=CHAR_W-12,ch=44;return cx<ob.x+ob.w&&cx+cw>ob.x&&cy<ob.y+ob.h&&cy+ch>ob.y;}
+
+function update(){
+  frame++;scoreTimer++;
+  if(scoreTimer>=45){score++;scoreTimer=0;document.getElementById('score-box').textContent=score+'점';}
+  speed=BASE_SPEED+Math.floor(score/10)*0.5;
+  charVY+=GRAVITY;charFY+=charVY;
+  if(charFY>=GROUND_Y){charFY=GROUND_Y;charVY=0;onGround=true;}
+  if(invincFrames>0)invincFrames--;
+  spawnCD--;
+  if(spawnCD<=0){spawnOb();spawnCD=Math.max(55,110-score)+Math.floor(Math.random()*25);}
+  if(frame%180===0)clouds.push({x:CW+70,y:18+Math.random()*Math.round(CH*0.35),w:60+Math.random()*50,a:0.4+Math.random()*0.3});
+  for(var i=obstacles.length-1;i>=0;i--){
+    obstacles[i].x-=speed;
+    if(obstacles[i].x+obstacles[i].w<0){obstacles.splice(i,1);continue;}
+    if(invincFrames===0&&checkHit(obstacles[i])){hearts--;invincFrames=INVINC;playSound('hit');updateHearts();obstacles.splice(i,1);if(hearts<=0){endGame();return;}}
+  }
+  for(var j=clouds.length-1;j>=0;j--){clouds[j].x-=0.7;if(clouds[j].x+clouds[j].w<0)clouds.splice(j,1);}
+}
+
+function draw(){
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle='#87CEEB';ctx.fillRect(0,0,CW,GROUND_Y);
+  for(var i=0;i<clouds.length;i++){var c=clouds[i];ctx.globalAlpha=c.a;ctx.fillStyle='#FFF';ctx.beginPath();ctx.ellipse(c.x+c.w*.3,c.y+11,c.w*.27,11,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(c.x+c.w*.55,c.y+7,c.w*.29,14,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(c.x+c.w*.76,c.y+12,c.w*.21,10,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+  ctx.fillStyle='#6DB33F';ctx.fillRect(0,GROUND_Y,CW,CH-GROUND_Y);
+  ctx.fillStyle='#5A9E2F';ctx.fillRect(0,GROUND_Y,CW,10);
+  ctx.fillStyle='#7DC44A';
+  for(var gx=0;gx<CW+30;gx+=28){var gp=(gx+(frame*speed*0.3))%(CW+56)-28;ctx.beginPath();ctx.moveTo(gp,GROUND_Y);ctx.lineTo(gp-4,GROUND_Y-7);ctx.lineTo(gp,GROUND_Y-3);ctx.lineTo(gp+4,GROUND_Y-7);ctx.lineTo(gp,GROUND_Y);ctx.fill();}
+  for(var i=0;i<obstacles.length;i++){var ob=obstacles[i];ctx.fillStyle='#7A7A7A';ctx.beginPath();ctx.moveTo(ob.x+ob.w*.13,ob.y+ob.h);ctx.lineTo(ob.x,ob.y+ob.h*.58);ctx.lineTo(ob.x+ob.w*.2,ob.y+ob.h*.06);ctx.lineTo(ob.x+ob.w*.6,ob.y);ctx.lineTo(ob.x+ob.w,ob.y+ob.h*.5);ctx.lineTo(ob.x+ob.w*.88,ob.y+ob.h);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(ob.x+ob.w*.38,ob.y+ob.h*.28,ob.w*.17,ob.h*.13,-0.3,0,Math.PI*2);ctx.fill();}
+  drawRabbit();
+}
+
+function drawRabbit(){
+  if(invincFrames>0&&Math.floor(invincFrames/7)%2===0)return;
+  var bx=CHAR_X,by=charFY,la=onGround?Math.sin(frame*.42)*.55:.3;
+  ctx.save();ctx.translate(bx+CHAR_W/2,by);
+  ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.ellipse(0,-1,14,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#EEE';ctx.beginPath();ctx.arc(-16,-16,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#F5F5F5';ctx.beginPath();ctx.ellipse(-1,-22,17,18,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#DDD';ctx.lineWidth=6;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(10,-10);ctx.lineTo(10+Math.sin(la)*12,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-9,-7);ctx.lineTo(-9+Math.sin(-la+.5)*12,0);ctx.stroke();
+  ctx.fillStyle='#F5F5F5';ctx.beginPath();ctx.ellipse(12,-42,13,12,.12,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#F5F5F5';ctx.beginPath();ctx.ellipse(5,-57,5,10,-.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#FFBBCC';ctx.beginPath();ctx.ellipse(5,-57,3,7,-.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#F5F5F5';ctx.beginPath();ctx.ellipse(17,-58,5,10,.22,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#FFBBCC';ctx.beginPath();ctx.ellipse(17,-58,3,7,.22,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(8,-44,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(17,-44,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(9.2,-45.2,1,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(18.2,-45.2,1,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#FF88AA';ctx.beginPath();ctx.ellipse(13,-39,3,2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,100,100,.3)';ctx.beginPath();ctx.ellipse(6,-41,5,3,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(20,-41,5,3,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function endGame(){
+  gameActive=false;if(animId){cancelAnimationFrame(animId);animId=null;}
+  if(score>hiScore)hiScore=score;
+  document.getElementById('gs').style.display='none';document.getElementById('es').style.display='flex';
+  document.getElementById('escore').textContent=score;document.getElementById('hi-box').textContent='최고: '+hiScore+'점';
+  var p;
+  if(score<=5)p={e:'😊',t:'잘 달렸어요! 👏',s:'토끼가 열심히 달렸어요!'};
+  else if(score<=12)p={e:'🌟',t:'멋져요! 🌟',s:'장애물을 잘 피했어요!'};
+  else if(score<=22)p={e:'🎉',t:'대단해요! 🎉',s:'정말 빠른 토끼예요!'};
+  else p={e:'🏆',t:'달리기 챔피언! 🏆',s:'최고의 점프 실력이에요!'};
+  document.getElementById('eemj').textContent=p.e;document.getElementById('epraise').textContent=p.t;document.getElementById('esub').textContent=p.s;
+}
+
+function startGame(){
+  init();
+  document.getElementById('ss').style.display='none';document.getElementById('es').style.display='none';document.getElementById('gs').style.display='flex';
+  setTimeout(function(){
+    resize();
+    score=0;hearts=3;speed=BASE_SPEED;charFY=GROUND_Y;charVY=0;onGround=true;invincFrames=0;
+    obstacles=[];frame=0;scoreTimer=0;spawnCD=90;
+    clouds=[{x:CW*.15,y:25,w:90,a:0.45},{x:CW*.55,y:50,w:70,a:0.38},{x:CW*.8,y:18,w:80,a:0.42}];
+    gameActive=true;
+    document.getElementById('score-box').textContent='0점';document.getElementById('hi-box').textContent='최고: '+hiScore+'점';
+    updateHearts();
+    if(animId)cancelAnimationFrame(animId);
+    function loop(){if(!gameActive)return;update();draw();animId=requestAnimationFrame(loop);}
+    loop();
+  },50);
+}
+document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();doJump();}});
+</script>
+</body>
+</html>
