@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>어느 쪽이 더 많을까요?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#a8e6ff;
+    --sky-bottom:#fff3c4;
+    --blue:#2e8bff;
+    --blue-dark:#1f6fd6;
+    --orange:#ff8a3d;
+    --orange-dark:#e86f22;
+    --ink:#3a2e1f;
+    --cream:#fffdf6;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:'Jua', sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg, var(--sky-top) 0%, #cdeedd 55%, var(--sky-bottom) 100%);
+    min-height:100dvh;
+    overflow-x:hidden;
+    user-select:none;
+  }
+  /* 둥실둥실 떠다니는 구름 배경 */
+  .cloud{position:fixed; font-size:60px; opacity:.55; pointer-events:none; z-index:0;}
+  .c1{top:6%; left:-10%; animation:drift 28s linear infinite;}
+  .c2{top:18%; left:-10%; font-size:42px; animation:drift 38s linear infinite; animation-delay:-12s;}
+  @keyframes drift{from{transform:translateX(0);} to{transform:translateX(130vw);}}
+
+  .wrap{position:relative; z-index:1; max-width:560px; margin:0 auto; padding:16px 14px 26px; min-height:100dvh; display:flex; flex-direction:column;}
+
+  .screen{display:none; flex:1; flex-direction:column;}
+  .screen.active{display:flex; animation:pop .35s ease;}
+  @keyframes pop{from{opacity:0; transform:scale(.96);} to{opacity:1; transform:scale(1);}}
+
+  /* ===== 시작 화면 ===== */
+  #start{justify-content:center; align-items:center; text-align:center; gap:6px;}
+  #start .big-emoji{font-size:88px; animation:bob 2s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);} 50%{transform:translateY(-14px) rotate(4deg);}}
+  #start h1{font-size:34px; margin:8px 0 2px; color:#ff5b8a; text-shadow:2px 2px 0 #fff;}
+  #start p{font-family:'Gaegu'; font-weight:700; font-size:20px; margin:0 0 18px; color:#5a4a33;}
+
+  .big-btn{
+    border:none; cursor:pointer; font-family:'Jua';
+    border-radius:26px; padding:18px 34px; font-size:26px; color:#fff;
+    box-shadow:0 7px 0 var(--blue-dark), 0 12px 18px rgba(0,0,0,.18);
+    transition:transform .08s, box-shadow .08s;
+  }
+  .big-btn:active{transform:translateY(5px); box-shadow:0 2px 0 var(--blue-dark);}
+  .start-btn{background:linear-gradient(180deg,#46a0ff,#2e8bff); --blue-dark:#1f6fd6;}
+  .restart-btn{background:linear-gradient(180deg,#ff7aab,#ff5b8a); box-shadow:0 7px 0 #d63f70, 0 12px 18px rgba(0,0,0,.18);}
+  .restart-btn:active{box-shadow:0 2px 0 #d63f70;}
+
+  /* ===== 게임 상단 바 ===== */
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;}
+  .pill{background:var(--cream); border-radius:18px; padding:8px 14px; font-size:18px; box-shadow:0 3px 0 rgba(0,0,0,.08); display:flex; align-items:center; gap:6px;}
+  .pill .label{font-family:'Gaegu'; font-weight:700; color:#8a7a5f; font-size:15px;}
+  .stars-pill{color:#ff9d00;}
+
+  .prompt{text-align:center; font-size:24px; margin:8px 0 12px; color:#3a2e1f; text-shadow:1px 1px 0 #fff;}
+
+  /* ===== 두 칸 ===== */
+  .arena{display:flex; gap:12px; flex:1; align-items:stretch;}
+  .side{flex:1; display:flex; flex-direction:column; gap:10px;}
+  .picturebox{
+    flex:1; background:var(--cream); border-radius:22px; padding:12px 8px;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:4px 8px; box-shadow:inset 0 0 0 4px rgba(0,0,0,.05), 0 4px 0 rgba(0,0,0,.06);
+    min-height:180px;
+  }
+  .picturebox .item{font-size:clamp(22px,7.2vw,40px); line-height:1.05; animation:plop .3s backwards;}
+  @keyframes plop{from{transform:scale(0); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  /* 누르는 큰 사각형 */
+  .choose{
+    border:none; cursor:pointer; font-family:'Jua'; color:#fff;
+    border-radius:22px; height:96px; font-size:26px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .08s, box-shadow .08s, filter .1s;
+  }
+  .choose .hand{font-size:34px;}
+  .choose.left{background:linear-gradient(180deg,#46a0ff,#2e8bff); box-shadow:0 8px 0 var(--blue-dark), 0 12px 16px rgba(0,0,0,.18);}
+  .choose.right{background:linear-gradient(180deg,#ffa45c,#ff8a3d); box-shadow:0 8px 0 var(--orange-dark), 0 12px 16px rgba(0,0,0,.18);}
+  .choose.left:active{transform:translateY(6px); box-shadow:0 2px 0 var(--blue-dark);}
+  .choose.right:active{transform:translateY(6px); box-shadow:0 2px 0 var(--orange-dark);}
+  .arena.locked .choose{pointer-events:none; filter:saturate(.7);}
+
+  /* ===== 피드백 토스트 ===== */
+  #toast{
+    position:fixed; left:50%; top:42%; transform:transl(-50%,-50%) scale(.5);
+    transform:translate(-50%,-50%) scale(.5);
+    z-index:30; padding:22px 30px; border-radius:26px; font-size:28px; color:#fff;
+    text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.25); opacity:0; pointer-events:none;
+    max-width:88vw;
+  }
+  #toast.show{opacity:1; transform:translate(-50%,-50%) scale(1); transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+  #toast.good{background:linear-gradient(180deg,#5ed98a,#27b865);}
+  #toast.try{background:linear-gradient(180deg,#ffc24d,#ff9d00);}
+  #toast .face{font-size:46px; display:block; margin-bottom:4px;}
+
+  /* 별 튀어오르기 */
+  .spark{position:fixed; z-index:25; font-size:34px; pointer-events:none; animation:fly 1s ease-out forwards;}
+  @keyframes fly{0%{opacity:1; transform:translateY(0) scale(.6) rotate(0);} 100%{opacity:0; transform:translateY(-160px) scale(1.4) rotate(40deg);}}
+
+  /* ===== 결과 화면 ===== */
+  #result{justify-content:center; align-items:center; text-align:center; gap:8px;}
+  #result .trophy{font-size:96px; animation:bob 2s ease-in-out infinite;}
+  #result h2{font-size:32px; margin:6px 0; color:#ff5b8a; text-shadow:2px 2px 0 #fff;}
+  #result .scoreline{font-size:26px; margin:2px 0 4px;}
+  #result .scoreline b{color:#ff9d00; font-size:34px;}
+  #result .msg{font-family:'Gaegu'; font-weight:700; font-size:21px; color:#5a4a33; margin:0 0 20px; line-height:1.5;}
+  #result .starrow{font-size:30px; letter-spacing:2px; margin:4px 0 10px;}
+</style>
+</head>
+<body>
+  <div class="cloud c1">☁️</div>
+  <div class="cloud c2">☁️</div>
+
+  <div class="wrap">
+    <!-- 시작 화면 -->
+    <section id="start" class="screen active">
+      <div class="big-emoji">🍎</div>
+      <h1>어느 쪽이 더 많을까요?</h1>
+      <p>그림을 세어 보고<br>더 많은 쪽을 콕! 눌러요</p>
+      <button class="big-btn start-btn" onclick="startGame()">▶ 시작하기</button>
+    </section>
+
+    <!-- 게임 화면 -->
+    <section id="game" class="screen">
+      <div class="topbar">
+        <div class="pill"><span class="label">문제</span> <span id="qnum">1</span> / 10</div>
+        <div class="pill stars-pill">⭐ <span id="score">0</span></div>
+      </div>
+
+      <div class="prompt">더 많은 쪽을 눌러 보세요!</div>
+
+      <div class="arena" id="arena">
+        <div class="side">
+          <div class="picturebox" id="boxL" onclick="choose('L')"></div>
+          <button class="choose left" onclick="choose('L')"><span class="hand">👈</span> 이쪽!</button>
+        </div>
+        <div class="side">
+          <div class="picturebox" id="boxR" onclick="choose('R')"></div>
+          <button class="choose right" onclick="choose('R')">이쪽! <span class="hand">👉</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 결과 화면 -->
+    <section id="result" class="screen">
+      <div class="trophy">🏆</div>
+      <h2>다 풀었어요!</h2>
+      <div class="starrow" id="starRow"></div>
+      <div class="scoreline">별 <b id="finalScore">0</b>개 모았어요!</div>
+      <p class="msg" id="resultMsg"></p>
+      <button class="big-btn restart-btn" onclick="restart()">🔄 다시 하기</button>
+    </section>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+  const EMOJIS = ['🍎','🍊','🍓','🍇','🍌','🐶','🐱','🐰','🦋','⭐','🐢','🍪','🌸','🐠'];
+  const TOTAL = 10;
+
+  let qIndex = 0;       // 현재 문제 (0~9)
+  let score = 0;        // 모은 별
+  let firstTry = true;  // 이번 문제 첫 시도인지
+  let answer = 'L';     // 정답 쪽
+  let locked = false;   // 정답 맞춘 뒤 잠깐 잠금
+
+  let audioCtx = null;
+
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startGame(){
+    // 첫 터치에서 소리 준비
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    qIndex = 0; score = 0;
+    updateBar();
+    showScreen('game');
+    newQuestion();
+  }
+
+  function updateBar(){
+    document.getElementById('qnum').textContent = qIndex + 1;
+    document.getElementById('score').textContent = score;
+  }
+
+  function newQuestion(){
+    firstTry = true;
+    locked = false;
+    document.getElementById('arena').classList.remove('locked');
+
+    // 서로 다른 개수 두 개 만들기 (1~10)
+    let a = 1 + Math.floor(Math.random()*10);
+    let b;
+    do{ b = 1 + Math.floor(Math.random()*10); } while(b === a);
+
+    // 어느 쪽에 더 많은 걸 놓을지 무작위
+    let leftCount, rightCount;
+    if(Math.random() < 0.5){ leftCount = a; rightCount = b; }
+    else { leftCount = b; rightCount = a; }
+    answer = leftCount > rightCount ? 'L' : 'R';
+
+    const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+    paint('boxL', emoji, leftCount);
+    paint('boxR', emoji, rightCount);
+  }
+
+  function paint(boxId, emoji, count){
+    const box = document.getElementById(boxId);
+    box.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const span = document.createElement('span');
+      span.className = 'item';
+      span.textContent = emoji;
+      span.style.animationDelay = (i*0.05) + 's';
+      box.appendChild(span);
+    }
+  }
+
+  function choose(side){
+    if(locked) return;
+
+    if(side === answer){
+      // 정답!
+      locked = true;
+      document.getElementById('arena').classList.add('locked');
+      if(firstTry){ score++; updateBar(); }
+      playGood();
+      burstStars();
+      toast('good','🥳','잘했어요! 더 많아요!');
+      setTimeout(()=>{
+        hideToast();
+        qIndex++;
+        if(qIndex >= TOTAL){ endGame(); }
+        else { updateBar(); newQuestion(); }
+      }, 1500);
+    } else {
+      // 틀림 — 부드럽게 다시 세어보기
+      firstTry = false;
+      playTry();
+      toast('try','🤔','다시 한 번 세어볼까요?');
+      setTimeout(hideToast, 1500);
+    }
+  }
+
+  function toast(type, face, text){
+    const t = document.getElementById('toast');
+    t.className = type;
+    t.innerHTML = '<span class="face">'+face+'</span>'+text;
+    // reflow 후 show
+    void t.offsetWidth;
+    t.classList.add('show');
+  }
+  function hideToast(){ document.getElementById('toast').classList.remove('show'); }
+
+  function burstStars(){
+    const faces = ['⭐','🌟','✨','💛','🎉'];
+    for(let i=0;i<8;i++){
+      const s = document.createElement('div');
+      s.className = 'spark';
+      s.textContent = faces[Math.floor(Math.random()*faces.length)];
+      s.style.left = (35 + Math.random()*30) + 'vw';
+      s.style.top  = (45 + Math.random()*10) + 'vh';
+      s.style.animationDelay = (Math.random()*0.2) + 's';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(), 1300);
+    }
+  }
+
+  function endGame(){
+    showScreen('result');
+    document.getElementById('finalScore').textContent = score;
+    // 별 줄
+    let row = '';
+    for(let i=0;i<TOTAL;i++){ row += (i < score) ? '⭐' : '☆'; }
+    document.getElementById('starRow').textContent = row;
+    // 칭찬 메시지
+    let msg;
+    if(score === TOTAL) msg = '와아! 전부 다 맞혔어요!\n숫자 박사님이에요! 🎓';
+    else if(score >= 7) msg = '정말 잘했어요!\n조금만 더 연습하면 척척박사! 💪';
+    else if(score >= 4) msg = '좋아요! 점점 잘하고 있어요.\n또 해볼까요? 😊';
+    else msg = '괜찮아요! 천천히 세어보면 돼요.\n같이 다시 해봐요! 🤗';
+    document.getElementById('resultMsg').textContent = msg;
+    playFinish();
+  }
+
+  function restart(){ startGame(); }
+
+  /* ===== 간단한 소리 ===== */
+  function beep(freq, dur, type, delay){
+    if(!audioCtx) return;
+    const t0 = audioCtx.currentTime + (delay||0);
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  }
+  function playGood(){ beep(660,0.15,'sine',0); beep(880,0.2,'sine',0.12); }
+  function playTry(){ beep(330,0.25,'triangle',0); }
+  function playFinish(){ beep(523,0.15,'sine',0); beep(659,0.15,'sine',0.15); beep(784,0.3,'sine',0.3); }
+</script>
+</body>
+</html>

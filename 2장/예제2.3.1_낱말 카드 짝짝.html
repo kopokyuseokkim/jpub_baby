@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>낱말 짝짓기</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Jua', 'Gaegu', sans-serif;
+    user-select: none; -webkit-user-select: none;
+  }
+  #app {
+    min-height: 100vh; width: 100%;
+    background: linear-gradient(160deg, #ffb86c 0%, #ff7eb3 55%, #8b6cff 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .center { text-align: center; padding: 0 24px; }
+  h1 { color: #fff; margin: 0 0 8px; text-shadow: 0 4px 0 rgba(0,0,0,0.15); }
+  .big-btn {
+    color: #fff; border: none; border-radius: 40px;
+    padding: 22px 50px; font-size: 32px;
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+  }
+  .topbar {
+    width: 100%; max-width: 480px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; font-size: 22px; color: #fff;
+  }
+  .picture {
+    width: 200px; height: 200px; background: #fff;
+    border-radius: 40px; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 120px; margin: 10px 0 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    cursor: pointer; transition: box-shadow 0.3s;
+  }
+  .feedback {
+    height: 48px; display: flex; align-items: center; justify-content: center;
+    font-size: 30px; color: #fff;
+  }
+  .cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    width: 100%; max-width: 440px;
+    padding: 8px 20px 28px;
+  }
+  .card {
+    height: 100px; border: none; border-radius: 28px;
+    background: #fff; color: #3b3b3b; font-size: 40px;
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+    transition: background 0.2s, box-shadow 0.3s;
+  }
+  @keyframes sparkle { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12) rotate(3deg);} }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+  @keyframes pop { 0%{transform:scale(0.7);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+  .sparkle { animation: sparkle 0.5s ease-in-out infinite; }
+  .shake { animation: shake 0.4s; }
+  .pop { animation: pop 0.3s; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ===== 문제 데이터: 받침 없는/짧은 단어 우선 =====
+var ALL_QUESTIONS = [
+  { emoji: "🍎", answer: "사과", color: "#ff6b6b" },
+  { emoji: "🐶", answer: "개",   color: "#ffa94d" },
+  { emoji: "⭐", answer: "별",   color: "#ffd43b" },
+  { emoji: "🥛", answer: "우유", color: "#74c0fc" },
+  { emoji: "🍐", answer: "배",   color: "#a9e34b" },
+  { emoji: "🐱", answer: "고양이", color: "#ffa8a8" },
+  { emoji: "🍌", answer: "바나나", color: "#ffe066" },
+  { emoji: "🌸", answer: "꽃",   color: "#faa2c1" },
+  { emoji: "🐰", answer: "토끼", color: "#d0bfff" },
+  { emoji: "🚗", answer: "자동차", color: "#63e6be" },
+  { emoji: "🐟", answer: "물고기", color: "#4dabf7" },
+  { emoji: "🌙", answer: "달",   color: "#b197fc" },
+  { emoji: "🍇", answer: "포도", color: "#9775fa" },
+  { emoji: "🐻", answer: "곰",   color: "#e8a87c" },
+  { emoji: "👟", answer: "신발", color: "#66d9e8" }
+];
+var TOTAL = 10;
+
+// ===== 유틸 =====
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function buildOptions(question) {
+  var wrongs = shuffle(ALL_QUESTIONS.filter(function(q){ return q.answer !== question.answer; }))
+    .slice(0, 3).map(function(q){ return q.answer; });
+  return shuffle([question.answer].concat(wrongs));
+}
+
+// ===== 소리 효과 =====
+function playSound(type) {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var now = ctx.currentTime;
+    function tone(freq, start, dur, wave, vol) {
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = wave || "sine"; osc.frequency.value = freq;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.0001, now + start);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.3, now + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+      osc.start(now + start); osc.stop(now + start + dur);
+    }
+    if (type === "correct") { [523,659,784].forEach(function(f,i){ tone(f, i*0.1, 0.25); }); }
+    else if (type === "wrong") {
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    }
+    else if (type === "finish") { [523,587,659,784,1047].forEach(function(f,i){ tone(f, i*0.12, 0.3); }); }
+  } catch (e) {}
+}
+
+// ===== 음성 =====
+function speak(text) {
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR"; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ===== 상태 =====
+var state = {
+  screen: "start",
+  questions: [],
+  index: 0,
+  options: [],
+  score: 0,
+  locked: false
+};
+var app = document.getElementById("app");
+
+function startGame() {
+  state.questions = shuffle(ALL_QUESTIONS).slice(0, TOTAL);
+  state.index = 0;
+  state.score = 0;
+  state.options = buildOptions(state.questions[0]);
+  state.screen = "play";
+  state.locked = false;
+  render();
+  setTimeout(function(){ speak(state.questions[0].answer + " 어디 있나요?"); }, 400);
+}
+
+function handlePick(word, btn) {
+  if (state.locked) return;
+  var current = state.questions[state.index];
+  if (word === current.answer) {
+    state.locked = true;
+    playSound("correct");
+    speak("짝! 정답이에요!");
+    document.getElementById("picture").className = "picture sparkle";
+    document.getElementById("picture").style.boxShadow =
+      "0 0 0 8px " + current.color + ", 0 0 40px 10px " + current.color;
+    btn.style.background = "#ffd43b";
+    btn.style.boxShadow = "0 0 0 6px #fff, 0 0 30px 6px #ffd43b";
+    btn.className = "card sparkle";
+    var fb = document.getElementById("feedback");
+    fb.innerHTML = '<span class="pop">짝! 정답이에요! 🎊</span>';
+    state.score += 1;
+    setTimeout(nextQuestion, 1600);
+  } else {
+    playSound("wrong");
+    speak("다시 한 번 볼까요?");
+    btn.className = "card shake";
+    setTimeout(function(){ btn.className = "card"; }, 400);
+    var fb2 = document.getElementById("feedback");
+    fb2.innerHTML = '<span class="pop" style="font-size:26px;">다시 한 번 볼까요? 🤔</span>';
+    setTimeout(function(){ if (!state.locked) fb2.innerHTML = ""; }, 1200);
+  }
+}
+
+function nextQuestion() {
+  var next = state.index + 1;
+  if (next >= TOTAL) {
+    playSound("finish");
+    state.screen = "result";
+    render();
+    return;
+  }
+  state.index = next;
+  state.options = buildOptions(state.questions[next]);
+  state.locked = false;
+  render();
+  setTimeout(function(){ speak(state.questions[next].answer + " 어디 있나요?"); }, 400);
+}
+
+// ===== 화면 그리기 =====
+function render() {
+  app.innerHTML = "";
+  if (state.screen === "start") { renderStart(); }
+  else if (state.screen === "result") { renderResult(); }
+  else { renderPlay(); }
+}
+
+function renderStart() {
+  var div = document.createElement("div");
+  div.className = "center";
+  div.innerHTML =
+    '<div style="font-size:90px;margin-bottom:10px;">🍎🐶⭐</div>' +
+    '<h1 style="font-size:44px;">낱말 짝짓기</h1>' +
+    '<p style="font-size:24px;color:#fff;margin-bottom:40px;">그림에 맞는 낱말을 찾아요!</p>' +
+    '<button class="big-btn" style="background:#ff6b6b;">시작하기 👆</button>';
+  div.querySelector("button").onclick = startGame;
+  app.appendChild(div);
+}
+
+function renderResult() {
+  var stars = Math.max(1, Math.round((state.score / TOTAL) * 3));
+  var message = "잘했어요! 또 해볼까요?";
+  if (state.score >= 9) message = "완벽해요! 최고예요!";
+  else if (state.score >= 6) message = "정말 잘했어요!";
+  var starStr = "";
+  for (var i = 0; i < stars; i++) starStr += "⭐";
+  for (var j = 0; j < 3 - stars; j++) starStr += "☆";
+
+  var div = document.createElement("div");
+  div.className = "center";
+  div.innerHTML =
+    '<div style="font-size:70px;margin-bottom:10px;">🎉</div>' +
+    '<div style="font-size:60px;letter-spacing:8px;margin-bottom:10px;">' + starStr + '</div>' +
+    '<h1 style="font-size:40px;">' + message + '</h1>' +
+    '<p style="font-size:30px;color:#fff;margin-bottom:36px;">10개 중 <b>' + state.score + '</b>개 정답!</p>' +
+    '<button class="big-btn" style="background:#4dabf7;">다시 하기 🔄</button>';
+  div.querySelector("button").onclick = startGame;
+  app.appendChild(div);
+}
+
+function renderPlay() {
+  var current = state.questions[state.index];
+
+  var top = document.createElement("div");
+  top.className = "topbar";
+  top.innerHTML =
+    '<span>' + (state.index + 1) + ' / ' + TOTAL + '</span>' +
+    '<span>⭐ ' + state.score + '점</span>';
+  app.appendChild(top);
+
+  var pic = document.createElement("div");
+  pic.id = "picture";
+  pic.className = "picture";
+  pic.textContent = current.emoji;
+  pic.onclick = function(){ speak(current.answer); };
+  app.appendChild(pic);
+
+  var fb = document.createElement("div");
+  fb.id = "feedback";
+  fb.className = "feedback";
+  app.appendChild(fb);
+
+  var cards = document.createElement("div");
+  cards.className = "cards";
+  state.options.forEach(function(word) {
+    var btn = document.createElement("button");
+    btn.className = "card";
+    btn.textContent = word;
+    btn.onclick = function(){ handlePick(word, btn); };
+    cards.appendChild(btn);
+  });
+  app.appendChild(cards);
+}
+
+render();
+</script>
+</body>
+</html>

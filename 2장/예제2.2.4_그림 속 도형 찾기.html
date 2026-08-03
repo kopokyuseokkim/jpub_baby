@@ -1,0 +1,400 @@
+<!-- 도형 세기 놀이 : 6세 유아용 도형 인식 & 개수 세기 게임 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>도형 세기 놀이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --sky1:#bfe6ff; --sky2:#fff4cf;
+    --ink:#3a342e; --card:#ffffff;
+    --green:#46b55a; --blue:#3d8be0; --orange:#f07e3c;
+    --b1:#ff8a5b; --b2:#3fc0a4; --b3:#5aa9f2; --b4:#ffc23d;
+    --shadow:0 10px 0 rgba(0,0,0,.12), 0 16px 30px rgba(0,0,0,.16);
+    --font:'Jua','Gaegu','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:var(--font);
+    background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 100%);
+    color:var(--ink);
+    display:flex; justify-content:center;
+    min-height:100vh; overflow-x:hidden;
+  }
+  #app{
+    width:100%; max-width:480px; min-height:100vh;
+    display:flex; flex-direction:column;
+    padding:14px 16px 24px; position:relative;
+  }
+  .screen{display:none; flex:1; flex-direction:column;}
+  .screen.on{display:flex;}
+
+  /* ---------- 시작 화면 ---------- */
+  #start{justify-content:center; align-items:center; text-align:center; gap:10px;}
+  #start .balloons{font-size:44px; letter-spacing:6px;}
+  #start h1{
+    font-size:46px; margin:6px 0 0; line-height:1.15;
+    text-shadow:0 3px 0 #fff, 0 6px 0 rgba(0,0,0,.08);
+  }
+  #start .sub{font-size:21px; color:#5b5247; margin:2px 0 18px;}
+  .demo{
+    background:#fff; border-radius:28px; padding:14px;
+    box-shadow:var(--shadow); width:88%; margin-bottom:24px;
+  }
+  .demo svg{width:100%;height:auto;display:block;}
+
+  /* ---------- 공통 버튼 ---------- */
+  .big-btn{
+    font-family:var(--font); border:none; cursor:pointer;
+    color:#fff; font-size:30px; padding:18px 30px; border-radius:24px;
+    background:var(--green); box-shadow:0 8px 0 rgba(0,0,0,.18);
+    transition:transform .08s, box-shadow .08s; user-select:none;
+  }
+  .big-btn:active{transform:translateY(6px); box-shadow:0 2px 0 rgba(0,0,0,.18);}
+
+  /* ---------- 게임 화면 ---------- */
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:22px; margin-bottom:8px;
+  }
+  .pill{background:#fff; border-radius:999px; padding:8px 16px; box-shadow:0 4px 0 rgba(0,0,0,.1);}
+  .pill .star{color:#ffb400;}
+  .progress{height:14px;background:#ffffffaa;border-radius:999px;overflow:hidden;margin-bottom:10px;}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,#ffd24d,#ff9b3d);width:0;transition:width .3s;}
+
+  .picture{
+    background:linear-gradient(180deg,#dff3ff,#eafff0);
+    border-radius:28px; padding:10px; box-shadow:var(--shadow);
+    margin-bottom:12px;
+  }
+  .picture svg{width:100%;height:auto;display:block;}
+  .picture.shake{animation:shake .45s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+  .question{
+    text-align:center; font-size:27px; line-height:1.35; margin:4px 4px 14px;
+  }
+  .question .qshape{font-weight:700; padding:0 4px; border-radius:8px;}
+  .question .icon{vertical-align:middle; margin-right:4px;}
+
+  .answers{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:auto;
+  }
+  .answer{
+    font-family:var(--font); border:none; cursor:pointer; color:#fff;
+    font-size:52px; height:100px; border-radius:26px;
+    box-shadow:0 9px 0 rgba(0,0,0,.18);
+    transition:transform .08s, box-shadow .08s, background .15s;
+  }
+  .answer:active{transform:translateY(7px); box-shadow:0 2px 0 rgba(0,0,0,.18);}
+  .answer:nth-child(1){background:var(--b1);}
+  .answer:nth-child(2){background:var(--b2);}
+  .answer:nth-child(3){background:var(--b3);}
+  .answer:nth-child(4){background:var(--b4);}
+  .answer.wrong{background:#e85d5d !important; animation:nope .4s;}
+  .answer.right{background:#3fbf63 !important;}
+  @keyframes nope{0%,100%{transform:translateX(0)}33%{transform:translateX(-7px)}66%{transform:translateX(7px)}}
+
+  /* ---------- 피드백 토스트 ---------- */
+  .toast-pill{
+    transform:translate(-50%,-50%) scale(.6);
+    position:fixed; left:50%; top:40%;
+    font-size:34px; color:#fff; padding:18px 30px; border-radius:30px;
+    box-shadow:0 10px 26px rgba(0,0,0,.25); white-space:nowrap;
+    animation:pop .35s forwards;
+  }
+  .toast-pill.good{background:#3fbf63;}
+  .toast-pill.bad{background:#f5972f;}
+  @keyframes pop{from{transform:translate(-50%,-50%) scale(.6);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+  .confetti{position:fixed; top:-30px; font-size:26px; z-index:25; pointer-events:none;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.9}}
+
+  /* ---------- 결과 화면 ---------- */
+  #result{justify-content:center; align-items:center; text-align:center; gap:6px;}
+  #result .stars{font-size:58px; letter-spacing:8px;}
+  #result h2{font-size:40px; margin:6px 0;}
+  #result .scoreline{font-size:30px; color:#5b5247;}
+  #result .scoreline b{color:var(--orange); font-size:40px;}
+  #result .msg{font-size:23px; color:#5b5247; margin:6px 0 22px;}
+</style>
+
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <section id="start" class="screen on">
+    <div class="balloons">🎈🟡 🔺 🟦🎈</div>
+    <h1>도형 세기 놀이</h1>
+    <div class="sub">동그라미 · 세모 · 네모를 찾아 세어 봐요!</div>
+    <div class="demo" id="demoPic"></div>
+    <button class="big-btn" id="startBtn">시작하기 ▶</button>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="game" class="screen">
+    <div class="topbar">
+      <span class="pill" id="progressText">문제 1 / 10</span>
+      <span class="pill"><span class="star">⭐</span> <span id="scoreText">0</span>점</span>
+    </div>
+    <div class="progress"><i id="progressBar"></i></div>
+
+    <div class="picture" id="picture"></div>
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section id="result" class="screen">
+    <div class="stars" id="resultStars">⭐⭐⭐</div>
+    <h2 id="resultTitle">참 잘했어요!</h2>
+    <div class="scoreline">10문제 중 <b id="resultScore">0</b>개 맞혔어요</div>
+    <div class="msg" id="resultMsg"></div>
+    <button class="big-btn" id="againBtn">다시 하기 🔄</button>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   도형 그리기 도우미 (모두 SVG)
+   - C: 동그라미, S: 네모, T: 세모, L: 선(개수에 안 셈)
+   ========================================================= */
+var ST = 'stroke="#3a342e" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+function C(cx,cy,r,f){ return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+f+'" '+ST+'/>'; }
+function S(x,y,s,f){ return '<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" rx="3" fill="'+f+'" '+ST+'/>'; }
+function T(p,f){ return '<polygon points="'+p+'" fill="'+f+'" '+ST+'/>'; }
+function L(x1,y1,x2,y2,c,w){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(c||'#7a5a3a')+'" stroke-width="'+(w||6)+'" stroke-linecap="round"/>'; }
+
+/* 햇살(선) - 개수에 안 셈 */
+function rays(cx,cy,r){
+  var s='', i, a;
+  for(i=0;i<8;i++){ a=i*Math.PI/4;
+    s+=L(cx+Math.cos(a)*(r+4), cy+Math.sin(a)*(r+4), cx+Math.cos(a)*(r+16), cy+Math.sin(a)*(r+16), '#FDB813',5);
+  }
+  return s;
+}
+
+/* =========================================================
+   그림 조각 정의 (그림 + 도형 개수)
+   c=동그라미, t=세모, s=네모
+   ========================================================= */
+var OBJECTS = {
+  house:  { counts:{c:0,t:1,s:2}, draw:function(){
+    return T('40,112 100,46 160,112','#E8554E') + S(55,112,92,'#F6C667') + S(86,158,40,'#9C6B43'); } },
+  tree:   { counts:{c:0,t:1,s:1}, draw:function(){
+    return T('38,162 162,162 100,48','#62B856') + S(82,160,38,'#9C6B43'); } },
+  pine:   { counts:{c:0,t:2,s:1}, draw:function(){
+    return T('100,30 58,100 142,100','#3FA45B') + T('100,72 44,150 156,150','#46AE63') + S(82,150,38,'#9C6B43'); } },
+  car:    { counts:{c:2,t:0,s:1}, draw:function(){
+    return S(46,92,100,'#4F86C6') + C(78,198,21,'#33312f') + C(124,198,21,'#33312f') + C(78,198,8,'#9aa4ac') + C(124,198,8,'#9aa4ac'); } },
+  sun:    { counts:{c:1,t:0,s:0}, draw:function(){
+    return rays(100,96,46) + C(100,96,46,'#FDB813'); } },
+  ball:   { counts:{c:1,t:0,s:0}, draw:function(){
+    return C(100,150,44,'#FF8FB1') + L(56,150,144,150,'#fff',4) + L(100,106,100,194,'#fff',4); } },
+  balloon:{ counts:{c:1,t:0,s:0}, draw:function(){
+    return L(100,118,100,208,'#9a9a9a',3) + C(100,78,40,'#B07CE8'); } },
+  boat:   { counts:{c:0,t:1,s:1}, draw:function(){
+    return L(100,38,100,128,'#7a5a3a',6) + T('100,44 100,124 168,124','#EFEFEF') + S(54,128,90,'#E07A3F'); } },
+  robot:  { counts:{c:2,t:0,s:2}, draw:function(){
+    return L(100,100,100,108,'#8a96a0',8) + S(70,40,60,'#9AA7B0') + S(56,108,86,'#8896A0')
+      + C(89,68,9,'#33312f') + C(111,68,9,'#33312f') + L(86,134,114,134,'#33312f',5); } }
+};
+var POOL = ['house','tree','pine','car','sun','ball','balloon','boat','robot'];
+
+/* 여러 조각을 가로로 배치해 한 장면 만들기 */
+function makeScene(keys){
+  var n=keys.length, W=n*200, H=240, inner='', total={c:0,t:0,s:0}, i, ct;
+  inner += '<rect x="0" y="206" width="'+W+'" height="34" fill="#cde8b5"/>';
+  for(i=0;i<n;i++){
+    inner += '<g transform="translate('+(i*200)+',0)">'+OBJECTS[keys[i]].draw()+'</g>';
+    ct=OBJECTS[keys[i]].counts; total.c+=ct.c; total.t+=ct.t; total.s+=ct.s;
+  }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';
+  return {svg:svg, total:total};
+}
+
+/* =========================================================
+   문제 만들기
+   ========================================================= */
+var SHAPES = [
+  { key:'c', word:'동그라미', color:'var(--orange)', icon:C(13,13,11,'#FDB813') },
+  { key:'t', word:'세모',   color:'var(--green)',  icon:T('13,3 24,23 2,23','#62B856') },
+  { key:'s', word:'네모',   color:'var(--blue)',   icon:S(3,3,20,'#5aa9f2') }
+];
+function iconSvg(inner){ return '<svg class="icon" width="24" height="26" viewBox="0 0 26 26">'+inner+'</svg>'; }
+
+function shuffle(a){ var i,j,t; for(i=a.length-1;i>0;i--){ j=Math.floor(Math.random()*(i+1)); t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+function buildQuestion(targetKey){
+  var targetObjs = POOL.filter(function(k){ return OBJECTS[k].counts[targetKey]>0; });
+  var tries=0, scene, ans, keys;
+  while(tries++ < 80){
+    var n = Math.random()<0.45 ? 2 : 3;
+    keys = [ targetObjs[Math.floor(Math.random()*targetObjs.length)] ];
+    while(keys.length < n){ keys.push(POOL[Math.floor(Math.random()*POOL.length)]); }
+    shuffle(keys);
+    scene = makeScene(keys);
+    ans = scene.total[targetKey];
+    if(ans>=1 && ans<=8) break;
+  }
+  return { svg:scene.svg, targetKey:targetKey, answer:ans, options:makeOptions(ans) };
+}
+
+/* 정답을 포함한 연속된 숫자 4개 보기 만들기 */
+function makeOptions(ans){
+  var below = Math.floor(Math.random()*Math.min(4, ans)); // 0~3
+  var start = ans - below;
+  if(start < 1) start = 1;
+  if(ans - start > 3) start = ans - 3;
+  return [start, start+1, start+2, start+3];
+}
+
+/* =========================================================
+   게임 흐름
+   ========================================================= */
+var TOTAL_Q = 10;
+var state = { i:0, score:0, q:null, firstWrong:false, locked:false };
+var audioCtx = null;
+
+var screens = {
+  start:  document.getElementById('start'),
+  game:   document.getElementById('game'),
+  result: document.getElementById('result')
+};
+function show(name){
+  for(var k in screens){ screens[k].classList.toggle('on', k===name); }
+}
+
+function ensureAudio(){
+  try{ if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } }catch(e){}
+}
+function tone(freq, start, dur, type){
+  try{
+    ensureAudio(); if(!audioCtx) return;
+    var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    o.connect(g); g.connect(audioCtx.destination);
+    var t=audioCtx.currentTime+start;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.25,t+0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+function happySound(){ tone(523,0,0.18); tone(659,0.12,0.18); tone(784,0.24,0.26); }
+function softSound(){ tone(330,0,0.18,'triangle'); }
+
+/* 시작 화면 데모 그림 */
+document.getElementById('demoPic').innerHTML = makeScene(['house','tree','sun']).svg;
+
+function startGame(){
+  ensureAudio();
+  state.i=0; state.score=0;
+  show('game');
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(state.i >= TOTAL_Q){ endGame(); return; }
+  var shape = SHAPES[state.i % SHAPES.length];     // 동그라미·세모·네모 골고루
+  state.q = buildQuestion(shape.key);
+  state.firstWrong = false;
+  state.locked = false;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  var shape = SHAPES.filter(function(s){return s.key===state.q.targetKey;})[0];
+  document.getElementById('progressText').textContent = '문제 ' + (state.i+1) + ' / ' + TOTAL_Q;
+  document.getElementById('scoreText').textContent = state.score;
+  document.getElementById('progressBar').style.width = ((state.i)/TOTAL_Q*100) + '%';
+  document.getElementById('picture').innerHTML = state.q.svg;
+
+  document.getElementById('question').innerHTML =
+    '이 그림에 ' + iconSvg(shape.icon) +
+    '<span class="qshape" style="color:'+shape.color+'">' + shape.word + '</span>는 몇 개 있을까요?';
+
+  var box = document.getElementById('answers');
+  box.innerHTML = '';
+  state.q.options.forEach(function(num){
+    var b = document.createElement('button');
+    b.className = 'answer';
+    b.textContent = num;
+    b.onclick = function(){ choose(num, b); };
+    box.appendChild(b);
+  });
+}
+
+function choose(num, btn){
+  if(state.locked) return;
+
+  if(num === state.q.answer){
+    state.locked = true;
+    btn.classList.add('right');
+    if(!state.firstWrong){ state.score++; document.getElementById('scoreText').textContent = state.score; }
+    happySound();
+    confetti();
+    showToast('정답이에요! 🎉', 'good');
+    document.getElementById('progressBar').style.width = ((state.i+1)/TOTAL_Q*100) + '%';
+    setTimeout(function(){ state.i++; nextQuestion(); }, 1300);
+  } else {
+    state.firstWrong = true;
+    btn.classList.add('wrong');
+    softSound();
+    var pic = document.getElementById('picture');
+    pic.classList.add('shake');
+    setTimeout(function(){ pic.classList.remove('shake'); btn.classList.remove('wrong'); }, 600);
+    showToast('한 번 더 세어볼까요? 😊', 'bad');
+  }
+}
+
+/* 피드백 토스트 */
+var toastTimer=null;
+function showToast(text, type){
+  var old=document.querySelector('.toast-pill'); if(old) old.remove();
+  var el=document.createElement('div');
+  el.className='toast-pill '+type;
+  el.textContent=text;
+  document.body.appendChild(el);
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.remove(); }, type==='good'?1200:1300);
+}
+
+/* 종이꽃가루 */
+function confetti(){
+  var emo=['🎉','⭐','✨','🎈','🌈'], i;
+  for(i=0;i<16;i++){
+    (function(){
+      var s=document.createElement('div');
+      s.className='confetti';
+      s.textContent=emo[Math.floor(Math.random()*emo.length)];
+      s.style.left=(Math.random()*100)+'vw';
+      var dur=(1.0+Math.random()*0.8);
+      s.style.animation='fall '+dur+'s linear forwards';
+      s.style.animationDelay=(Math.random()*0.2)+'s';
+      document.body.appendChild(s);
+      setTimeout(function(){ s.remove(); }, (dur+0.3)*1000);
+    })();
+  }
+}
+
+function endGame(){
+  show('result');
+  var sc=state.score;
+  document.getElementById('resultScore').textContent = sc;
+  var stars, title, msg;
+  if(sc>=9){ stars='⭐⭐⭐'; title='완벽해요! 🏆'; msg='도형을 정말 잘 찾았어요!'; }
+  else if(sc>=6){ stars='⭐⭐'; title='아주 잘했어요!'; msg='조금만 더 하면 만점이에요!'; }
+  else if(sc>=3){ stars='⭐'; title='잘했어요!'; msg='한 번 더 해 볼까요?'; }
+  else { stars='⭐'; title='참 잘 도전했어요!'; msg='천천히 다시 세어 봐요!'; }
+  document.getElementById('resultStars').textContent = stars;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+document.getElementById('startBtn').onclick = startGame;
+document.getElementById('againBtn').onclick = startGame;
+</script>

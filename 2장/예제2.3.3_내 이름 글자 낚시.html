@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>물고기 이름 잡기</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Jua', sans-serif;
+    background: linear-gradient(180deg,#fef6e4 0%,#e0f7fa 100%);
+    min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px 24px;
+  }
+
+  /* 시작 화면 */
+  .start-card {
+    background: #fff; border-radius: 28px; padding: 32px 24px;
+    max-width: 380px; width: 100%; text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12); margin-top: 24px;
+  }
+  .fish-emoji { font-size: 64px; margin-bottom: 6px; }
+  .title { font-size: 34px; color: #ff7b54; margin: 4px 0 8px; }
+  .subtitle { font-size: 17px; color: #666; margin-bottom: 24px; }
+  .label { display: block; font-size: 18px; color: #444; margin-bottom: 10px; }
+  #nameInput {
+    font-family: 'Jua', sans-serif; font-size: 30px; text-align: center;
+    width: 70%; padding: 12px; border: 3px solid #5ec8d8;
+    border-radius: 18px; outline: none; color: #333;
+  }
+  .quick-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 18px 0 26px; }
+  .quick-btn {
+    font-family: 'Jua', sans-serif; font-size: 18px; background: #fff3e0;
+    color: #ff7b54; border: 2px solid #ffd1a8; border-radius: 14px;
+    padding: 8px 16px; cursor: pointer;
+  }
+  .big-btn {
+    font-family: 'Jua', sans-serif; font-size: 26px; color: #fff;
+    background: linear-gradient(135deg,#ff9b54,#ff7b54); border: none;
+    border-radius: 22px; padding: 16px 40px; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255,123,84,0.4); width: 100%;
+  }
+
+  /* 게임 화면 */
+  .top-bar {
+    width: 100%; max-width: 560px; display: flex;
+    justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  .small-btn {
+    font-family: 'Jua', sans-serif; font-size: 16px; color: #0288a8;
+    background: #fff; border: 2px solid #5ec8d8; border-radius: 14px;
+    padding: 8px 14px; cursor: pointer;
+  }
+  .score-box {
+    font-family: 'Jua', sans-serif; font-size: 24px; color: #ff9b00;
+    background: #fff; border-radius: 16px; padding: 6px 18px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  }
+  .slot-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .slot {
+    width: 70px; height: 70px; border-radius: 18px; background: #fff;
+    border: 4px dashed #b0bec5; display: flex; align-items: center;
+    justify-content: center; font-size: 40px; color: #333;
+  }
+  .slot.filled { border: 4px solid #4caf50; background: #e8f5e9; color: #2e7d32; }
+  .slot.active { border: 4px solid #ff9b00; background: #fff8e1; box-shadow: 0 0 0 4px rgba(255,155,0,0.2); }
+  .msg { font-size: 20px; color: #444; text-align: center; min-height: 30px; margin: 6px 0 12px; max-width: 500px; }
+
+  .pond {
+    position: relative; width: 100%; max-width: 560px; height: 55vh;
+    min-height: 340px; background: linear-gradient(180deg,#4fc3f7 0%,#0288d1 100%);
+    border-radius: 28px; overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2); transition: box-shadow 0.2s;
+  }
+  .pond.flash { box-shadow: 0 0 0 6px #fff inset, 0 8px 30px rgba(0,0,0,0.2); }
+  .wave { position: absolute; left: 0; right: 0; height: 2px; border-radius: 4px; }
+  .wave1 { top: 20%; background: rgba(255,255,255,0.25); }
+  .wave2 { top: 55%; background: rgba(255,255,255,0.18); }
+
+  .fish-btn {
+    position: absolute; width: 96px; height: 64px; background: none;
+    border: none; padding: 0; cursor: pointer;
+    transition: transform 0.8s ease-in, opacity 0.8s ease-in;
+  }
+  .fish-btn.caught { opacity: 0; transform: translateY(-320px) scale(0.4); }
+
+  @keyframes swimL {
+    0%   { transform: translate(0,0); }
+    50%  { transform: translate(-40px, 24px); }
+    100% { transform: translate(36px, -18px); }
+  }
+  @keyframes swimR {
+    0%   { transform: translate(0,0); }
+    50%  { transform: translate(40px, 20px); }
+    100% { transform: translate(-36px, -22px); }
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const DISTRACTOR_POOL = [
+  "가","나","다","라","마","바","사","아","자","차","카","타","파","하",
+  "고","노","도","로","모","보","소","오","조","초","구","누","두","루",
+  "무","부","수","우","주","추","기","니","디","리","미","비","시","이",
+  "지","치","개","내","대","래","매","배","새","애","재","채","해","태"
+];
+const FISH_COLORS = ["#ff8fab","#ffb347","#ffd23f","#9be36b","#5ec8d8","#7aa5ff","#c89bff","#ff9b85"];
+const TOTAL_FISH = 8;
+
+// 상태
+let state = { name: "지우", chars: [], fishes: [], filled: 0, score: 0 };
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// 사운드
+let audioCtx = null;
+function getCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(freq,dur,type="sine",vol=0.15){
+  try{
+    const ctx=getCtx(); const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+const sound = {
+  correct(){ beep(660,0.12); setTimeout(()=>beep(880,0.18),110); },
+  wrong(){ beep(200,0.25,"triangle",0.12); },
+  win(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.2,"sine",0.18),i*130)); }
+};
+function speak(text){
+  try{
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="ko-KR"; u.rate=0.85;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+// 물고기 SVG
+function fishSVG(char,color,flip){
+  const t = flip ? 'transform="scale(-1,1)" transform-origin="60 40"' : '';
+  return `<svg viewBox="0 0 120 80" width="100%" height="100%">
+    <g ${flip?'transform="translate(120,0) scale(-1,1)"':''}>
+      <ellipse cx="55" cy="40" rx="38" ry="26" fill="${color}"/>
+      <polygon points="88,40 116,22 116,58" fill="${color}" opacity="0.85"/>
+      <polygon points="55,14 70,30 40,30" fill="${color}" opacity="0.7"/>
+      <circle cx="30" cy="32" r="6" fill="#fff"/>
+      <circle cx="29" cy="32" r="3" fill="#222"/>
+      <text x="55" y="48" text-anchor="middle" font-size="26" font-weight="700"
+        fill="#fff" font-family="'Jua',sans-serif"
+        ${flip?'transform="translate(110,0) scale(-1,1)"':''}>${char}</text>
+    </g>
+  </svg>`;
+}
+
+const app = document.getElementById("app");
+
+// 시작 화면
+function renderStart(){
+  app.innerHTML = `
+    <div class="start-card">
+      <div class="fish-emoji">🐟</div>
+      <h1 class="title">물고기 이름 잡기</h1>
+      <p class="subtitle">물고기를 잡아 내 이름을 만들어요!</p>
+      <label class="label">이름을 적어 주세요</label>
+      <input id="nameInput" value="지우" placeholder="지우" maxlength="6">
+      <div class="quick-row">
+        <button class="quick-btn" data-n="엄마">엄마</button>
+        <button class="quick-btn" data-n="아빠">아빠</button>
+        <button class="quick-btn" data-n="동생">동생</button>
+        <button class="quick-btn" data-n="지우">지우</button>
+      </div>
+      <button class="big-btn" id="startBtn">시작하기 ▶</button>
+    </div>`;
+  const input = document.getElementById("nameInput");
+  document.querySelectorAll(".quick-btn").forEach(b=>{
+    b.onclick=()=>{ input.value=b.dataset.n; };
+  });
+  document.getElementById("startBtn").onclick=()=>{
+    const n=(input.value.trim()||"지우");
+    startGame(n);
+  };
+}
+
+function startGame(n){
+  state.name=n; state.chars=Array.from(n); state.score=0;
+  renderPlay();
+  newRound();
+  setTimeout(()=>speak(n+" 이름을 만들어요"),300);
+}
+
+function newRound(){
+  const targetChars = state.chars;
+  const distractors = shuffle(DISTRACTOR_POOL.filter(c=>!targetChars.includes(c)))
+    .slice(0, Math.max(0, TOTAL_FISH - targetChars.length));
+  let pool = shuffle([...targetChars, ...distractors]).slice(0, TOTAL_FISH);
+  targetChars.forEach(c=>{ if(!pool.includes(c)) pool[Math.floor(Math.random()*pool.length)]=c; });
+  state.fishes = shuffle(pool).map((c,i)=>({
+    id: Math.random().toString(36).slice(2),
+    char: c, color: FISH_COLORS[i%FISH_COLORS.length],
+    top: 12+Math.random()*62, left: 6+Math.random()*78,
+    dur: 7+Math.random()*6, delay: -Math.random()*8,
+    flip: Math.random()>0.5, caught: false
+  }));
+  state.filled = 0;
+  drawSlots(); drawFishes(); setMsg("");
+}
+
+function renderPlay(){
+  app.innerHTML = `
+    <div class="top-bar">
+      <button class="small-btn" id="backBtn">← 이름 변경</button>
+      <div class="score-box">⭐ <span id="score">0</span></div>
+    </div>
+    <div class="slot-row" id="slotRow"></div>
+    <div class="msg" id="msg"></div>
+    <div class="pond" id="pond">
+      <div class="wave wave1"></div>
+      <div class="wave wave2"></div>
+    </div>`;
+  document.getElementById("backBtn").onclick=renderStart;
+}
+
+function drawSlots(){
+  const row = document.getElementById("slotRow");
+  document.getElementById("score").textContent = state.score;
+  row.innerHTML = state.chars.map((c,i)=>{
+    let cls="slot";
+    if(i<state.filled) cls+=" filled";
+    else if(i===state.filled) cls+=" active";
+    return `<div class="${cls}">${i<state.filled?c:""}</div>`;
+  }).join("");
+}
+
+function drawFishes(){
+  const pond = document.getElementById("pond");
+  // 기존 물고기 제거 (물결은 유지)
+  pond.querySelectorAll(".fish-btn").forEach(el=>el.remove());
+  state.fishes.forEach(f=>{
+    const btn=document.createElement("button");
+    btn.className="fish-btn";
+    btn.style.top=f.top+"%";
+    btn.style.left=f.left+"%";
+    btn.style.animation=`swim${f.flip?"R":"L"} ${f.dur}s ease-in-out ${f.delay}s infinite alternate`;
+    btn.innerHTML=fishSVG(f.char,f.color,f.flip);
+    btn.onclick=()=>handleFish(f,btn);
+    pond.appendChild(btn);
+  });
+}
+
+function setMsg(text){
+  const el=document.getElementById("msg");
+  if(!el) return;
+  if(text){ el.textContent=text; }
+  else {
+    const next = state.chars[state.filled] || "";
+    el.textContent = `다음 글자 ‘${next}’ 를 찾아보세요!`;
+  }
+}
+
+function handleFish(f, btn){
+  if(f.caught) return;
+  const nextChar = state.chars[state.filled];
+  if(f.char===nextChar){
+    sound.correct();
+    f.caught=true;
+    btn.classList.add("caught");
+    btn.style.animation="none";
+    btn.disabled=true;
+    const pond=document.getElementById("pond");
+    pond.classList.add("flash");
+    setTimeout(()=>pond.classList.remove("flash"),400);
+
+    state.filled++;
+    drawSlots();
+
+    if(state.filled===state.chars.length){
+      sound.win();
+      setMsg("🎉 내 이름 완성!");
+      speak(state.name+", 내 이름 완성!");
+      state.score++;
+      setTimeout(()=>{ drawSlots(); },50);
+      setTimeout(newRound, 2200);
+    } else {
+      setMsg("");
+      speak(f.char);
+    }
+  } else {
+    sound.wrong();
+    const target=state.chars[state.filled];
+    setMsg(`다음 글자는 ‘${target}’ 이에요. 다시 찾아볼까요?`);
+    speak(`다음 글자는 ${target} 이에요`);
+  }
+}
+
+renderStart();
+</script>
+</body>
+</html>

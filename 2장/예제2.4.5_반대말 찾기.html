@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>반대말 놀이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Jua', sans-serif;
+    background: linear-gradient(160deg, #fff6e0 0%, #ffe3ec 50%, #e3f6ff 100%);
+    display: flex; justify-content: center; align-items: center;
+    color: #4a3f55; user-select: none;
+  }
+  #app {
+    width: 100%; max-width: 480px; height: 100%; max-height: 920px;
+    display: flex; flex-direction: column; position: relative;
+    padding: 16px; overflow: hidden;
+  }
+
+  /* 상단 진행 표시 */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; flex-shrink: 0;
+  }
+  .dots { display: flex; gap: 5px; flex-wrap: wrap; max-width: 60%; }
+  .dot { width: 13px; height: 13px; border-radius: 50%; background: #fff; border: 2px solid #ffc4d6; }
+  .dot.done { background: #ff8fab; border-color: #ff8fab; }
+  .dot.current { background: #ffd166; border-color: #ffb703; transform: scale(1.25); }
+  .score-box {
+    background: #fff; border-radius: 20px; padding: 6px 16px;
+    font-size: 20px; color: #ff7096; box-shadow: 0 3px 0 #ffc4d6;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* 단계 표시 */
+  .stage-label {
+    text-align: center; font-size: 17px; color: #8c7aa8;
+    background: #ffffffaa; border-radius: 16px; padding: 4px 0;
+    margin-bottom: 10px; flex-shrink: 0;
+  }
+
+  /* 문제 카드 */
+  .question {
+    background: #fff; border-radius: 30px; padding: 22px 16px;
+    box-shadow: 0 8px 0 #ffd6e0; text-align: center; flex-shrink: 0;
+    margin-bottom: 14px;
+  }
+  .q-emoji { font-size: 72px; line-height: 1; margin-bottom: 6px; }
+  .q-emoji.hidden { display: none; }
+  .q-prompt { font-size: 19px; color: #b3a4c9; }
+  .q-word { font-size: 64px; color: #ff5d8f; line-height: 1.1; }
+
+  /* 보기 카드 그리드 */
+  .options {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    flex: 1; min-height: 0;
+  }
+  .opt {
+    background: #fff; border-radius: 26px; border: 4px solid #ffe0e9;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; box-shadow: 0 6px 0 #ffd0dd; transition: transform .08s;
+    padding: 8px;
+  }
+  .opt:active { transform: translateY(4px); box-shadow: 0 2px 0 #ffd0dd; }
+  .opt-emoji { font-size: 50px; line-height: 1; margin-bottom: 4px; }
+  .opt-emoji.hidden { display: none; }
+  .opt-word { font-size: 40px; color: #6a5a85; }
+  .opt.correct { border-color: #8ce99a; background: #eaffef; box-shadow: 0 6px 0 #8ce99a; }
+  .opt.wrong { border-color: #ffb3b3; background: #fff0f0; box-shadow: 0 6px 0 #ffb3b3; animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+  /* 피드백 오버레이 */
+  .feedback {
+    position: absolute; inset: 0; background: rgba(255,255,255,.96);
+    display: none; flex-direction: column; justify-content: center; align-items: center;
+    padding: 24px; z-index: 10; border-radius: 16px;
+  }
+  .feedback.show { display: flex; animation: pop .3s; }
+  @keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+  .fb-face { font-size: 80px; margin-bottom: 10px; }
+  .fb-msg { font-size: 26px; text-align: center; color: #ff5d8f; line-height: 1.4; margin-bottom: 22px; }
+  .fb-compare { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+  .fb-item { display: flex; flex-direction: column; align-items: center; }
+  .fb-item .e { font-size: 60px; }
+  .fb-item .w { font-size: 36px; color: #6a5a85; }
+  .fb-vs { font-size: 34px; color: #ffc4d6; }
+  .fb-msg.retry { color: #f4a259; }
+  .next-btn {
+    background: #ff8fab; color: #fff; border: none; border-radius: 24px;
+    font-family: 'Jua'; font-size: 28px; padding: 16px 50px;
+    box-shadow: 0 6px 0 #e36c8a; cursor: pointer;
+  }
+  .next-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #e36c8a; }
+  .next-btn.retry { background: #ffd166; box-shadow: 0 6px 0 #e0a800; }
+
+  /* 결과 화면 */
+  .result {
+    position: absolute; inset: 0; background: linear-gradient(160deg,#fff6e0,#ffe3ec,#e3f6ff);
+    display: none; flex-direction: column; justify-content: center; align-items: center;
+    padding: 30px; z-index: 20;
+  }
+  .result.show { display: flex; }
+  .result h1 { font-size: 42px; color: #ff5d8f; margin-bottom: 14px; }
+  .result .trophy { font-size: 100px; margin-bottom: 10px; animation: bounce 1s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+  .result .score { font-size: 34px; color: #6a5a85; margin-bottom: 6px; }
+  .result .stars { font-size: 46px; margin-bottom: 24px; }
+  .result .comment { font-size: 22px; color: #8c7aa8; text-align: center; margin-bottom: 30px; }
+  .replay-btn {
+    background: #ff8fab; color: #fff; border: none; border-radius: 30px;
+    font-family: 'Jua'; font-size: 30px; padding: 18px 56px;
+    box-shadow: 0 7px 0 #e36c8a; cursor: pointer;
+  }
+  .replay-btn:active { transform: translateY(4px); box-shadow: 0 3px 0 #e36c8a; }
+
+  .confetti { position:absolute; top:-20px; font-size:24px; z-index:25; pointer-events:none; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity:0; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="dots" id="dots"></div>
+    <div class="score-box">⭐ <span id="score">0</span></div>
+  </div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="question">
+    <div class="q-emoji" id="qEmoji">🐘</div>
+    <div class="q-prompt">이 낱말의 반대말은?</div>
+    <div class="q-word" id="qWord">크다</div>
+  </div>
+
+  <div class="options" id="options"></div>
+
+  <!-- 피드백 -->
+  <div class="feedback" id="feedback">
+    <div class="fb-face" id="fbFace">🎉</div>
+    <div class="fb-msg" id="fbMsg"></div>
+    <div class="fb-compare" id="fbCompare"></div>
+    <button class="next-btn" id="nextBtn">다음 →</button>
+  </div>
+
+  <!-- 결과 -->
+  <div class="result" id="result">
+    <div class="trophy">🏆</div>
+    <h1>참 잘했어요!</h1>
+    <div class="stars" id="resultStars"></div>
+    <div class="score">10문제 중 <span id="finalScore">0</span>개 정답!</div>
+    <div class="comment" id="resultComment"></div>
+    <button class="replay-btn" id="replayBtn">다시 하기 🔄</button>
+  </div>
+</div>
+
+<script>
+// 낱말 데이터 (낱말, 그림, 반대말, 반대말 그림)
+const PAIRS = [
+  { w:"크다", e:"🐘", opp:"작다", oppE:"🐜" },
+  { w:"길다", e:"🦒", opp:"짧다", oppE:"🐛" },
+  { w:"빠르다", e:"🐆", opp:"느리다", oppE:"🐢" },
+  { w:"많다", e:"🍇", opp:"적다", oppE:"🍒" },
+  { w:"높다", e:"⛰️", opp:"낮다", oppE:"🪨" },
+  { w:"뜨겁다", e:"🔥", opp:"차갑다", oppE:"🧊" },
+  { w:"밝다", e:"☀️", opp:"어둡다", oppE:"🌙" },
+  { w:"무겁다", e:"🐘", opp:"가볍다", oppE:"🪶" },
+  { w:"넓다", e:"🌊", opp:"좁다", oppE:"🛤️" },
+  { w:"두껍다", e:"📚", opp:"얇다", oppE:"📄" },
+  { w:"기쁘다", e:"😄", opp:"슬프다", oppE:"😢" },
+  { w:"새것", e:"✨", opp:"낡은것", oppE:"🪚" },
+];
+
+const TOTAL = 10;
+let problems = [], idx = 0, score = 0;
+
+const $ = id => document.getElementById(id);
+
+function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
+
+// 게임 시작/리셋
+function startGame(){
+  score = 0; idx = 0;
+  $("score").textContent = 0;
+  $("result").classList.remove("show");
+
+  // 앞 5문제는 그림 O, 뒤 5문제는 그림 X
+  const pool = shuffle(PAIRS).slice(0, TOTAL);
+  problems = pool.map((p, i) => ({ ...p, showImage: i < 5 }));
+
+  buildDots();
+  loadProblem();
+}
+
+function buildDots(){
+  const c = $("dots"); c.innerHTML = "";
+  for(let i=0;i<TOTAL;i++){
+    const d = document.createElement("div");
+    d.className = "dot"; d.id = "dot"+i;
+    c.appendChild(d);
+  }
+}
+function updateDots(){
+  for(let i=0;i<TOTAL;i++){
+    const d = $("dot"+i);
+    d.className = "dot" + (i<idx?" done":"") + (i===idx?" current":"");
+  }
+}
+
+function loadProblem(){
+  const p = problems[idx];
+  updateDots();
+
+  // 단계 안내
+  $("stageLabel").textContent = p.showImage
+    ? "🎨 그림과 함께 풀어요 (" + (idx+1) + "/10)"
+    : "📖 글자로만 풀어요 (" + (idx+1) + "/10)";
+
+  // 문제
+  $("qWord").textContent = p.w;
+  const qe = $("qEmoji");
+  qe.textContent = p.e;
+  qe.classList.toggle("hidden", !p.showImage);
+
+  // 보기 만들기 (정답 1 + 오답 3)
+  const wrongs = shuffle(PAIRS.filter(x => x.opp !== p.opp))
+                   .slice(0,3)
+                   .map(x => ({ word:x.opp, emoji:x.oppE }));
+  const correct = { word:p.opp, emoji:p.oppE, isCorrect:true };
+  const opts = shuffle([correct, ...wrongs]);
+
+  const c = $("options"); c.innerHTML = "";
+  opts.forEach(o => {
+    const btn = document.createElement("div");
+    btn.className = "opt";
+    const em = document.createElement("div");
+    em.className = "opt-emoji" + (p.showImage ? "" : " hidden");
+    em.textContent = o.emoji;
+    const wd = document.createElement("div");
+    wd.className = "opt-word";
+    wd.textContent = o.word;
+    btn.appendChild(em); btn.appendChild(wd);
+    btn.onclick = () => choose(btn, o, p);
+    c.appendChild(btn);
+  });
+}
+
+let locked = false;
+function choose(btn, o, p){
+  if(locked) return;
+  if(o.isCorrect){
+    locked = true;
+    btn.classList.add("correct");
+    score++;
+    $("score").textContent = score;
+    speak("맞아요!");
+    setTimeout(()=> showFeedback(true, p), 450);
+  } else {
+    btn.classList.add("wrong");
+    speak("다시 생각해 볼까요?");
+    setTimeout(()=> btn.classList.remove("wrong"), 500);
+    showRetryMsg();
+  }
+}
+
+// 틀렸을 때 잠깐 안내 띄우기
+let retryTimer = null;
+function showRetryMsg(){
+  const fb = $("feedback");
+  $("fbFace").textContent = "🤔";
+  $("fbMsg").className = "fb-msg retry";
+  $("fbMsg").textContent = "이 낱말의 반대를\n한 번 더 생각해 볼까요?";
+  $("fbCompare").innerHTML = "";
+  const nb = $("nextBtn");
+  nb.className = "next-btn retry";
+  nb.textContent = "다시 골라보기 👆";
+  nb.onclick = () => fb.classList.remove("show");
+  fb.classList.add("show");
+}
+
+function showFeedback(correct, p){
+  const fb = $("feedback");
+  $("fbFace").textContent = "🎉";
+  $("fbMsg").className = "fb-msg";
+  $("fbMsg").textContent = "맞아요! " + p.w + "의 반대는\n" + p.opp + "예요!";
+  $("fbCompare").innerHTML =
+    '<div class="fb-item"><div class="e">'+p.e+'</div><div class="w">'+p.w+'</div></div>' +
+    '<div class="fb-vs">↔️</div>' +
+    '<div class="fb-item"><div class="e">'+p.oppE+'</div><div class="w">'+p.opp+'</div></div>';
+  const nb = $("nextBtn");
+  nb.className = "next-btn";
+  nb.textContent = idx < TOTAL-1 ? "다음 →" : "결과 보기 🏁";
+  nb.onclick = nextProblem;
+  fb.classList.add("show");
+  launchConfetti();
+}
+
+function nextProblem(){
+  $("feedback").classList.remove("show");
+  locked = false;
+  idx++;
+  if(idx >= TOTAL){ showResult(); }
+  else { loadProblem(); }
+}
+
+function showResult(){
+  updateDots();
+  $("finalScore").textContent = score;
+  const stars = score>=9 ? "⭐⭐⭐" : score>=6 ? "⭐⭐" : "⭐";
+  $("resultStars").textContent = stars;
+  $("resultComment").textContent =
+    score>=9 ? "반대말 박사님이네요!" :
+    score>=6 ? "정말 잘했어요! 멋져요!" :
+    "잘했어요! 또 도전해 볼까요?";
+  $("result").classList.add("show");
+  speak("참 잘했어요!");
+  for(let i=0;i<5;i++) setTimeout(launchConfetti, i*250);
+}
+
+// 한국어 음성
+function speak(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR"; u.rate = 1; u.pitch = 1.3;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+// 색종이 효과
+function launchConfetti(){
+  const emojis = ["🎉","✨","🌟","💖","🎈","🍭"];
+  for(let i=0;i<12;i++){
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    c.style.left = Math.random()*100 + "%";
+    c.style.animation = "fall " + (1.5+Math.random()*1.5) + "s linear forwards";
+    document.getElementById("app").appendChild(c);
+    setTimeout(()=>c.remove(), 3000);
+  }
+}
+
+$("replayBtn").onclick = startGame;
+startGame();
+</script>
+</body>
+</html>

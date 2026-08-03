@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>한자 떨어지는 게임</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --sky1:#fff4d6; --sky2:#ffe3a8; --ground:#a8e6a1;
+    --card:#fffaf0; --ink:#5b4636; --accent:#ff8a5c;
+    --green:#4caf50; --shadow:rgba(120,80,40,.18);
+  }
+  html,body{ height:100%; overflow:hidden; }
+  body{
+    font-family:'Jua',sans-serif;
+    background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 58%,var(--ground) 58.1%,#8fd98a 100%);
+    color:var(--ink); user-select:none; touch-action:manipulation;
+    display:flex; justify-content:center;
+  }
+  #app{ position:relative; width:100%; max-width:520px; height:100dvh; overflow:hidden; }
+
+  /* 떠다니는 구름 장식 */
+  .cloud{ position:absolute; background:rgba(255,255,255,.7); border-radius:50px; filter:blur(.3px);}
+  .cloud::before,.cloud::after{ content:""; position:absolute; background:inherit; border-radius:50%;}
+  .c1{ width:90px; height:30px; top:10%; left:8%; animation:drift 22s linear infinite;}
+  .c1::before{ width:45px; height:45px; top:-22px; left:14px;}
+  .c1::after{ width:35px; height:35px; top:-16px; left:48px;}
+  .c2{ width:70px; height:24px; top:22%; right:10%; animation:drift 28s linear infinite reverse;}
+  .c2::before{ width:34px; height:34px; top:-16px; left:12px;}
+  .c2::after{ width:28px; height:28px; top:-12px; left:38px;}
+  @keyframes drift{ 0%{transform:translateX(0)} 50%{transform:translateX(18px)} 100%{transform:translateX(0)} }
+
+  /* 상단 점수바 */
+  #topbar{
+    position:absolute; top:0; left:0; right:0; z-index:30;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 18px; font-size:20px;
+  }
+  .pill{ background:var(--card); border-radius:30px; padding:8px 18px;
+    box-shadow:0 4px 0 var(--shadow); display:flex; align-items:center; gap:6px;}
+  .pill .big{ color:var(--accent); font-size:24px;}
+
+  /* 떨어지는 한자 */
+  #faller{
+    position:absolute; left:50%; top:-120px; transform:translateX(-50%);
+    width:140px; height:140px; border-radius:32px;
+    background:linear-gradient(145deg,#fff,#ffe9c7);
+    box-shadow:0 10px 0 var(--shadow), inset 0 3px 8px rgba(255,255,255,.8);
+    display:flex; align-items:center; justify-content:center; z-index:20;
+  }
+  #faller span{ font-family:'Noto Serif KR',serif; font-weight:900; font-size:92px; color:#4a3528; line-height:1;}
+  #faller.win{ animation:pop .6s ease forwards;}
+  @keyframes pop{
+    0%{ box-shadow:0 0 0 0 rgba(255,210,80,.9), 0 10px 0 var(--shadow);}
+    40%{ transform:translateX(-50%) scale(1.25); box-shadow:0 0 0 40px rgba(255,210,80,0), 0 10px 0 var(--shadow);}
+    100%{ transform:translateX(-50%) scale(0); opacity:0;}
+  }
+
+  /* 정답/오답 안내 토스트 */
+  #toast{
+    position:absolute; top:38%; left:50%; transform:translate(-50%,-50%) scale(.5);
+    z-index:40; background:var(--card); padding:20px 30px; border-radius:28px;
+    font-size:30px; text-align:center; box-shadow:0 8px 0 var(--shadow);
+    opacity:0; pointer-events:none; max-width:88%;
+  }
+  #toast.show{ animation:toast 1.4s ease forwards;}
+  @keyframes toast{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.5);}
+    15%{opacity:1; transform:translate(-50%,-50%) scale(1.08);}
+    25%{transform:translate(-50%,-50%) scale(1);}
+    80%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(1);}
+  }
+
+  /* 하단 보기 카드 */
+  #choices{
+    position:absolute; bottom:0; left:0; right:0; z-index:25;
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+  .choice{
+    background:var(--card); border:none; border-radius:26px;
+    padding:26px 10px; font-family:'Jua',sans-serif; font-size:38px; color:var(--ink);
+    box-shadow:0 7px 0 var(--shadow); cursor:pointer; transition:transform .08s;
+    min-height:96px;
+  }
+  .choice:active{ transform:translateY(5px); box-shadow:0 2px 0 var(--shadow);}
+  .choice.correct{ background:#bdf0b5; box-shadow:0 7px 0 #7bbf73;}
+  .choice.wrong{ background:#ffc9c9; box-shadow:0 7px 0 #e08585;}
+
+  /* 결과 화면 */
+  #result{
+    position:absolute; inset:0; z-index:50; display:none;
+    flex-direction:column; align-items:center; justify-content:center; gap:24px;
+    background:linear-gradient(180deg,#fff4d6,#ffe3a8); text-align:center; padding:30px;
+  }
+  #result.show{ display:flex; animation:fadein .4s ease;}
+  @keyframes fadein{ from{opacity:0} to{opacity:1} }
+  #result h1{ font-size:42px; color:var(--accent);}
+  #result .stars{ font-size:50px; letter-spacing:6px;}
+  #result .score{ font-size:30px; background:var(--card); padding:16px 30px; border-radius:30px; box-shadow:0 6px 0 var(--shadow);}
+  .btn{
+    background:var(--accent); color:#fff; border:none; border-radius:30px;
+    font-family:'Jua',sans-serif; font-size:30px; padding:18px 44px;
+    box-shadow:0 7px 0 #d96a3f; cursor:pointer;
+  }
+  .btn:active{ transform:translateY(5px); box-shadow:0 2px 0 #d96a3f;}
+
+  /* 시작 화면 */
+  #start{
+    position:absolute; inset:0; z-index:60; display:flex;
+    flex-direction:column; align-items:center; justify-content:center; gap:26px;
+    background:linear-gradient(180deg,#fff4d6,#ffe3a8); text-align:center; padding:30px;
+  }
+  #start h1{ font-size:46px; color:#4a3528;}
+  #start .sub{ font-size:22px; color:var(--ink); line-height:1.5;}
+  #start .demo{ font-family:'Noto Serif KR',serif; font-weight:900; font-size:80px; color:#4a3528;
+    background:linear-gradient(145deg,#fff,#ffe9c7); width:130px; height:130px; border-radius:30px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 8px 0 var(--shadow);}
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+
+  <div id="topbar" class="hidden">
+    <div class="pill">⭐ <span class="big" id="score">0</span></div>
+    <div class="pill">문제 <span id="qnum">1</span>/10</div>
+  </div>
+
+  <div id="faller"><span></span></div>
+  <div id="toast"></div>
+  <div id="choices" class="hidden"></div>
+
+  <!-- 시작 화면 -->
+  <div id="start">
+    <div class="demo">山</div>
+    <h1>한자 떨어지기</h1>
+    <p class="sub">위에서 한자가 천천히 내려와요.<br>아래 카드에서 <b>알맞은 뜻</b>을 콕! 눌러요.</p>
+    <button class="btn" id="startBtn">시작하기</button>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="result">
+    <div class="stars" id="stars"></div>
+    <h1 id="resultTitle">참 잘했어요!</h1>
+    <div class="score">맞힌 개수 <b id="finalScore">0</b> / 10</div>
+    <button class="btn" id="againBtn">다시 하기</button>
+  </div>
+</div>
+
+<script>
+/* ===== 한자 데이터 (그림에 가까운 기초 한자) ===== */
+const HANJA = [
+  { ch:"山", ans:"산", wrong:["물","불","나무"] },
+  { ch:"川", ans:"내",  wrong:["불","해","사람"] },
+  { ch:"火", ans:"불", wrong:["물","나무","달"] },
+  { ch:"日", ans:"해", wrong:["달","산","사람"] },
+  { ch:"月", ans:"달", wrong:["해","물","나무"] },
+  { ch:"人", ans:"사람", wrong:["나무","산","불"] },
+  { ch:"木", ans:"나무", wrong:["사람","물","해"] },
+  { ch:"水", ans:"물", wrong:["불","산","달"] },
+];
+
+/* ===== 게임 상태 ===== */
+let queue=[], current=null, qIndex=0, score=0;
+let fallTimer=null, fallPos=0, locked=false;
+const TOTAL=10, MIDLINE=42; // 중간쯤 지점(%)
+
+const $ = s=>document.querySelector(s);
+const faller=$("#faller"), fallerCh=faller.querySelector("span");
+const choicesEl=$("#choices"), toastEl=$("#toast");
+
+/* ===== 소리 (Web Audio API, 외부 파일 없음) ===== */
+let actx=null;
+function beep(freq,dur,type="sine",vol=.25){
+  try{
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=freq;
+    o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(vol,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function soundCorrect(){ beep(660,.12,"triangle"); setTimeout(()=>beep(880,.18,"triangle"),120); }
+function soundWrong(){ beep(200,.25,"sine"); }
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="ko-KR"; u.rate=.9; u.pitch=1.2;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ===== 유틸 ===== */
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildQueue(){
+  // 8개 기초 한자를 섞고, 10문제가 되도록 앞에서 2개를 더 채움
+  const base=shuffle(HANJA);
+  const extra=shuffle(HANJA).slice(0,TOTAL-base.length);
+  queue=base.concat(extra);
+}
+
+/* ===== 화면 전환 ===== */
+function startGame(){
+  buildQueue();
+  qIndex=0; score=0;
+  $("#start").classList.add("hidden");
+  $("#result").classList.remove("show");
+  $("#topbar").classList.remove("hidden");
+  $("#choices").classList.remove("hidden");
+  $("#score").textContent=0;
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(qIndex>=TOTAL){ showResult(); return; }
+  current=queue[qIndex];
+  $("#qnum").textContent=qIndex+1;
+  // 보기 카드 구성
+  const opts=shuffle([current.ans, ...current.wrong]);
+  choicesEl.innerHTML="";
+  opts.forEach(opt=>{
+    const b=document.createElement("button");
+    b.className="choice"; b.textContent=opt;
+    b.onclick=()=>pick(opt,b);
+    choicesEl.appendChild(b);
+  });
+  // 한자 표시 & 떨어뜨리기
+  fallerCh.textContent=current.ch;
+  faller.className=""; faller.style.opacity=1;
+  startFall();
+}
+
+function startFall(){
+  locked=false;
+  fallPos=-18; // 화면 위(%)에서 시작
+  clearInterval(fallTimer);
+  fallTimer=setInterval(()=>{
+    fallPos+=0.55;
+    faller.style.top=fallPos+"%";
+    if(fallPos>=78){ // 너무 아래로 내려옴
+      clearInterval(fallTimer);
+      timeUp();
+    }
+  },40);
+}
+
+/* ===== 정답/오답 ===== */
+function pick(opt,btn){
+  if(locked) return;
+  if(opt===current.ans){
+    locked=true; clearInterval(fallTimer);
+    btn.classList.add("correct");
+    faller.className="win";
+    soundCorrect();
+    showToast(`정답! ${current.ch}은(는) ${current.ans}이에요`);
+    speak(`정답! ${current.ch}은 ${current.ans}이에요`);
+    score++; $("#score").textContent=score;
+    setTimeout(()=>{ qIndex++; nextQuestion(); },1500);
+  } else {
+    btn.classList.add("wrong");
+    soundWrong();
+    showToast("한 번 더 볼까요?");
+    speak("한 번 더 볼까요?");
+    // 같은 한자를 다시 위에서 시작
+    setTimeout(()=>{ btn.classList.remove("wrong"); },600);
+    clearInterval(fallTimer);
+    setTimeout(()=>{ if(!locked) startFall(); },700);
+  }
+}
+
+function timeUp(){
+  if(locked) return;
+  locked=true;
+  soundWrong();
+  // 정답 카드 강조
+  [...choicesEl.children].forEach(b=>{ if(b.textContent===current.ans) b.classList.add("correct"); });
+  showToast(`이건 ${current.ans}이에요`);
+  speak(`이건 ${current.ans}이에요`);
+  setTimeout(()=>{ qIndex++; nextQuestion(); },1700);
+}
+
+function showToast(msg){
+  toastEl.textContent=msg;
+  toastEl.classList.remove("show"); void toastEl.offsetWidth;
+  toastEl.classList.add("show");
+}
+
+/* ===== 결과 ===== */
+function showResult(){
+  clearInterval(fallTimer);
+  $("#topbar").classList.add("hidden");
+  $("#choices").classList.add("hidden");
+  faller.style.opacity=0;
+  const stars = score>=9?"⭐⭐⭐" : score>=6?"⭐⭐" : score>=3?"⭐":"🌱";
+  const title = score>=9?"최고예요!" : score>=6?"참 잘했어요!" : score>=3?"잘했어요!":"또 해볼까요?";
+  $("#stars").textContent=stars;
+  $("#resultTitle").textContent=title;
+  $("#finalScore").textContent=score;
+  $("#result").classList.add("show");
+  speak(`${score}개 맞혔어요. ${title}`);
+}
+
+$("#startBtn").onclick=()=>{ if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} startGame(); };
+$("#againBtn").onclick=startGame;
+</script>
+</body>
+</html>

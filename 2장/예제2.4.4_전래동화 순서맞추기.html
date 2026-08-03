@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>옛이야기 순서 맞추기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fdf6e3;
+    --ink: #5c4326;
+    --accent: #e8743b;
+    --accent2: #4a9d7f;
+    --gold: #f2b705;
+    --soft: #fff;
+    --shadow: rgba(92,67,38,0.22);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Jua', sans-serif;
+    background:
+      radial-gradient(circle at 20% 15%, #fff5dc 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #ffe9cf 0%, transparent 50%),
+      linear-gradient(160deg, #fef3da 0%, #f7e4c3 100%);
+    color: var(--ink);
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 14px 12px 40px;
+    min-height: 100vh;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 30px;
+    color: var(--accent);
+    text-shadow: 2px 2px 0 #fff, 3px 3px 0 var(--shadow);
+    letter-spacing: 1px;
+    margin: 6px 0 2px;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .pill {
+    background: var(--soft);
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 6px 14px;
+    font-size: 18px;
+    box-shadow: 2px 2px 0 var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pill .big { font-size: 22px; color: var(--accent); }
+
+  .storyname {
+    background: var(--accent2);
+    color: #fff;
+    border-radius: 16px;
+    padding: 8px 14px;
+    font-size: 20px;
+    text-align: center;
+    box-shadow: 2px 3px 0 var(--shadow);
+    margin-bottom: 12px;
+    border: 3px solid #fff;
+  }
+
+  .hint {
+    text-align: center;
+    font-family: 'Gaegu', cursive;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 10px;
+    min-height: 24px;
+  }
+
+  /* ---------- scene cards ---------- */
+  .board {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .slot {
+    position: relative;
+  }
+  .card {
+    position: relative;
+    background: var(--soft);
+    border: 4px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 4px 0 var(--shadow);
+    overflow: hidden;
+    cursor: grab;
+    transition: transform .12s ease, box-shadow .12s ease;
+    touch-action: none;
+  }
+  .card:active { cursor: grabbing; }
+  .card.dragging {
+    opacity: .35;
+  }
+  .card.floating {
+    position: fixed;
+    z-index: 999;
+    pointer-events: none;
+    box-shadow: 6px 10px 0 var(--shadow);
+    transform: rotate(-3deg) scale(1.04);
+    opacity: .95;
+  }
+  .card.dropzone-over {
+    box-shadow: 0 0 0 4px var(--gold), 3px 4px 0 var(--shadow);
+    transform: scale(1.03);
+  }
+  .card svg { display: block; width: 100%; height: auto; }
+
+  /* order badge tappable */
+  .order-badge {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    color: var(--ink);
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 0 var(--shadow);
+  }
+  .order-badge.empty {
+    background: #fff;
+    color: #c9b48f;
+    border-style: dashed;
+  }
+  .scene-caption {
+    position: absolute;
+    top: 6px; left: 6px; right: 6px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--ink);
+    background: rgba(255,255,255,.78);
+    border-radius: 10px;
+    padding: 1px 4px;
+    font-family: 'Gaegu', cursive;
+    font-weight: 700;
+  }
+  .card.wrong-shake { animation: shake .45s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+  .card.wrong-mark { box-shadow: 0 0 0 4px #e85b5b, 3px 4px 0 var(--shadow); }
+  .card.right-pop { animation: pop .4s ease; box-shadow: 0 0 0 4px var(--accent2), 3px 4px 0 var(--shadow); }
+  @keyframes pop {
+    0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)}
+  }
+
+  /* ---------- buttons ---------- */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  button.act {
+    flex: 1;
+    font-family: 'Jua', sans-serif;
+    font-size: 22px;
+    padding: 16px 0;
+    border-radius: 20px;
+    border: 4px solid var(--ink);
+    box-shadow: 3px 4px 0 var(--shadow);
+    cursor: pointer;
+    transition: transform .08s ease;
+  }
+  button.act:active { transform: translate(2px,3px); box-shadow: 1px 1px 0 var(--shadow); }
+  .btn-check { background: var(--accent); color: #fff; }
+  .btn-reset { background: #fff; color: var(--ink); }
+
+  /* ---------- overlay ---------- */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(60,40,20,.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; animation: fade .3s ease; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+  .modal {
+    background: var(--paper);
+    border: 5px solid var(--ink);
+    border-radius: 26px;
+    padding: 26px 22px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 6px 8px 0 var(--shadow);
+    animation: drop .4s cubic-bezier(.2,1.4,.5,1);
+  }
+  @keyframes drop { from{transform:translateY(-40px) scale(.9); opacity:0} to{transform:none; opacity:1} }
+  .modal h2 { font-size: 30px; color: var(--accent); margin: 6px 0 10px; }
+  .modal p { font-family:'Gaegu',cursive; font-weight:700; font-size: 19px; margin: 6px 0 16px; }
+  .modal .emoji { font-size: 50px; }
+  .filmstrip {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 10px 0 16px;
+    flex-wrap: wrap;
+  }
+  .filmstrip .mini {
+    width: 60px; height: 60px;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    overflow: hidden;
+    background:#fff;
+    opacity: 0;
+    transform: scale(.4);
+  }
+  .filmstrip .mini.in { animation: miniIn .4s forwards; }
+  @keyframes miniIn { to { opacity:1; transform:scale(1);} }
+  .filmstrip .mini svg { width:100%; height:100%; }
+
+  .confetti {
+    position: fixed; top: -10px;
+    width: 12px; height: 16px;
+    z-index: 3000;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">📖 옛이야기 순서 맞추기</div>
+    <div class="topbar">
+      <div class="pill">⭐ <span>점수</span> <span class="big" id="score">0</span></div>
+      <div class="pill">📚 <span id="storyIndex">1 / 4</span></div>
+    </div>
+  </header>
+
+  <div class="storyname" id="storyName">이야기 이름</div>
+  <div class="hint" id="hint">그림을 끌어 옮기거나, 아래 번호를 눌러 순서를 정해요!</div>
+
+  <div class="board" id="board"></div>
+
+  <div class="actions">
+    <button class="act btn-reset" id="resetBtn">🔄 다시 섞기</button>
+    <button class="act btn-check" id="checkBtn">✅ 확인</button>
+  </div>
+</div>
+
+<!-- overlay -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* ============================================================
+   장면 그림(SVG)들. 각 이야기는 장면 4~5개로 구성.
+   scenes 배열의 "순서대로"가 정답.
+============================================================ */
+
+function svgWrap(inner){
+  return '<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';
+}
+// 공통 하늘+풀 배경
+function bg(sky, ground){
+  return '<rect width="200" height="160" fill="'+(sky||'#bfe7ff')+'"/>'+
+         '<rect y="120" width="200" height="40" fill="'+(ground||'#9bd66e')+'"/>';
+}
+function sun(){ return '<circle cx="172" cy="26" r="16" fill="#ffd23f"/>'; }
+function cloud(x,y){ return '<ellipse cx="'+x+'" cy="'+y+'" rx="20" ry="11" fill="#fff"/><ellipse cx="'+(x+16)+'" cy="'+y+'" rx="14" ry="9" fill="#fff"/>'; }
+function tree(x){ return '<rect x="'+(x-4)+'" y="95" width="8" height="30" fill="#9b6a3c"/><circle cx="'+x+'" cy="92" r="20" fill="#5aa84f"/>'; }
+function moon(){ return '<circle cx="170" cy="28" r="15" fill="#fdf6c8"/><circle cx="176" cy="24" r="13" fill="#bfe7ff" opacity="0"/>'; }
+
+/* --- 캐릭터 조각들 --- */
+function rabbit(x,y,s,sleep){
+  s=s||1;
+  var ear = '<ellipse cx="'+(x-4*s)+'" cy="'+(y-16*s)+'" rx="'+(4*s)+'" ry="'+(11*s)+'" fill="#fff" stroke="#c9a" stroke-width="1"/>'+
+            '<ellipse cx="'+(x+4*s)+'" cy="'+(y-16*s)+'" rx="'+(4*s)+'" ry="'+(11*s)+'" fill="#fff" stroke="#c9a" stroke-width="1"/>';
+  var body = '<ellipse cx="'+x+'" cy="'+(y+8*s)+'" rx="'+(13*s)+'" ry="'+(11*s)+'" fill="#fff" stroke="#ddd" stroke-width="1"/>';
+  var head = '<circle cx="'+x+'" cy="'+y+'" r="'+(10*s)+'" fill="#fff" stroke="#ddd" stroke-width="1"/>';
+  var face = sleep
+    ? '<path d="M'+(x-5*s)+' '+(y-1*s)+' q3 3 6 0" stroke="#555" stroke-width="1.4" fill="none"/>'+
+      '<path d="M'+(x+1*s)+' '+(y-1*s)+' q3 3 6 0" stroke="#555" stroke-width="1.4" fill="none"/>'+
+      '<text x="'+(x+12*s)+'" y="'+(y-8*s)+'" font-size="'+(10*s)+'" fill="#3a6">z</text>'
+    : '<circle cx="'+(x-4*s)+'" cy="'+(y-1*s)+'" r="1.6" fill="#333"/><circle cx="'+(x+4*s)+'" cy="'+(y-1*s)+'" r="1.6" fill="#333"/>'+
+      '<ellipse cx="'+x+'" cy="'+(y+3*s)+'" rx="2" ry="1.4" fill="#f4a"/>';
+  return ear+body+head+face;
+}
+function turtle(x,y,s){
+  s=s||1;
+  return '<ellipse cx="'+x+'" cy="'+(y+4*s)+'" rx="'+(14*s)+'" ry="'+(9*s)+'" fill="#4a9d4a"/>'+
+         '<ellipse cx="'+x+'" cy="'+(y+1*s)+'" rx="'+(11*s)+'" ry="'+(7*s)+'" fill="#7bc47b"/>'+
+         '<path d="M'+(x-6*s)+' '+(y-2*s)+' h12 M'+x+' '+(y-5*s)+' v12" stroke="#3a7a3a" stroke-width="1.2"/>'+
+         '<circle cx="'+(x+15*s)+'" cy="'+y+'" r="'+(5*s)+'" fill="#7bc47b"/>'+
+         '<circle cx="'+(x+17*s)+'" cy="'+(y-1*s)+'" r="1.3" fill="#222"/>';
+}
+function flag(x){ return '<rect x="'+x+'" y="70" width="3" height="55" fill="#774"/><path d="M'+(x+3)+' 70 l18 6 -18 6 z" fill="#e8743b"/>'; }
+
+/* =========================================================
+   토끼와 거북이
+========================================================= */
+var tortoiseHare = {
+  name: '🐢 토끼와 거북이',
+  scenes: [
+    { cap:'출발!', svg: svgWrap(bg()+sun()+cloud(40,30)+flag(150)+rabbit(60,95,1)+turtle(95,108,1)) },
+    { cap:'토끼가 앞서가요', svg: svgWrap(bg()+sun()+tree(160)+rabbit(120,90,1.1)+turtle(40,110,0.9)) },
+    { cap:'토끼가 잠들어요', svg: svgWrap(bg()+sun()+tree(150)+rabbit(70,100,1.1,true)+turtle(120,110,0.9)) },
+    { cap:'거북이 도착!', svg: svgWrap(bg()+sun()+flag(150)+'<path d="M150 72 l-8 6 8 6z" fill="#fff"/>'+turtle(140,108,1.1)+rabbit(50,100,0.9,true)) }
+  ]
+};
+
+/* =========================================================
+   해님 달님 (간단 4장면)
+========================================================= */
+function tiger(x,y,s){ s=s||1;
+  return '<ellipse cx="'+x+'" cy="'+(y+6*s)+'" rx="'+(14*s)+'" ry="'+(10*s)+'" fill="#f6a623"/>'+
+         '<circle cx="'+x+'" cy="'+y+'" r="'+(9*s)+'" fill="#f6a623"/>'+
+         '<path d="M'+(x-9*s)+' '+(y-6*s)+' l3 5 M'+(x+9*s)+' '+(y-6*s)+' l-3 5" stroke="#a85" stroke-width="2"/>'+
+         '<circle cx="'+(x-3*s)+'" cy="'+(y-1*s)+'" r="1.5" fill="#222"/><circle cx="'+(x+3*s)+'" cy="'+(y-1*s)+'" r="1.5" fill="#222"/>'+
+         '<path d="M'+(x-4*s)+' '+(y+4*s)+' q4 3 8 0" stroke="#a85" stroke-width="1.4" fill="none"/>'; }
+function kids(x,y){ return '<circle cx="'+x+'" cy="'+y+'" r="7" fill="#ffd9b3"/><rect x="'+(x-6)+'" y="'+(y+5)+'" width="12" height="16" rx="4" fill="#e85b5b"/>'+
+  '<circle cx="'+(x+16)+'" cy="'+y+'" r="7" fill="#ffd9b3"/><rect x="'+(x+10)+'" y="'+(y+5)+'" width="12" height="16" rx="4" fill="#4a9d7f"/>'; }
+
+var sunMoon = {
+  name: '🌞 해님 달님',
+  scenes: [
+    { cap:'엄마가 떡을 이고 가요', svg: svgWrap(bg('#cdeeff')+sun()+tree(30)+'<circle cx="110" cy="95" r="8" fill="#ffd9b3"/><rect x="103" y="100" width="14" height="20" rx="5" fill="#7e57c2"/><rect x="104" y="78" width="12" height="8" fill="#fff" stroke="#ccc"/>') },
+    { cap:'호랑이가 나타나요', svg: svgWrap(bg('#bcd9ef')+tree(170)+tiger(70,95,1.3)) },
+    { cap:'남매가 나무 위로', svg: svgWrap(bg('#bcd9ef')+'<rect x="92" y="40" width="14" height="85" fill="#9b6a3c"/><circle cx="99" cy="45" r="30" fill="#5aa84f"/>'+kids(80,48)+tiger(70,118,0.9)) },
+    { cap:'하늘로 올라가 해와 달이 돼요', svg: svgWrap(bg('#3a4a7a','#2a3a5a')+'<circle cx="55" cy="40" r="18" fill="#ffd23f"/><circle cx="150" cy="45" r="15" fill="#fdf6c8"/>'+kids(80,90)) }
+  ]
+};
+
+/* =========================================================
+   흥부와 놀부 (제비/박)
+========================================================= */
+function swallow(x,y){ return '<ellipse cx="'+x+'" cy="'+y+'" rx="9" ry="4" fill="#3a3a5a"/><path d="M'+(x-9)+' '+y+' l-6 -5 M'+(x-9)+' '+y+' l-6 5" stroke="#3a3a5a" stroke-width="2"/><circle cx="'+(x+8)+'" cy="'+(y-1)+'" r="3" fill="#3a3a5a"/><path d="M'+(x+8)+' '+(y+3)+' l0 5" stroke="#3a3a5a"/>'; }
+function house(x){ return '<rect x="'+(x-18)+'" y="100" width="36" height="25" fill="#e8d3a0"/><path d="M'+(x-22)+' 100 l22 -14 22 14z" fill="#8a5a2b"/>'; }
+function gourd(x,y,open){ var g='<ellipse cx="'+x+'" cy="'+y+'" rx="16" ry="14" fill="#bdd66e"/>';
+  if(open) g+='<path d="M'+(x-16)+' '+y+' a16 14 0 0 0 32 0" fill="#f2e6a0"/><circle cx="'+x+'" cy="'+(y-2)+'" r="6" fill="#f2b705"/>';
+  return g; }
+
+var heungbu = {
+  name: '🐦 흥부와 놀부',
+  scenes: [
+    { cap:'흥부가 제비를 도와줘요', svg: svgWrap(bg()+sun()+house(150)+'<circle cx="70" cy="90" r="9" fill="#ffd9b3"/><rect x="63" y="95" width="14" height="22" rx="5" fill="#4a9d7f"/>'+swallow(70,70)) },
+    { cap:'제비가 박씨를 물어와요', svg: svgWrap(bg()+sun()+cloud(150,40)+swallow(100,60)+'<circle cx="100" cy="48" r="3" fill="#8a5"/>'+house(50)) },
+    { cap:'박에서 보물이!', svg: svgWrap(bg()+sun()+house(150)+gourd(70,100,true)+'<circle cx="70" cy="78" r="9" fill="#ffd9b3"/><rect x="63" y="83" width="14" height="14" rx="4" fill="#4a9d7f"/>') },
+    { cap:'흥부가 부자가 돼요', svg: svgWrap(bg('#fff0c8')+sun()+'<rect x="80" y="60" width="60" height="55" fill="#f2d28a"/><path d="M75 60 l35 -20 35 20z" fill="#b9822b"/><rect x="100" y="90" width="18" height="25" fill="#8a5a2b"/>'+'<circle cx="50" cy="95" r="9" fill="#ffd9b3"/><rect x="43" y="100" width="14" height="20" rx="5" fill="#f2b705"/>') }
+  ]
+};
+
+/* =========================================================
+   콩쥐 팥쥐 (간단 4장면)
+========================================================= */
+function girl(x,y,c){ return '<circle cx="'+x+'" cy="'+y+'" r="8" fill="#ffd9b3"/><path d="M'+(x-9)+' '+(y-2)+' a9 9 0 0 1 18 0 z" fill="#2a2a3a"/><rect x="'+(x-8)+'" y="'+(y+6)+'" width="16" height="22" rx="6" fill="'+(c||'#e85b5b')+'"/>'; }
+
+var kongjwi = {
+  name: '👧 콩쥐 팥쥐',
+  scenes: [
+    { cap:'콩쥐가 일을 해요', svg: svgWrap(bg()+sun()+house(150)+girl(70,90,'#bd7a3a')+'<rect x="58" y="112" width="24" height="6" fill="#9b6a3c"/>') },
+    { cap:'두꺼비가 도와줘요', svg: svgWrap(bg()+sun()+girl(120,90,'#bd7a3a')+'<ellipse cx="70" cy="118" rx="14" ry="8" fill="#8aa84f"/><circle cx="62" cy="113" r="3" fill="#5a7a2f"/><circle cx="78" cy="113" r="3" fill="#5a7a2f"/>') },
+    { cap:'잔치에 가요', svg: svgWrap(bg('#ffe6f0')+sun()+'<rect x="60" y="60" width="80" height="50" fill="#f2c6d6"/><path d="M55 60 l45 -18 45 18z" fill="#c95a8a"/>'+girl(95,90,'#e85b5b')) },
+    { cap:'콩쥐가 행복해져요', svg: svgWrap(bg('#fff0c8')+sun()+cloud(40,34)+girl(85,88,'#e85b5b')+'<path d="M70 70 l6 8 6 -8z" fill="#f2b705"/><path d="M98 70 l6 8 6 -8z" fill="#f2b705"/>') }
+  ]
+};
+
+var STORIES = [tortoiseHare, sunMoon, heungbu, kongjwi];
+
+/* ============================================================
+   게임 로직
+============================================================ */
+var board = document.getElementById('board');
+var scoreEl = document.getElementById('score');
+var storyNameEl = document.getElementById('storyName');
+var storyIndexEl = document.getElementById('storyIndex');
+var hintEl = document.getElementById('hint');
+var overlay = document.getElementById('overlay');
+var modal = document.getElementById('modal');
+
+var score = 0;
+var storyOrder = shuffle(STORIES.map(function(_,i){return i;}));
+var storyPos = 0;          // storyOrder 안에서의 위치
+var current;               // 현재 이야기
+var arrangement = [];      // 현재 배치된 장면(원래 인덱스) 배열
+
+function shuffle(a){
+  a = a.slice();
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
+  return a;
+}
+
+function loadStory(){
+  current = STORIES[storyOrder[storyPos]];
+  storyNameEl.textContent = current.name;
+  storyIndexEl.textContent = (storyPos+1) + ' / ' + STORIES.length;
+  // 정답이 그대로 나오지 않게 섞기
+  var ids = current.scenes.map(function(_,i){return i;});
+  do { arrangement = shuffle(ids); } while(isSorted(arrangement) && ids.length>1);
+  hintEl.textContent = '그림을 끌어 옮기거나, 아래 번호를 눌러 순서를 정해요!';
+  render();
+}
+
+function isSorted(arr){
+  for(var i=0;i<arr.length;i++){ if(arr[i]!==i) return false; }
+  return true;
+}
+
+function render(){
+  board.innerHTML = '';
+  arrangement.forEach(function(sceneId, pos){
+    var slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.dataset.pos = pos;
+
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.pos = pos;
+    card.innerHTML = current.scenes[sceneId].svg +
+      '<div class="scene-caption">'+current.scenes[sceneId].cap+'</div>' +
+      '<div class="order-badge '+((pos+1)? '':'empty')+'">'+(pos+1)+'</div>';
+
+    attachDrag(card);
+    // 번호 배지 탭 → 위치 입력으로 이동
+    card.querySelector('.order-badge').addEventListener('click', function(e){
+      e.stopPropagation();
+      promptMove(pos);
+    });
+
+    slot.appendChild(card);
+    board.appendChild(slot);
+  });
+}
+
+/* ---- 번호 눌러 옮기기 ---- */
+function promptMove(pos){
+  var n = current.scenes.length;
+  var ans = window.prompt('이 그림을 몇 번째에 놓을까요? (1 ~ '+n+')', String(pos+1));
+  if(ans===null) return;
+  var target = parseInt(ans,10)-1;
+  if(isNaN(target) || target<0 || target>=n) return;
+  moveCard(pos, target);
+  render();
+}
+
+function moveCard(from, to){
+  if(from===to) return;
+  var item = arrangement.splice(from,1)[0];
+  arrangement.splice(to,0,item);
+}
+
+/* ---- 드래그(터치/마우스) ---- */
+var dragState = null;
+function attachDrag(card){
+  card.addEventListener('pointerdown', startDrag);
+}
+function startDrag(e){
+  // 배지 누른 경우는 무시
+  if(e.target.classList.contains('order-badge')) return;
+  var card = e.currentTarget;
+  var rect = card.getBoundingClientRect();
+  dragState = {
+    card: card,
+    fromPos: parseInt(card.dataset.pos,10),
+    offX: e.clientX - rect.left,
+    offY: e.clientY - rect.top,
+    w: rect.width, h: rect.height,
+    moved: false
+  };
+  card.setPointerCapture(e.pointerId);
+  card.classList.add('dragging');
+  document.addEventListener('pointermove', onDrag);
+  document.addEventListener('pointerup', endDrag);
+}
+function onDrag(e){
+  if(!dragState) return;
+  dragState.moved = true;
+  var c = dragState.ghost;
+  if(!c){
+    // 떠다니는 복제본 생성
+    c = dragState.card.cloneNode(true);
+    c.classList.remove('dragging');
+    c.classList.add('floating');
+    c.style.width = dragState.w + 'px';
+    document.body.appendChild(c);
+    dragState.ghost = c;
+  }
+  c.style.left = (e.clientX - dragState.offX) + 'px';
+  c.style.top  = (e.clientY - dragState.offY) + 'px';
+
+  // 어떤 카드 위인지 표시
+  clearOver();
+  var over = cardUnder(e.clientX, e.clientY);
+  if(over) over.classList.add('dropzone-over');
+}
+function cardUnder(x,y){
+  var cards = board.querySelectorAll('.card');
+  for(var i=0;i<cards.length;i++){
+    var r = cards[i].getBoundingClientRect();
+    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return cards[i];
+  }
+  return null;
+}
+function clearOver(){
+  board.querySelectorAll('.dropzone-over').forEach(function(c){c.classList.remove('dropzone-over');});
+}
+function endDrag(e){
+  if(!dragState) return;
+  document.removeEventListener('pointermove', onDrag);
+  document.removeEventListener('pointerup', endDrag);
+  var ds = dragState;
+  dragState = null;
+  ds.card.classList.remove('dragging');
+  if(ds.ghost) ds.ghost.remove();
+  clearOver();
+
+  if(ds.moved){
+    var over = cardUnder(e.clientX, e.clientY);
+    if(over){
+      var toPos = parseInt(over.dataset.pos,10);
+      moveCard(ds.fromPos, toPos);
+    }
+  } else {
+    // 그냥 탭하면 한 칸 뒤로? -> 안내만
+    hintEl.textContent = '그림을 꾹 눌러서 다른 그림 위로 끌어 보세요!';
+  }
+  render();
+}
+
+/* ---- 확인 ---- */
+document.getElementById('checkBtn').addEventListener('click', check);
+document.getElementById('resetBtn').addEventListener('click', function(){
+  loadStory();
+});
+
+function check(){
+  beep(660,0.08);
+  var cards = board.querySelectorAll('.card');
+  cards.forEach(function(c){ c.classList.remove('wrong-shake','wrong-mark','right-pop'); });
+
+  if(isSorted(arrangement)){
+    // 정답
+    cards.forEach(function(c,i){
+      setTimeout(function(){ c.classList.add('right-pop'); beep(523+i*90,0.1); }, i*180);
+    });
+    score++;
+    scoreEl.textContent = score;
+    speak('이야기 완성! 정말 잘했어요!');
+    setTimeout(showWin, cards.length*180 + 300);
+  } else {
+    // 틀린 위치 표시
+    var firstWrong = -1;
+    arrangement.forEach(function(id,pos){
+      if(id!==pos){
+        cards[pos].classList.add('wrong-shake','wrong-mark');
+        if(firstWrong<0) firstWrong = pos;
+      }
+    });
+    beep(200,0.2);
+    var msg = '거의 다 왔어요! ';
+    if(firstWrong>=0){
+      msg += (firstWrong+1)+'번째 자리 그림을 다시 옮겨 볼까요?';
+    }
+    hintEl.textContent = '🤔 ' + msg;
+    speak('조금 달라요. 다시 해볼까요?');
+  }
+}
+
+/* ---- 정답 모달 ---- */
+function showWin(){
+  launchConfetti();
+  var strip = '';
+  current.scenes.forEach(function(s,i){
+    strip += '<div class="mini" data-i="'+i+'">'+s.svg+'</div>';
+  });
+  var last = (storyPos >= STORIES.length-1);
+  modal.innerHTML =
+    '<div class="emoji">🎉</div>'+
+    '<h2>이야기 완성!</h2>'+
+    '<p>'+current.name+' 순서를 맞혔어요!</p>'+
+    '<div class="filmstrip">'+strip+'</div>'+
+    '<p>⭐ 점수: '+score+'점</p>'+
+    '<button class="act btn-check" id="nextBtn" style="width:100%">'+
+      (last ? '🏆 처음부터 다시!' : '다음 이야기 ▶')+
+    '</button>';
+  overlay.classList.add('show');
+
+  // 필름 차례로 등장
+  var minis = modal.querySelectorAll('.mini');
+  minis.forEach(function(m,i){ setTimeout(function(){ m.classList.add('in'); beep(500+i*100,0.08); }, 250+i*250); });
+
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    overlay.classList.remove('show');
+    if(last){ storyOrder = shuffle(STORIES.map(function(_,i){return i;})); storyPos=0; }
+    else { storyPos++; }
+    loadStory();
+  });
+}
+
+/* ---- 소리 ---- */
+var actx;
+function beep(freq, dur){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.18, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function speak(text){
+  try{
+    if(!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang='ko-KR'; u.rate=1; u.pitch=1.2;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---- 꽃가루 ---- */
+function launchConfetti(){
+  var colors=['#e8743b','#f2b705','#4a9d7f','#e85b5b','#7e57c2'];
+  for(var i=0;i<40;i++){
+    (function(){
+      var d=document.createElement('div');
+      d.className='confetti';
+      d.style.left=Math.random()*100+'vw';
+      d.style.background=colors[Math.floor(Math.random()*colors.length)];
+      d.style.borderRadius = Math.random()<.5?'50%':'2px';
+      document.body.appendChild(d);
+      var dur=1800+Math.random()*1400;
+      var rot=Math.random()*720-360;
+      d.animate([
+        {transform:'translateY(0) rotate(0deg)',opacity:1},
+        {transform:'translateY(110vh) rotate('+rot+'deg)',opacity:.9}
+      ],{duration:dur,easing:'cubic-bezier(.3,.7,.5,1)'});
+      setTimeout(function(){d.remove();},dur);
+    })();
+  }
+}
+
+/* 시작 */
+loadStory();
+</script>
+</body>
+</html>

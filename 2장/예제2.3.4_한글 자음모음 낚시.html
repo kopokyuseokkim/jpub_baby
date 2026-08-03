@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>한글 물고기 연못</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html, body { height:100%; overflow:hidden; }
+  body {
+    font-family:'Jua', sans-serif;
+    background: linear-gradient(180deg, #bdeaff 0%, #8fd3f4 40%, #5bb8e8 100%);
+    display:flex; flex-direction:column; align-items:center;
+    touch-action:manipulation;
+  }
+
+  /* 상단 글자 만들기 영역 */
+  #target {
+    width:100%; padding:10px 10px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    z-index:5;
+  }
+  #prompt { font-size:20px; color:#1a6a9e; }
+  #goal-wrap {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:#fff; border-radius:22px; padding:6px 24px 10px;
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+  }
+  #goal-label { font-size:16px; color:#1a6a9e; }
+  #goal-char { font-size:72px; color:#e85d04; line-height:1; }
+  #slots { display:flex; align-items:center; gap:8px; }
+  .slot {
+    width:74px; height:90px; border-radius:18px;
+    background:rgba(255,255,255,0.55);
+    border:4px dashed #fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:58px; color:#2b6cb0;
+    transition:transform .2s, background .2s;
+  }
+  .slot.filled { background:#fff; border-style:solid; border-color:#ffd166; }
+  .slot.pop { animation:pop .35s ease; }
+  .plus { font-size:34px; color:#fff; }
+  .equal { font-size:34px; color:#fff; }
+  #result-char {
+    width:90px; height:96px; border-radius:18px;
+    background:rgba(255,255,255,0.3); border:4px dashed #fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:66px; color:#e85d04;
+  }
+  #result-char.show { background:#fff3cd; border-style:solid; border-color:#ffb703; }
+  #result-char.pop { animation:pop .4s ease; }
+  @keyframes pop { 0%{transform:scale(.4)} 60%{transform:scale(1.25)} 100%{transform:scale(1)} }
+
+  /* 메시지 */
+  #msg {
+    min-height:32px; font-size:22px; color:#fff;
+    text-shadow:1px 1px 3px rgba(0,0,0,.25); text-align:center; padding:0 10px;
+  }
+
+  /* 점수 */
+  #score {
+    position:absolute; top:10px; right:14px;
+    background:#fff; border-radius:20px; padding:6px 14px;
+    font-size:18px; color:#e85d04; box-shadow:0 3px 6px rgba(0,0,0,.15); z-index:6;
+  }
+
+  /* 연못 */
+  #pond {
+    position:relative; width:100%; flex:1;
+    overflow:hidden;
+  }
+  .fish {
+    position:absolute; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s;
+  }
+  .fish svg { width:100%; height:100%; display:block; filter:drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
+  .fish .letter {
+    position:absolute; font-size:34px; color:#fff;
+    text-shadow:1px 1px 2px rgba(0,0,0,.3); pointer-events:none;
+    left:42%; top:50%; transform:translate(-50%,-50%);
+  }
+  .fish.tapped { transform:scale(.85)!important; }
+  .fish.caught { animation:caught .4s forwards; }
+  @keyframes caught { to { transform:scale(0); opacity:0; } }
+
+  /* 결과 화면 */
+  #end {
+    position:absolute; inset:0; background:rgba(0,40,70,.75);
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; z-index:20; color:#fff; text-align:center; padding:20px;
+  }
+  #end.show { display:flex; }
+  #end h1 { font-size:40px; }
+  #end .stars { font-size:46px; }
+  #end p { font-size:26px; }
+  .btn {
+    font-family:'Jua', sans-serif; font-size:28px; color:#fff;
+    background:#ff8800; border:none; border-radius:30px;
+    padding:16px 40px; box-shadow:0 5px 0 #cc6d00; cursor:pointer;
+  }
+  .btn:active { transform:translateY(4px); box-shadow:0 1px 0 #cc6d00; }
+
+  .bubble { position:absolute; border-radius:50%; background:rgba(255,255,255,.4); pointer-events:none; animation:rise linear infinite; }
+  @keyframes rise { from{ transform:translateY(0); opacity:.6 } to{ transform:translateY(-100vh); opacity:0 } }
+</style>
+</head>
+<body>
+  <div id="score">⭐ 0</div>
+
+  <div id="target">
+    <div id="prompt">이 글자를 만들어요!</div>
+    <div id="goal-wrap">
+      <div id="goal-label">만들 글자</div>
+      <div id="goal-char">가</div>
+    </div>
+    <div id="slots">
+      <div class="slot" id="slot-c"></div>
+      <span class="plus">＋</span>
+      <div class="slot" id="slot-v"></div>
+      <span class="equal">＝</span>
+      <div id="result-char"></div>
+    </div>
+  </div>
+
+  <div id="msg">자음 물고기를 먼저 잡아요 🐟</div>
+
+  <div id="pond"></div>
+
+  <div id="end">
+    <h1>참 잘했어요!</h1>
+    <div class="stars" id="end-stars"></div>
+    <p id="end-score"></p>
+    <button class="btn" onclick="restart()">다시 하기</button>
+  </div>
+
+<script>
+// ===== 게임 데이터 =====
+// 받침 없는 짧은 글자 10개 (자음 + 모음)
+const WORDS = [
+  {c:'ㄱ', v:'ㅏ', char:'가'},
+  {c:'ㄴ', v:'ㅏ', char:'나'},
+  {c:'ㄷ', v:'ㅗ', char:'도'},
+  {c:'ㅁ', v:'ㅜ', char:'무'},
+  {c:'ㅂ', v:'ㅓ', char:'버'},
+  {c:'ㅅ', v:'ㅗ', char:'소'},
+  {c:'ㅈ', v:'ㅜ', char:'주'},
+  {c:'ㅋ', v:'ㅏ', char:'카'},
+  {c:'ㅌ', v:'ㅓ', char:'터'},
+  {c:'ㅎ', v:'ㅗ', char:'호'},
+];
+
+const ALL_C = ['ㄱ','ㄴ','ㄷ','ㅁ','ㅂ','ㅅ','ㅈ','ㅋ','ㅌ','ㅎ'];
+const ALL_V = ['ㅏ','ㅓ','ㅗ','ㅜ'];
+const COLORS_C = ['#ff6b6b','#ff9f43','#ee5253','#ff7979'];
+const COLORS_V = ['#54a0ff','#5f27cd','#48dbfb','#0abde3'];
+
+let order = [], idx = 0, score = 0;
+let pickedC = null, pickedV = null, busy = false;
+
+const slotC = document.getElementById('slot-c');
+const slotV = document.getElementById('slot-v');
+const resultChar = document.getElementById('result-char');
+const pond = document.getElementById('pond');
+const msg = document.getElementById('msg');
+const scoreEl = document.getElementById('score');
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// 물고기 SVG 모양
+function fishSVG(color, flip){
+  return `<svg viewBox="0 0 120 80">
+    <g transform="${flip?'scale(-1,1) translate(-120,0)':''}">
+      <path d="M85 40 L115 18 L110 40 L115 62 Z" fill="${color}"/>
+      <ellipse cx="48" cy="40" rx="45" ry="30" fill="${color}"/>
+      <circle cx="20" cy="32" r="6" fill="#fff"/>
+      <circle cx="18" cy="32" r="3" fill="#222"/>
+      <path d="M55 18 Q65 8 75 18" stroke="${color}" stroke-width="6" fill="none"/>
+    </g>
+  </svg>`;
+}
+
+function speak(t){
+  try{ const u=new SpeechSynthesisUtterance(t); u.lang='ko-KR'; u.rate=.9; speechSynthesis.cancel(); speechSynthesis.speak(u);}catch(e){}
+}
+
+// 글자 합치기 (자음+모음 -> 글자)
+function combine(c, v){
+  const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const JUNG=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+  const ci=CHO.indexOf(c), vi=JUNG.indexOf(v);
+  if(ci<0||vi<0) return '';
+  return String.fromCharCode(0xAC00 + (ci*21 + vi)*28);
+}
+
+function setupRound(){
+  busy=false; pickedC=null; pickedV=null;
+  const w = order[idx];
+
+  // 슬롯 초기화
+  slotC.textContent=''; slotC.className='slot';
+  slotV.textContent=''; slotV.className='slot';
+  resultChar.textContent=''; resultChar.className='';
+  document.getElementById('goal-char').textContent = w.char;
+  msg.textContent='자음 물고기를 먼저 잡아요 🐟';
+  document.getElementById('prompt').textContent = `(${idx+1}/10) 이 글자를 만들어요!`;
+
+  // 정답 + 다른 보기로 자음/모음 후보 만들기
+  let cands_c = shuffle(ALL_C.filter(x=>x!==w.c)).slice(0,3).concat([w.c]);
+  let cands_v = shuffle(ALL_V.filter(x=>x!==w.v)).slice(0,3).concat([w.v]);
+  cands_c = shuffle(cands_c); cands_v = shuffle(cands_v);
+
+  // 물고기 배치
+  pond.innerHTML='';
+  const items = cands_c.map((l,i)=>({l,type:'c',color:COLORS_C[i%COLORS_C.length]}))
+    .concat(cands_v.map((l,i)=>({l,type:'v',color:COLORS_V[i%COLORS_V.length]})));
+  const shuffled = shuffle(items);
+
+  const pw = pond.clientWidth, ph = pond.clientHeight;
+  const fw = Math.min(140, pw*0.4), fh = fw*0.62;
+  const cols = 2, rows = 4;
+  shuffled.forEach((it,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    const cellW=pw/cols, cellH=ph/rows;
+    const jitterX=(Math.random()-.5)*(cellW-fw)*0.6;
+    const jitterY=(Math.random()-.5)*(cellH-fh)*0.5;
+    const x=col*cellW + cellW/2 - fw/2 + jitterX;
+    const y=row*cellH + cellH/2 - fh/2 + jitterY;
+    const flip = x < pw/2;
+
+    const f=document.createElement('div');
+    f.className='fish';
+    f.style.width=fw+'px'; f.style.height=fh+'px';
+    f.style.left=Math.max(2,Math.min(pw-fw-2,x))+'px';
+    f.style.top=Math.max(2,Math.min(ph-fh-2,y))+'px';
+    f.innerHTML = fishSVG(it.color, flip) + `<span class="letter" style="${flip?'left:58%':''}">${it.l}</span>`;
+    f.dataset.letter=it.l; f.dataset.type=it.type;
+    // 둥실둥실 떠다니는 효과
+    f.animate([
+      {transform:'translateY(0)'},{transform:`translateY(${6+Math.random()*6}px)`},{transform:'translateY(0)'}
+    ],{duration:2000+Math.random()*1500, iterations:Infinity});
+    f.addEventListener('click', ()=>tapFish(f));
+    pond.appendChild(f);
+  });
+}
+
+function tapFish(f){
+  if(busy) return;
+  const type=f.dataset.type, letter=f.dataset.letter;
+  f.classList.add('tapped');
+  setTimeout(()=>f.classList.remove('tapped'),120);
+  speak(letter);
+
+  if(type==='c'){
+    pickedC=letter;
+    slotC.textContent=letter; slotC.classList.add('filled','pop');
+    setTimeout(()=>slotC.classList.remove('pop'),350);
+    msg.textContent='이제 모음 물고기를 잡아요 🐠';
+  } else {
+    pickedV=letter;
+    slotV.textContent=letter; slotV.classList.add('filled','pop');
+    setTimeout(()=>slotV.classList.remove('pop'),350);
+    if(!pickedC){ msg.textContent='먼저 자음 물고기를 잡아요 🐟'; return; }
+  }
+
+  // 둘 다 골랐으면 합치기
+  if(pickedC && pickedV) check();
+}
+
+function check(){
+  busy=true;
+  const w=order[idx];
+  const made=combine(pickedC,pickedV);
+  resultChar.textContent=made;
+  resultChar.classList.add('show','pop');
+
+  if(pickedC===w.c && pickedV===w.v){
+    score++; scoreEl.textContent='⭐ '+score;
+    msg.textContent=`정답! ${pickedC}과(와) ${pickedV}이(가) 만나 ${made}이(가) 됐어요!`;
+    speak(`${made}. 정답이에요!`);
+    setTimeout(()=>{
+      idx++;
+      if(idx>=order.length) showEnd();
+      else setupRound();
+    },1800);
+  } else {
+    msg.textContent='다른 짝을 찾아볼까요? 🐡';
+    speak('다른 짝을 찾아볼까요?');
+    setTimeout(()=>{
+      // 슬롯만 비우고 다시 시도
+      pickedC=null; pickedV=null; busy=false;
+      slotC.textContent=''; slotC.className='slot';
+      slotV.textContent=''; slotV.className='slot';
+      resultChar.textContent=''; resultChar.className='';
+      msg.textContent='자음 물고기를 먼저 잡아요 🐟';
+    },1600);
+  }
+}
+
+function showEnd(){
+  const end=document.getElementById('end');
+  const stars = score>=9?'⭐⭐⭐⭐⭐' : score>=7?'⭐⭐⭐⭐' : score>=5?'⭐⭐⭐' : score>=3?'⭐⭐' : '⭐';
+  document.getElementById('end-stars').textContent=stars;
+  document.getElementById('end-score').textContent=`10문제 중 ${score}개 정답!`;
+  end.classList.add('show');
+  speak('참 잘했어요!');
+}
+
+function restart(){
+  document.getElementById('end').classList.remove('show');
+  order=shuffle(WORDS); idx=0; score=0;
+  scoreEl.textContent='⭐ 0';
+  setupRound();
+}
+
+// 거품 장식
+function makeBubbles(){
+  for(let i=0;i<8;i++){
+    const b=document.createElement('div'); b.className='bubble';
+    const s=8+Math.random()*22;
+    b.style.width=s+'px'; b.style.height=s+'px';
+    b.style.left=Math.random()*100+'%'; b.style.bottom='-40px';
+    b.style.animationDuration=(6+Math.random()*6)+'s';
+    b.style.animationDelay=(Math.random()*6)+'s';
+    pond.appendChild(b);
+  }
+}
+
+// 시작
+window.addEventListener('load', ()=>{
+  order=shuffle(WORDS);
+  setupRound();
+  makeBubbles();
+});
+window.addEventListener('resize', ()=>{ if(!document.getElementById('end').classList.contains('show')) setupRound(); });
+</script>
+</body>
+</html>

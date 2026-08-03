@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>그림자 맞추기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Jua', sans-serif;
+    background: linear-gradient(165deg, #fff4e0 0%, #ffe3c7 45%, #ffd0e0 100%);
+    color: #5a4632;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    max-height: 920px;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom) 14px;
+    position: relative;
+  }
+
+  /* 상단 점수 / 진행 */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 6px 6px;
+  }
+  .score {
+    background: #ffb84d;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 22px;
+    box-shadow: 0 4px 0 #e89a2b;
+  }
+  .progress { display: flex; gap: 6px; flex-wrap: wrap; max-width: 200px; justify-content: flex-end; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: #f3d9b8; box-shadow: inset 0 -2px 0 #e8c79c; }
+  .dot.done { background: #7ed957; box-shadow: inset 0 -2px 0 #5cb83f; }
+  .dot.wrong { background: #ff9eb0; box-shadow: inset 0 -2px 0 #e87a8f; }
+
+  /* 그림자 무대 */
+  .stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 0;
+  }
+  .shadow-box {
+    width: 58vw;
+    max-width: 250px;
+    height: 58vw;
+    max-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .shadow-box .emoji {
+    font-size: 46vw;
+    line-height: 1;
+    transition: filter .5s ease, transform .3s ease;
+  }
+  @media (min-width: 480px) { .shadow-box .emoji { font-size: 220px; } }
+  /* 그림자 모드: 이모지를 까맣게 */
+  .shadow-box.as-shadow .emoji {
+    filter: brightness(0) saturate(0);
+    -webkit-filter: brightness(0) saturate(0);
+  }
+  /* 카드 이모지: 항상 컬러, 큼직하게 */
+  .card .emoji {
+    font-size: 18vw;
+    line-height: 1;
+  }
+  @media (min-width: 480px) { .card .emoji { font-size: 86px; } }
+
+  .bounce { animation: bounce .6s ease; }
+  @keyframes bounce {
+    0%,100% { transform: scale(1); }
+    30% { transform: scale(1.12) rotate(-4deg); }
+    60% { transform: scale(.96) rotate(3deg); }
+  }
+  .shake { animation: shake .4s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-9px); }
+    75% { transform: translateX(9px); }
+  }
+
+  .question {
+    font-size: 26px;
+    margin-top: 6px;
+    text-align: center;
+    min-height: 34px;
+  }
+
+  /* 안내 말풍선 */
+  .feedback {
+    font-size: 22px;
+    text-align: center;
+    min-height: 30px;
+    padding: 6px 14px;
+    color: #c2683f;
+  }
+  .feedback.good { color: #3da13d; }
+
+  /* 카드 그리드 */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 8px 4px 14px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 0 #e7c9a3, 0 8px 14px rgba(0,0,0,.08);
+    cursor: pointer;
+    transition: transform .12s;
+    border: 4px solid #fff;
+    overflow: hidden;
+  }
+  .card:active { transform: translateY(4px); box-shadow: 0 2px 0 #e7c9a3; }
+  .card.right { border-color: #7ed957; box-shadow: 0 6px 0 #5cb83f; animation: pop .4s; }
+  .card.wrong { border-color: #ff9eb0; }
+  .card.lock { pointer-events: none; opacity: .55; }
+  @keyframes pop { 0%{transform:scale(1);} 50%{transform:scale(1.08);} 100%{transform:scale(1);} }
+
+  /* 결과 화면 */
+  .result {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(165deg, #fff4e0, #ffd0e0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    padding: 24px;
+    z-index: 10;
+  }
+  .result h1 { font-size: 40px; color: #ff8c42; }
+  .result .stars { font-size: 50px; letter-spacing: 4px; }
+  .result .big { font-size: 30px; }
+  .btn {
+    margin-top: 10px;
+    background: #ffb84d;
+    color: #fff;
+    border: none;
+    font-family: 'Jua', sans-serif;
+    font-size: 28px;
+    padding: 16px 44px;
+    border-radius: 999px;
+    box-shadow: 0 6px 0 #e89a2b;
+    cursor: pointer;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #e89a2b; }
+  .hidden { display: none !important; }
+
+  /* 색종이 */
+  .confetti {
+    position: absolute; top: -20px; width: 12px; height: 18px;
+    opacity: .9; z-index: 20; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="score">⭐ <span id="scoreNum">0</span></div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div class="stage">
+    <div class="shadow-box" id="shadowBox"></div>
+    <div class="question" id="question"></div>
+  </div>
+
+  <div class="feedback" id="feedback">그림자의 주인을 찾아 주세요!</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="result hidden" id="result">
+    <h1>참 잘했어요!</h1>
+    <div class="stars" id="stars"></div>
+    <div class="big">10문제 중 <span id="finalScore">0</span>문제 정답!</div>
+    <button class="btn" onclick="restart()">다시 하기</button>
+  </div>
+</div>
+
+<script>
+/* ===== 동물 이모지 (또렷하게 알아보기 쉬움) ===== */
+const ART = {
+  elephant: { name: "코끼리", emoji: "🐘" },
+  giraffe:  { name: "기린",   emoji: "🦒" },
+  lion:     { name: "사자",   emoji: "🦁" },
+  bear:     { name: "곰",     emoji: "🐻" },
+  dog:      { name: "강아지", emoji: "🐶" },
+  cat:      { name: "고양이", emoji: "🐱" },
+  fox:      { name: "여우",   emoji: "🦊" },
+  rabbit:   { name: "토끼",   emoji: "🐰" },
+};
+
+const EASY = ["elephant","giraffe","lion","bear"];   // 윤곽이 또렷이 다른 동물
+const HARD = ["dog","cat","fox","rabbit"];            // 윤곽이 비슷한 동물
+
+/* ===== 게임 상태 ===== */
+let questions = [];
+let current = 0;
+let score = 0;
+let locked = false;
+
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildQuestions(){
+  questions = [];
+  // 앞 5문제: 또렷이 다른 동물 (EASY 4종에서 정답 + 보기)
+  for(let i=0;i<5;i++){
+    const order = shuffle(EASY);
+    const answer = order[0];
+    questions.push({ answer, options: shuffle(order) });
+  }
+  // 뒤 5문제: 비슷한 동물 (HARD 4종)
+  for(let i=0;i<5;i++){
+    const order = shuffle(HARD);
+    const answer = order[0];
+    questions.push({ answer, options: shuffle(order) });
+  }
+}
+
+function makeEmoji(key){
+  return `<span class="emoji">${ART[key].emoji}</span>`;
+}
+
+function renderProgress(){
+  const p = document.getElementById('progress');
+  p.innerHTML = questions.map((q,i)=>{
+    let c = 'dot';
+    if(q.result==='ok') c+=' done';
+    if(q.result==='no') c+=' wrong';
+    return `<div class="${c}"></div>`;
+  }).join('');
+}
+
+function loadQuestion(){
+  locked = false;
+  const q = questions[current];
+  const box = document.getElementById('shadowBox');
+  box.innerHTML = makeEmoji(q.answer);
+  box.classList.add('as-shadow');   // 그림자 모드(까맣게)
+  box.classList.remove('bounce');
+  document.getElementById('question').textContent = "이 그림자는 누구일까요?";
+  const fb = document.getElementById('feedback');
+  fb.textContent = "그림자의 주인을 찾아 주세요!";
+  fb.className = "feedback";
+
+  const cards = document.getElementById('cards');
+  cards.innerHTML = q.options.map(key =>
+    `<div class="card" data-key="${key}" onclick="pick('${key}', this)">${makeEmoji(key)}</div>`
+  ).join('');
+  renderProgress();
+}
+
+function speak(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR'; u.rate = 0.95;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* 소리 효과 */
+let AC;
+function tone(freqs, dur){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.type='sine'; o.frequency.value=f;
+      o.connect(g); g.connect(AC.destination);
+      const t=AC.currentTime + i*0.12;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.start(t); o.stop(t+dur);
+    });
+  }catch(e){}
+}
+const happySound = ()=>tone([523,659,784],0.3);
+const softSound  = ()=>tone([392,330],0.25);
+
+function pick(key, el){
+  if(locked) return;
+  const q = questions[current];
+  if(key === q.answer){
+    locked = true;
+    q.result = 'ok';
+    score++;
+    document.getElementById('scoreNum').textContent = score;
+    el.classList.add('right');
+    document.querySelectorAll('.card').forEach(c=>c.classList.add('lock'));
+
+    // 그림자가 컬러로 변신
+    const box = document.getElementById('shadowBox');
+    box.classList.remove('as-shadow');
+    box.classList.add('bounce');
+
+    const fb = document.getElementById('feedback');
+    fb.textContent = `정답이에요! 이건 ${ART[key].name}예요`;
+    fb.className = "feedback good";
+    document.getElementById('question').textContent = "";
+    happySound();
+    speak(`정답이에요! 이건 ${ART[key].name}예요`);
+    confetti();
+    renderProgress();
+
+    setTimeout(()=>{
+      current++;
+      if(current >= questions.length) showResult();
+      else loadQuestion();
+    }, 2100);
+  } else {
+    q.result = q.result || 'no';
+    el.classList.add('wrong');
+    el.classList.add('shake');
+    const fb = document.getElementById('feedback');
+    fb.textContent = "그림자 모양을 다시 한 번 볼까요?";
+    fb.className = "feedback";
+    softSound();
+    speak("그림자 모양을 다시 한 번 볼까요?");
+    setTimeout(()=>el.classList.remove('wrong','shake'), 500);
+    renderProgress();
+  }
+}
+
+function confetti(){
+  const colors=['#ff8c42','#ffb84d','#7ed957','#5ec5ff','#ff9eb0','#c08bff'];
+  for(let i=0;i<26;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'%';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration=(1.2+Math.random()*1.2)+'s';
+    c.style.animationDelay=(Math.random()*0.3)+'s';
+    document.getElementById('app').appendChild(c);
+    setTimeout(()=>c.remove(),2600);
+  }
+}
+
+function showResult(){
+  const r = document.getElementById('result');
+  document.getElementById('finalScore').textContent = score;
+  let stars = score>=9?'⭐⭐⭐' : score>=6?'⭐⭐' : '⭐';
+  document.getElementById('stars').textContent = stars;
+  r.classList.remove('hidden');
+  happySound();
+  confetti();
+  speak(`참 잘했어요! 열 문제 중 ${score}문제 맞혔어요`);
+}
+
+function restart(){
+  document.getElementById('result').classList.add('hidden');
+  current = 0; score = 0;
+  document.getElementById('scoreNum').textContent = 0;
+  buildQuestions();
+  loadQuestion();
+}
+
+/* 시작 */
+buildQuestions();
+loadQuestion();
+</script>
+</body>
+</html>

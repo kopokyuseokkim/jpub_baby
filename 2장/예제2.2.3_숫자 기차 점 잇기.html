@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>점 잇기 숫자 놀이</title>
+<!-- 점 잇기 숫자 놀이 - 6살 아이용 -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap');
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Jua', 'Apple SD Gothic Neo', sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
+  }
+
+  #app {
+    position: relative;
+    height: 100dvh;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background:
+      radial-gradient(120% 90% at 50% -10%, #bde6ff 0%, #e9f8ff 45%, #fff7e6 100%);
+    overflow: hidden;
+    padding: 10px 12px max(14px, env(safe-area-inset-bottom));
+  }
+
+  /* 떠다니는 구름 장식 */
+  .cloud {
+    position: absolute; background: #ffffff; border-radius: 50%;
+    opacity: .75; filter: blur(1px); pointer-events: none;
+    box-shadow: 18px 6px 0 -4px #fff, -18px 6px 0 -4px #fff, 36px 10px 0 -8px #fff;
+  }
+  .c1 { width: 70px; height: 38px; top: 12%; left: 8%; }
+  .c2 { width: 50px; height: 28px; top: 24%; right: 10%; }
+
+  header { text-align: center; z-index: 2; margin-top: 4px; }
+  h1 {
+    margin: 0; font-size: clamp(22px, 6.5vw, 32px); color: #ff6f61;
+    text-shadow: 0 2px 0 #fff, 0 4px 8px rgba(0,0,0,.08);
+    letter-spacing: 1px;
+  }
+
+  /* 안내 말풍선 */
+  #prompt {
+    z-index: 2;
+    margin: 8px 0 4px;
+    display: flex; align-items: center; gap: 10px;
+    background: #ffffff;
+    border: 4px solid #ffd25e;
+    border-radius: 999px;
+    padding: 8px 18px 8px 10px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.07);
+    min-height: 60px;
+    transition: transform .15s ease, border-color .2s;
+  }
+  #prompt.shake { animation: shake .45s; border-color: #ffb1a3; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+  }
+  #targetBadge {
+    flex: none;
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: #ffd25e; color: #6a4b00;
+    font-size: 26px; line-height: 1;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.12);
+  }
+  #promptText { font-size: clamp(17px, 4.8vw, 22px); color: #4a4a4a; }
+
+  /* 게임 영역 */
+  #stage {
+    z-index: 1;
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 0;
+  }
+  svg.board {
+    width: min(94vw, 62vh);
+    height: min(94vw, 62vh);
+    max-width: 560px; max-height: 560px;
+    touch-action: none;
+  }
+
+  /* 점 */
+  .dot { cursor: pointer; }
+  .dot .hit { fill: transparent; }
+  .dot .disc {
+    fill: #ffffff; stroke: #7bb8ff; stroke-width: 2.4;
+    transition: transform .12s ease;
+    transform-box: fill-box; transform-origin: center;
+  }
+  .dot .num { fill: #3a6ea5; font-size: 8px; font-family: 'Jua', sans-serif;
+              text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .dot.done .disc { fill: #8be08a; stroke: #4caf50; }
+  .dot.done .num { fill: #ffffff; }
+  .dot.hint .disc { animation: pulse 1s ease-in-out infinite; stroke: #ff8a5b; }
+  .dot.hint .num { fill: #ff6a3d; }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.28); }
+  }
+  .dot.pop .disc { animation: pop .3s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 45%{transform:scale(1.4)} 100%{transform:scale(1)} }
+
+  /* 연결선 */
+  .link { fill: none; stroke: #ff8a5b; stroke-width: 4.2; stroke-linecap: round;
+          transition: stroke-dashoffset .35s ease; }
+  #fillLayer { transition: opacity .5s ease; }
+
+  /* 다시 하기 버튼 */
+  #resetBtn {
+    position: relative; z-index: 6; margin-top: 6px;
+    touch-action: manipulation;
+    font-family: 'Jua', sans-serif; font-size: clamp(18px, 5vw, 22px);
+    color: #fff; background: linear-gradient(#7ec8ff, #4aa3ff);
+    border: none; border-radius: 999px;
+    padding: 14px 34px; cursor: pointer;
+    box-shadow: 0 6px 0 #2f7fd1, 0 10px 18px rgba(0,0,0,.18);
+    transition: transform .08s, box-shadow .08s;
+  }
+  #resetBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #2f7fd1; }
+  /* 완성 후 강조: 버튼은 그대로 두고 노란 후광만 부드럽게 깜빡임 (위치가 흔들리면 터치가 어긋나요) */
+  #resetBtn.cheer { animation: glow 1.4s ease-in-out infinite alternate; }
+  @keyframes glow {
+    from { box-shadow: 0 6px 0 #2f7fd1, 0 0 0 4px rgba(255,210,94,.55), 0 10px 22px rgba(0,0,0,.22); }
+    to   { box-shadow: 0 6px 0 #2f7fd1, 0 0 0 12px rgba(255,210,94,.15), 0 10px 22px rgba(0,0,0,.22); }
+  }
+
+  /* 완성 배너 */
+  #banner {
+    position: absolute; z-index: 5; top: 38%; left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    background: #fff; border: 6px solid #ffd25e; border-radius: 26px;
+    padding: 18px 26px; text-align: center;
+    box-shadow: 0 16px 40px rgba(0,0,0,.22);
+    font-size: clamp(24px, 7vw, 34px); color: #ff6f61;
+    pointer-events: none; white-space: nowrap;
+  }
+  #banner.show { animation: bannerPop .6s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes bannerPop {
+    0% { transform: translate(-50%,-50%) scale(0) rotate(-12deg); }
+    70% { transform: translate(-50%,-50%) scale(1.12) rotate(4deg); }
+    100% { transform: translate(-50%,-50%) scale(1) rotate(0); }
+  }
+
+  /* 색종이 */
+  #confetti { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+  .piece { position: absolute; top: -24px; will-change: transform; pointer-events: none; }
+  @keyframes fall {
+    to { transform: translateY(115vh) rotate(720deg); opacity: .85; }
+  }
+</style>
+
+<div id="app">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+
+  <header><h1>🚂 점 잇기 숫자 놀이</h1></header>
+
+  <div id="prompt">
+    <div id="targetBadge">1</div>
+    <div id="promptText">1번 점을 눌러보세요!</div>
+  </div>
+
+  <div id="stage">
+    <svg class="board" viewBox="0 0 100 100" id="board" aria-label="점 잇기 놀이판">
+      <g id="fillLayer"></g>
+      <g id="decorLayer"></g>
+      <g id="lineLayer"></g>
+      <g id="dotLayer"></g>
+    </svg>
+  </div>
+
+  <button id="resetBtn">🔄 다시 하기</button>
+
+  <div id="banner"></div>
+  <div id="confetti"></div>
+</div>
+
+<script>
+(function () {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const NATIVE = ["", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열"];
+
+  // ── 그림 모양들 (점 10개를 순서대로 이으면 그림이 됩니다) ──
+  const SHAPES = [
+    {
+      name: "기차", done: "기차가 완성됐어요!", emoji: "🚂", color: "#ff5e57",
+      pts: [[12,70],[12,44],[32,44],[32,26],[52,26],[52,44],[88,44],[88,70],[58,70],[35,70]],
+      decor: (g) => {
+        // 굴뚝 + 연기
+        rect(g, 76, 30, 6, 14, "#3a3a3a");
+        circle(g, 79, 26, 3.2, "#ffffff");
+        circle(g, 82.5, 21, 4, "#ffffff");
+        circle(g, 86, 15, 4.6, "#ffffff");
+        // 창문
+        rect(g, 36, 30, 12, 11, "#bfe9ff");
+        // 바퀴
+        [24, 50, 76].forEach(x => { circle(g, x, 73, 7, "#37404a"); circle(g, x, 73, 2.6, "#cfd6dd"); });
+      }
+    },
+    {
+      name: "별", done: "별이 완성됐어요!", emoji: "⭐", color: "#ffcf33",
+      pts: starPts(50, 50, 40),
+      decor: (g) => {
+        circle(g, 41, 46, 1.8, "#5a4500"); circle(g, 59, 46, 1.8, "#5a4500");
+        smile(g, 50, 52, 9);
+      }
+    },
+    {
+      name: "꽃", done: "꽃이 완성됐어요!", emoji: "🌸", color: "#ff8fc7",
+      pts: flowerPts(50, 50, 40, 18),
+      decor: (g) => {
+        circle(g, 50, 50, 13, "#ffd34d");
+        circle(g, 46, 48, 1.6, "#7a5a00"); circle(g, 54, 48, 1.6, "#7a5a00");
+        smile(g, 50, 52, 5);
+      }
+    },
+    {
+      name: "강아지", done: "강아지가 완성됐어요!", emoji: "🐶", color: "#d8a25e",
+      pts: [[25,30],[35,52],[30,70],[43,84],[57,84],[70,70],[65,52],[75,30],[60,34],[40,34]],
+      decor: (g) => {
+        circle(g, 43, 54, 4.2, "#ffffff"); circle(g, 57, 54, 4.2, "#ffffff");
+        circle(g, 43, 54, 2, "#2b2b2b"); circle(g, 57, 54, 2, "#2b2b2b");
+        circle(g, 50, 64, 4, "#2b2b2b");
+        // 혀
+        const t = document.createElementNS(SVGNS, "path");
+        t.setAttribute("d", "M47 68 Q50 80 53 68 Z");
+        t.setAttribute("fill", "#ff7d8a"); g.appendChild(t);
+      }
+    },
+    {
+      name: "집", done: "집이 완성됐어요!", emoji: "🏠", color: "#ffe08a",
+      pts: [[18,82],[18,48],[50,18],[82,48],[82,82],[60,82],[60,58],[44,58],[44,82],[30,82]],
+      decor: (g) => {
+        const roof = document.createElementNS(SVGNS, "polygon");
+        roof.setAttribute("points", "16,49 50,17 84,49");
+        roof.setAttribute("fill", "#ff7a5c"); g.appendChild(roof);
+        rect(g, 24, 56, 12, 12, "#bfe9ff");      // 창문
+        rect(g, 23, 32, 7, 16, "#9a5a3a");        // 굴뚝
+        circle(g, 16, 16, 6, "#ffe14d");          // 해
+      }
+    },
+    {
+      name: "하트", done: "하트가 완성됐어요!", emoji: "❤️", color: "#ff5d73",
+      pts: [[50,32],[38,20],[24,22],[16,36],[28,56],[50,78],[72,56],[84,36],[76,22],[62,20]],
+      decor: (g) => {
+        const hl = document.createElementNS(SVGNS, "ellipse");
+        hl.setAttribute("cx", 36); hl.setAttribute("cy", 34);
+        hl.setAttribute("rx", 6); hl.setAttribute("ry", 9);
+        hl.setAttribute("fill", "#ffffff"); hl.setAttribute("opacity", ".55");
+        hl.setAttribute("transform", "rotate(-25 36 34)"); g.appendChild(hl);
+      }
+    }
+  ];
+
+  // ── 모양 계산 도우미 ──
+  function starPts(cx, cy, r) {
+    const out = [];
+    for (let i = 0; i < 10; i++) {
+      const a = (-90 + i * 108) * Math.PI / 180;
+      out.push([round(cx + r * Math.cos(a)), round(cy + r * Math.sin(a))]);
+    }
+    return out;
+  }
+  function flowerPts(cx, cy, rOut, rIn) {
+    const out = [];
+    for (let i = 0; i < 10; i++) {
+      const r = (i % 2 === 0) ? rOut : rIn;
+      const a = (-90 + i * 36) * Math.PI / 180;
+      out.push([round(cx + r * Math.cos(a)), round(cy + r * Math.sin(a))]);
+    }
+    return out;
+  }
+  function round(n) { return Math.round(n * 10) / 10; }
+
+  function rect(g, x, y, w, h, fill) {
+    const r = document.createElementNS(SVGNS, "rect");
+    r.setAttribute("x", x); r.setAttribute("y", y);
+    r.setAttribute("width", w); r.setAttribute("height", h);
+    r.setAttribute("rx", 1); r.setAttribute("fill", fill); g.appendChild(r);
+  }
+  function circle(g, cx, cy, r, fill) {
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("cx", cx); c.setAttribute("cy", cy);
+    c.setAttribute("r", r); c.setAttribute("fill", fill); g.appendChild(c);
+  }
+  function smile(g, cx, cy, w) {
+    const p = document.createElementNS(SVGNS, "path");
+    p.setAttribute("d", `M${cx - w} ${cy} Q${cx} ${cy + w * 0.8} ${cx + w} ${cy}`);
+    p.setAttribute("stroke", "#7a5a00"); p.setAttribute("stroke-width", 2);
+    p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round");
+    g.appendChild(p);
+  }
+
+  // ── DOM 참조 ──
+  const fillLayer = document.getElementById("fillLayer");
+  const decorLayer = document.getElementById("decorLayer");
+  const lineLayer = document.getElementById("lineLayer");
+  const dotLayer = document.getElementById("dotLayer");
+  const promptEl = document.getElementById("prompt");
+  const promptText = document.getElementById("promptText");
+  const targetBadge = document.getElementById("targetBadge");
+  const resetBtn = document.getElementById("resetBtn");
+  const banner = document.getElementById("banner");
+  const confetti = document.getElementById("confetti");
+
+  // ── 상태 ──
+  let shapeIndex = -1;
+  let shape = null;
+  let target = 1;          // 다음에 눌러야 할 점 번호
+  let finished = false;
+  let hintTimer = null;
+
+  // ── 사운드 (간단한 효과음) ──
+  let actx = null;
+  function audio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (actx && actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tone(freq, t0, dur, gain, type) {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    o.connect(g); g.connect(a.destination);
+    const t = a.currentTime + t0;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function soundCorrect(step) {
+    const scale = [392, 440, 494, 523, 587, 659, 698, 784, 880, 988];
+    tone(scale[Math.min(step - 1, 9)], 0, 0.25, 0.18, "triangle");
+  }
+  function soundWrong() { tone(300, 0, 0.18, 0.12, "sine"); tone(240, 0.1, 0.22, 0.12, "sine"); }
+  function soundWin() {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.4, 0.2, "triangle"));
+    tone(1319, 0.5, 0.6, 0.18, "triangle");
+  }
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR"; u.rate = 0.95; u.pitch = 1.25;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ── 화면 그리기 ──
+  function buildBoard() {
+    [fillLayer, decorLayer, lineLayer, dotLayer].forEach(l => l.innerHTML = "");
+    fillLayer.style.opacity = "0";
+
+    shape.pts.forEach((p, i) => {
+      const g = document.createElementNS(SVGNS, "g");
+      g.setAttribute("class", "dot");
+      g.setAttribute("transform", `translate(${p[0]},${p[1]})`);
+      g.dataset.n = i + 1;
+
+      const hit = document.createElementNS(SVGNS, "circle");
+      hit.setAttribute("class", "hit"); hit.setAttribute("r", 12);
+
+      const disc = document.createElementNS(SVGNS, "circle");
+      disc.setAttribute("class", "disc"); disc.setAttribute("r", 7);
+
+      const num = document.createElementNS(SVGNS, "text");
+      num.setAttribute("class", "num"); num.textContent = (i + 1);
+
+      g.appendChild(hit); g.appendChild(disc); g.appendChild(num);
+      g.addEventListener("pointerdown", onTap, { passive: false });
+      dotLayer.appendChild(g);
+    });
+  }
+
+  function onTap(e) {
+    e.preventDefault();
+    if (finished) return;
+    audio(); // 첫 터치에 소리 깨우기
+    const n = parseInt(e.currentTarget.dataset.n, 10);
+
+    if (n === target) {
+      const g = e.currentTarget;
+      g.classList.add("done", "pop");
+      g.classList.remove("hint");
+      setTimeout(() => g.classList.remove("pop"), 320);
+
+      if (target > 1) drawLink(shape.pts[target - 2], shape.pts[target - 1]);
+      soundCorrect(target);
+      speak(NATIVE[target]);
+
+      target++;
+      if (target > 10) { win(); }
+      else { updatePrompt(); armHint(); }
+    } else {
+      // 틀렸을 때 — 부드럽게 안내
+      soundWrong();
+      promptText.textContent = "다음 점을 찾아볼까? 🤔";
+      promptEl.classList.remove("shake"); void promptEl.offsetWidth;
+      promptEl.classList.add("shake");
+      speak("다음 점을 찾아볼까?");
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => { updatePrompt(); showHint(); }, 1200);
+    }
+  }
+
+  function drawLink(a, b) {
+    const ln = document.createElementNS(SVGNS, "line");
+    ln.setAttribute("class", "link");
+    ln.setAttribute("x1", a[0]); ln.setAttribute("y1", a[1]);
+    ln.setAttribute("x2", b[0]); ln.setAttribute("y2", b[1]);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    ln.style.strokeDasharray = len; ln.style.strokeDashoffset = len;
+    lineLayer.appendChild(ln);
+    requestAnimationFrame(() => { ln.style.strokeDashoffset = "0"; });
+  }
+
+  function updatePrompt() {
+    targetBadge.textContent = target;
+    promptText.textContent = target + "번 점을 눌러보세요!";
+  }
+
+  function armHint() {
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(showHint, 6000); // 6초 멈칫하면 살짝 깜빡임
+  }
+  function showHint() {
+    const g = dotLayer.querySelector(`.dot[data-n="${target}"]`);
+    if (g && !finished) g.classList.add("hint");
+  }
+
+  // ── 완성! ──
+  function win() {
+    finished = true;
+    clearTimeout(hintTimer);
+
+    // 마지막 점 → 첫 점 닫는 선
+    drawLink(shape.pts[9], shape.pts[0]);
+
+    // 그림 색칠
+    const poly = document.createElementNS(SVGNS, "polygon");
+    poly.setAttribute("points", shape.pts.map(p => p.join(",")).join(" "));
+    poly.setAttribute("fill", shape.color);
+    poly.setAttribute("stroke", shape.color);
+    poly.setAttribute("stroke-width", "2");
+    poly.setAttribute("stroke-linejoin", "round");
+    fillLayer.appendChild(poly);
+    shape.decor(decorLayer);
+
+    setTimeout(() => { fillLayer.style.opacity = "1"; }, 250);
+
+    promptText.textContent = "참 잘했어요!";
+    targetBadge.textContent = shape.emoji;
+
+    banner.textContent = "🎉 " + shape.done + " 🎉";
+    banner.classList.add("show");
+    resetBtn.classList.add("cheer");
+
+    soundWin();
+    setTimeout(() => speak(shape.done), 350);
+    burstConfetti();
+
+    setTimeout(() => { banner.classList.remove("show"); banner.style.transform = "translate(-50%,-50%) scale(0)"; }, 2600);
+  }
+
+  function burstConfetti() {
+    const colors = ["#ff6f61", "#ffd25e", "#7ec8ff", "#8be08a", "#c79bff", "#ff8fc7"];
+    for (let i = 0; i < 90; i++) {
+      const p = document.createElement("div");
+      p.className = "piece";
+      const size = 8 + Math.random() * 10;
+      p.style.left = Math.random() * 100 + "%";
+      p.style.width = size + "px"; p.style.height = size * (0.5 + Math.random()) + "px";
+      p.style.background = colors[(Math.random() * colors.length) | 0];
+      p.style.borderRadius = Math.random() < 0.4 ? "50%" : "2px";
+      const dur = 2 + Math.random() * 1.8;
+      p.style.animation = `fall ${dur}s linear ${Math.random() * 0.5}s forwards`;
+      confetti.appendChild(p);
+      setTimeout(() => p.remove(), (dur + 0.6) * 1000);
+    }
+  }
+
+  // ── 새 게임 ──
+  function newGame() {
+    shapeIndex = (shapeIndex + 1) % SHAPES.length;
+    // 깊은 복사 후 살짝 흔들어 매번 조금씩 다르게
+    const base = SHAPES[shapeIndex];
+    shape = {
+      name: base.name, done: base.done, emoji: base.emoji, color: base.color,
+      decor: base.decor,
+      pts: base.pts.map(p => [
+        Math.max(9, Math.min(91, p[0] + (Math.random() - 0.5) * 2.4)),
+        Math.max(9, Math.min(91, p[1] + (Math.random() - 0.5) * 2.4))
+      ])
+    };
+    target = 1; finished = false;
+    confetti.innerHTML = "";
+    banner.classList.remove("show");
+    resetBtn.classList.remove("cheer");
+    buildBoard();
+    updatePrompt();
+    armHint();
+  }
+
+  resetBtn.addEventListener("click", () => { audio(); newGame(); });
+
+  newGame();
+})();
+</script>

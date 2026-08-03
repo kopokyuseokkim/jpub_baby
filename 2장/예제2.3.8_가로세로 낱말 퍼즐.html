@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>가로세로 낱말 퍼즐</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  html,body { height:100%; }
+  body {
+    font-family:'Jua', sans-serif;
+    background: linear-gradient(180deg, #BDE3FF 0%, #E8F7FF 45%, #FFF6DE 100%);
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100dvh; overflow:hidden;
+  }
+  .screen { width:100%; max-width:430px; min-height:100dvh; display:none; flex-direction:column; align-items:center; padding:8px 10px; }
+  .screen.on { display:flex; }
+
+  /* ===== 시작 화면 ===== */
+  #startScreen { justify-content:center; gap:18px; text-align:center; }
+  .big-emoji { font-size:64px; animation: bounce 1.6s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  #startScreen h1 { font-size:34px; color:#2C6E9E; text-shadow:0 2px 0 #fff; }
+  .start-desc { font-size:18px; color:#5B7A93; line-height:1.6; background:#ffffffcc; border-radius:16px; padding:14px 18px; }
+  .btn-main {
+    font-family:'Jua'; font-size:26px; color:#fff; border:none; cursor:pointer;
+    background:linear-gradient(180deg,#FFB03A,#FF8F1F); border-radius:999px;
+    padding:16px 46px; box-shadow:0 6px 0 #D96F00;
+  }
+  .btn-main:active { transform:translateY(4px); box-shadow:0 2px 0 #D96F00; }
+
+  /* ===== 게임 화면 ===== */
+  #gameScreen { gap:6px; }
+  .topbar { width:100%; display:flex; align-items:center; justify-content:space-between; }
+  .topbar .title { font-size:19px; color:#2C6E9E; }
+  .progress { font-size:18px; color:#fff; background:#57B0F2; border-radius:999px; padding:4px 14px; box-shadow:0 3px 0 #3B8CC9; }
+  .btn-hintlist { font-family:'Jua'; font-size:16px; border:none; background:#fff; color:#2C6E9E; border-radius:999px; padding:6px 12px; box-shadow:0 3px 0 #C9DCEA; cursor:pointer; }
+  .btn-hintlist:active { transform:translateY(2px); box-shadow:0 1px 0 #C9DCEA; }
+
+  #grid {
+    --cell: min(11.6vw, 45px);
+    display:grid;
+    grid-template-columns: repeat(7, var(--cell));
+    grid-template-rows: repeat(8, var(--cell));
+    gap:4px; margin-top:2px;
+  }
+  .cell {
+    background:#fff; border:3px solid #A9CBE4; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: calc(var(--cell) * 0.52); color:#2C4B63; position:relative; cursor:pointer;
+    transition: background .18s, border-color .18s, transform .12s;
+  }
+  .cell .num { position:absolute; top:1px; left:4px; font-size:11px; color:#7FA6C2; }
+  .cell.sel { background:#FFF3C2; border-color:#FFC93C; }
+  .cell.filled { background:#EAF2FF; border-color:#8FB8DC; }
+  .cell.target { border-color:#FF8F1F; background:#FFE7B8; transform:scale(1.06); box-shadow:0 0 0 3px #FFD79B; z-index:2; }
+  .cell.wrong { background:#FFDDDD; border-color:#F26D6D; color:#B03A3A; }
+  .cell.done { background:#FFE690; border-color:#F5B516; color:#8A5A00; }
+  .cell.bad { animation:shake .35s; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+  .clue-panel {
+    width:100%; background:#fff; border-radius:16px; padding:10px 12px;
+    display:flex; align-items:center; gap:10px; min-height:64px;
+    box-shadow:0 4px 0 #DCE9F2; margin-top:4px;
+  }
+  .clue-badge { flex:none; font-size:16px; color:#fff; border-radius:10px; padding:6px 10px; }
+  .clue-badge.A { background:#57B0F2; }
+  .clue-badge.D { background:#6BC77B; }
+  .clue-text { flex:1; font-size:17px; line-height:1.35; color:#33556E; }
+  .clue-text.cheer { color:#E8880C; font-size:20px; }
+  .clue-text.retry { color:#C25454; }
+  .btn-speak { flex:none; font-size:24px; border:none; background:#EAF5FF; border-radius:50%; width:46px; height:46px; cursor:pointer; }
+  .btn-speak:active { background:#CFE8FF; }
+
+  #keypad {
+    width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:2px; min-height:118px;
+  }
+  .tile {
+    font-family:'Jua'; font-size:28px; color:#4A3B77; cursor:pointer;
+    background:linear-gradient(180deg,#FFFFFF,#EFE9FF); border:3px solid #C9BCF2; border-radius:14px;
+    height:54px; box-shadow:0 4px 0 #B7A8E8;
+  }
+  .tile:active { transform:translateY(3px); box-shadow:0 1px 0 #B7A8E8; }
+  .tile.erase { font-size:22px; color:#B03A3A; background:linear-gradient(180deg,#FFF5F5,#FFE1E1); border-color:#F2B0B0; box-shadow:0 4px 0 #E39B9B; }
+  .keypad-msg { grid-column:1/-1; text-align:center; font-size:20px; color:#4E9E58; align-self:center; }
+
+  /* ===== 힌트 목록 ===== */
+  #hintSheet {
+    position:fixed; inset:0; background:rgba(30,60,90,.45); display:none; z-index:50;
+    align-items:flex-end; justify-content:center;
+  }
+  #hintSheet.on { display:flex; }
+  .sheet {
+    width:100%; max-width:430px; background:#fff; border-radius:22px 22px 0 0;
+    max-height:72dvh; overflow-y:auto; padding:16px 16px 24px;
+  }
+  .sheet h3 { font-size:20px; color:#2C6E9E; margin:8px 0 6px; }
+  .hint-row { display:flex; gap:8px; align-items:flex-start; padding:9px 8px; border-radius:12px; font-size:16px; color:#33556E; cursor:pointer; }
+  .hint-row:active { background:#EAF5FF; }
+  .hint-row.done { color:#9BB2C3; }
+  .hint-row.done .hint-clue { text-decoration:line-through; }
+  .hint-row .mark { flex:none; width:22px; font-size:16px; }
+  .hint-row .hnum { flex:none; color:#57B0F2; }
+  .hint-row.d .hnum { color:#4E9E58; }
+  .sheet-close { display:block; margin:12px auto 0; font-family:'Jua'; font-size:18px; border:none; background:#EAF0F5; color:#54718A; border-radius:999px; padding:10px 30px; }
+
+  /* ===== 결과 화면 ===== */
+  #resultScreen { justify-content:center; gap:16px; text-align:center; }
+  .stars { font-size:58px; letter-spacing:6px; }
+  .stars .dim { opacity:.22; }
+  #resultScreen h2 { font-size:30px; color:#2C6E9E; }
+  .result-msg { font-size:19px; color:#5B7A93; line-height:1.6; }
+
+  /* 폭죽 */
+  .confetti { position:fixed; top:-14px; border-radius:3px; pointer-events:none; z-index:99; }
+  @keyframes fall { to { transform:translateY(105dvh) rotate(720deg); opacity:.85; } }
+</style>
+</head>
+<body>
+
+<!-- 시작 화면 -->
+<div id="startScreen" class="screen on">
+  <div class="big-emoji">🧩</div>
+  <h1>가로세로 낱말 퍼즐</h1>
+  <div class="start-desc">
+    힌트 수수께끼를 읽고 글자를 눌러<br>빈칸을 채워 보세요!<br>
+    틀려도 괜찮아요. <b>⌫ 지우개</b>로 지우고<br>다시 채울 수 있어요!<br>
+    🐙 동물 · 🍌 과일 · ✈️ 탈것 · 👨‍👩‍👧 가족
+  </div>
+  <button class="btn-main" id="btnStart">시작하기 ▶</button>
+</div>
+
+<!-- 게임 화면 -->
+<div id="gameScreen" class="screen">
+  <div class="topbar">
+    <span class="title">🧩 낱말 퍼즐</span>
+    <span class="progress" id="progress">0 / 10</span>
+    <button class="btn-hintlist" id="btnSheet">힌트 📋</button>
+  </div>
+  <div id="grid"></div>
+  <div class="clue-panel">
+    <span class="clue-badge A" id="clueBadge">가로 1</span>
+    <span class="clue-text" id="clueText">칸을 눌러 보세요!</span>
+    <button class="btn-speak" id="btnSpeak">🔊</button>
+  </div>
+  <div id="keypad"></div>
+</div>
+
+<!-- 힌트 목록 -->
+<div id="hintSheet">
+  <div class="sheet">
+    <h3>➡️ 가로 힌트</h3>
+    <div id="listA"></div>
+    <h3>⬇️ 세로 힌트</h3>
+    <div id="listD"></div>
+    <button class="sheet-close" id="btnCloseSheet">닫기</button>
+  </div>
+</div>
+
+<!-- 결과 화면 -->
+<div id="resultScreen" class="screen">
+  <div class="big-emoji">🎉</div>
+  <h2>퍼즐 완성!</h2>
+  <div class="stars" id="stars"></div>
+  <div class="result-msg" id="resultMsg"></div>
+  <button class="btn-main" id="btnReplay">다시 하기 🔄</button>
+</div>
+
+<script>
+/* ===== 폰트 ===== */
+const fl=document.createElement('link'); fl.rel='stylesheet';
+fl.href='https://fonts.googleapis.com/css2?family=Jua&display=swap';
+document.head.appendChild(fl);
+
+/* ===== 퍼즐 데이터 (8행 x 7열) ===== */
+const ROWS=8, COLS=7;
+const WORDS=[
+ {num:1, dir:'A', ans:'문어',  cells:[[0,1],[0,2]],       clue:'다리가 여덟 개이고 먹물을 뿜는 바다 동물은?'},
+ {num:2, dir:'D', ans:'어머니', cells:[[0,2],[1,2],[2,2]], clue:'‘엄마’를 어른스럽게 높여 부르는 말은?'},
+ {num:3, dir:'A', ans:'자전거', cells:[[0,4],[0,5],[0,6]], clue:'페달을 발로 밟아서 두 바퀴로 가는 탈것은?'},
+ {num:3, dir:'D', ans:'자동차', cells:[[0,4],[1,4],[2,4]], clue:'빵빵! 네 바퀴로 길을 씽씽 달리는 탈것은?'},
+ {num:4, dir:'A', ans:'할머니', cells:[[2,0],[2,1],[2,2]], clue:'아빠나 엄마의 엄마! 우리를 예뻐해 주시는 분은?'},
+ {num:5, dir:'A', ans:'바나나', cells:[[4,0],[4,1],[4,2]], clue:'원숭이가 좋아하는 길쭉하고 노란 과일은?'},
+ {num:6, dir:'D', ans:'나비',  cells:[[4,2],[5,2]],       clue:'팔랑팔랑 예쁜 날개로 꽃에 앉는 곤충은?'},
+ {num:7, dir:'A', ans:'비행기', cells:[[5,2],[5,3],[5,4]], clue:'큰 날개로 하늘을 훨훨 나는 탈것은?'},
+ {num:8, dir:'D', ans:'오리',  cells:[[6,6],[7,6]],       clue:'꽥꽥! 물에서 뒤뚱뒤뚱 헤엄치는 새는?'},
+ {num:9, dir:'A', ans:'코끼리', cells:[[7,4],[7,5],[7,6]], clue:'코가 아주 길고 귀가 큰, 몸집이 커다란 동물은?'},
+];
+const DECOYS=['수','박','포','도','토','끼','고','래','버','스','사','과','하','늘','별','꽃'];
+const PRAISE=['정답이에요! 참 잘했어요!','정답이에요! 딩동댕!','정답이에요! 정말 멋져요!','정답이에요! 최고예요!'];
+
+/* ===== 상태 ===== */
+let filled={}, confirmed=new Set(), doneWords=new Set(), selIdx=-1, wrongChecks=0;
+const $=id=>document.getElementById(id);
+const key=(r,c)=>r+','+c;
+
+const cellWords={};
+WORDS.forEach((w,i)=>w.cells.forEach(([r,c])=>{
+  (cellWords[key(r,c)]=cellWords[key(r,c)]||[]).push(i);
+}));
+const startNums={};
+WORDS.forEach(w=>{
+  const k=key(w.cells[0][0],w.cells[0][1]);
+  if(!startNums[k]) startNums[k]=w.num;
+});
+
+/* ===== 소리 ===== */
+let AC=null;
+function initAudio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
+function tone(f1,f2,t,dur,type='sine',vol=.22){
+  if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(f1,AC.currentTime+t);
+  o.frequency.exponentialRampToValueAtTime(f2,AC.currentTime+t+dur);
+  g.gain.setValueAtTime(0,AC.currentTime+t);
+  g.gain.linearRampToValueAtTime(vol,AC.currentTime+t+.02);
+  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+dur);
+  o.connect(g).connect(AC.destination);
+  o.start(AC.currentTime+t); o.stop(AC.currentTime+t+dur+.05);
+}
+const sndPut=()=>{ tone(440,560,0,.09,'sine',.14); };
+const sndErase=()=>{ tone(360,260,0,.1,'sine',.12); };
+const sndOkWord=()=>{ [523,659,784].forEach((f,i)=>tone(f,f,i*.11,.18)); };
+const sndBad=()=>{ tone(220,160,0,.22,'triangle',.14); };
+const sndFanfare=()=>{ [523,659,784,1047,1319].forEach((f,i)=>tone(f,f,i*.14,.3)); };
+
+/* ===== 말하기 ===== */
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ko-KR'; u.rate=.95; u.pitch=1.1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ===== 그리드 ===== */
+function buildGrid(){
+  const g=$('grid'); g.innerHTML='';
+  const used=new Set(Object.keys(cellWords));
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const k=key(r,c);
+    if(!used.has(k)) continue;
+    const d=document.createElement('div');
+    d.className='cell'; d.id='cell-'+k;
+    d.style.gridRow=(r+1); d.style.gridColumn=(c+1);
+    if(startNums[k]){ const n=document.createElement('span'); n.className='num'; n.textContent=startNums[k]; d.appendChild(n); }
+    const s=document.createElement('span'); s.className='ch'; d.appendChild(s);
+    d.addEventListener('click',()=>tapCell(r,c));
+    g.appendChild(d);
+  }
+}
+
+/* ===== 칸 누르기 ===== */
+function tapCell(r,c){
+  const k=key(r,c);
+  const ws=cellWords[k]; if(!ws) return;
+  /* 지금 고른 낱말의 (아직 확정되지 않은) 글자를 누르면 지우기 */
+  if(ws.includes(selIdx) && filled[k] && !confirmed.has(k)){
+    eraseCell(k); return;
+  }
+  let next;
+  if(ws.length===1) next=ws[0];
+  else{
+    const notDone=ws.filter(i=>!doneWords.has(i));
+    if(ws.includes(selIdx)){
+      const other=ws.find(i=>i!==selIdx);
+      next=(notDone.length&&!notDone.includes(other))?selIdx:other;
+    } else next=notDone[0]??ws[0];
+  }
+  selectWord(next);
+}
+
+function selectWord(i){
+  selIdx=i;
+  const w=WORDS[i];
+  document.querySelectorAll('.cell').forEach(el=>el.classList.remove('sel','target'));
+  w.cells.forEach(([r,c])=>$('cell-'+key(r,c)).classList.add('sel'));
+  updateTarget();
+  const b=$('clueBadge');
+  b.textContent=(w.dir==='A'?'가로 ':'세로 ')+w.num;
+  b.className='clue-badge '+w.dir;
+  setClue(doneWords.has(i)?('✔ '+w.ans+' — 이미 찾았어요!'):w.clue,'');
+  buildKeypad();
+}
+
+function setClue(text,mode){
+  const t=$('clueText');
+  t.textContent=text;
+  t.className='clue-text'+(mode?(' '+mode):'');
+}
+
+function nextSlot(w){ return w.cells.find(([r,c])=>!filled[key(r,c)]&&!confirmed.has(key(r,c)))||null; }
+function updateTarget(){
+  document.querySelectorAll('.cell.target').forEach(el=>el.classList.remove('target'));
+  if(selIdx<0||doneWords.has(selIdx)) return;
+  const t=nextSlot(WORDS[selIdx]);
+  if(t) $('cell-'+key(t[0],t[1])).classList.add('target');
+}
+
+/* ===== 글자판 ===== */
+function buildKeypad(){
+  const kp=$('keypad'); kp.innerHTML='';
+  const w=WORDS[selIdx];
+  if(doneWords.has(selIdx)){
+    kp.innerHTML='<div class="keypad-msg">🌟 다른 빈칸을 눌러 보세요!</div>';
+    return;
+  }
+  /* 아직 확정되지 않은 칸들의 정답 글자 + 함정 글자 */
+  const need=w.cells.filter(([r,c])=>!confirmed.has(key(r,c))).map(([r,c])=>{
+    const idx=w.cells.findIndex(([a,b])=>a===r&&b===c);
+    return w.ans[idx];
+  });
+  const tiles=[...need];
+  const pool=DECOYS.filter(ch=>!need.includes(ch)).sort(()=>Math.random()-.5);
+  while(tiles.length<7&&pool.length) tiles.push(pool.pop());
+  tiles.sort(()=>Math.random()-.5);
+  tiles.forEach(ch=>{
+    const b=document.createElement('button');
+    b.className='tile'; b.textContent=ch;
+    b.addEventListener('click',()=>tapTile(ch));
+    kp.appendChild(b);
+  });
+  const e=document.createElement('button');
+  e.className='tile erase'; e.textContent='⌫ 지우기';
+  e.addEventListener('click',eraseLast);
+  kp.appendChild(e);
+}
+
+/* ===== 글자 채우기 / 지우기 ===== */
+function tapTile(ch){
+  if(selIdx<0||doneWords.has(selIdx)) return;
+  const w=WORDS[selIdx];
+  const t=nextSlot(w); if(!t) return;
+  const k=key(t[0],t[1]);
+  filled[k]=ch;
+  const el=$('cell-'+k);
+  el.querySelector('.ch').textContent=ch;
+  el.classList.add('filled');
+  el.style.animation='pop .3s ease'; setTimeout(()=>el.style.animation='',350);
+  sndPut();
+  clearWrongMarks(w);
+  updateTarget();
+  /* 낱말이 다 채워지면 확인 */
+  if(w.cells.every(([r,c])=>filled[key(r,c)]||confirmed.has(key(r,c)))) checkWord(selIdx);
+}
+
+function eraseLast(){
+  if(selIdx<0||doneWords.has(selIdx)) return;
+  const w=WORDS[selIdx];
+  const cs=[...w.cells].reverse().find(([r,c])=>filled[key(r,c)]&&!confirmed.has(key(r,c)));
+  if(cs) eraseCell(key(cs[0],cs[1]));
+}
+
+function eraseCell(k){
+  delete filled[k];
+  const el=$('cell-'+k);
+  el.querySelector('.ch').textContent='';
+  el.classList.remove('filled','wrong');
+  sndErase();
+  if(selIdx>=0){ clearWrongMarks(WORDS[selIdx]); setClue(WORDS[selIdx].clue,''); }
+  updateTarget();
+}
+
+function clearWrongMarks(w){
+  w.cells.forEach(([r,c])=>{
+    const k=key(r,c);
+    if(!confirmed.has(k)) $('cell-'+k).classList.remove('wrong');
+  });
+}
+
+/* ===== 낱말 확인 ===== */
+function wordText(w){ return w.cells.map(([r,c])=>filled[key(r,c)]||'').join(''); }
+
+function checkWord(i){
+  const w=WORDS[i];
+  if(wordText(w)===w.ans){
+    confirmWord(i,true);
+    /* 교차 칸 덕분에 저절로 완성된 다른 낱말도 확인 */
+    WORDS.forEach((v,j)=>{
+      if(doneWords.has(j)) return;
+      const full=v.cells.every(([r,c])=>filled[key(r,c)]||confirmed.has(key(r,c)));
+      if(full && wordText(v)===v.ans) confirmWord(j,false);
+    });
+    if(doneWords.size===WORDS.length){ setTimeout(finish,700); return; }
+    if(doneWords.has(selIdx)){
+      setTimeout(()=>{
+        let n=(selIdx+1)%WORDS.length;
+        while(doneWords.has(n)) n=(n+1)%WORDS.length;
+        selectWord(n);
+      },1200);
+    }
+  }else{
+    wrongChecks++;
+    sndBad();
+    w.cells.forEach(([r,c])=>{
+      const k=key(r,c), el=$('cell-'+k);
+      el.classList.add('bad');
+      if(!confirmed.has(k)) el.classList.add('wrong');
+      setTimeout(()=>el.classList.remove('bad'),400);
+    });
+    setClue('음… 다시 한번 볼까요? 빨간 칸을 누르거나 ⌫로 지워요!','retry');
+    speak('음, 다시 한번 생각해 볼까요?');
+  }
+}
+
+function confirmWord(i,cheer){
+  const w=WORDS[i];
+  doneWords.add(i);
+  w.cells.forEach(([r,c])=>{
+    const k=key(r,c); confirmed.add(k);
+    const el=$('cell-'+k);
+    el.classList.remove('filled','wrong');
+    el.classList.add('done');
+    el.style.animation='pop .4s ease'; setTimeout(()=>el.style.animation='',450);
+  });
+  $('progress').textContent=doneWords.size+' / 10';
+  sndOkWord();
+  if(cheer){
+    setClue('🌟 정답이에요! ('+w.ans+')','cheer');
+    speak(PRAISE[Math.floor(Math.random()*PRAISE.length)]);
+  }
+  updateTarget();
+}
+
+/* ===== 완성! ===== */
+function finish(){
+  sndFanfare();
+  confetti();
+  speak('와, 축하해요! 낱말 퍼즐 열 개를 모두 완성했어요!');
+  setTimeout(()=>{
+    show('resultScreen');
+    const stars = wrongChecks<=2?3 : wrongChecks<=5?2 : 1;
+    $('stars').innerHTML = [1,2,3].map(n=>`<span class="${n<=stars?'':'dim'}">⭐</span>`).join('');
+    $('resultMsg').innerHTML =
+      stars===3 ? '수수께끼를 척척! 낱말 박사예요! 👑' :
+      stars===2 ? '10개 낱말을 모두 찾았어요! 정말 잘했어요! 💪' :
+                  '지우고 다시 채우며 끝까지 해냈어요! 대단해요! 🌈';
+  },2300);
+}
+
+function confetti(){
+  const colors=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#C77DFF','#FF9F45'];
+  for(let i=0;i<90;i++){
+    const p=document.createElement('div');
+    p.className='confetti';
+    const s=6+Math.random()*8;
+    p.style.cssText=`left:${Math.random()*100}vw;width:${s}px;height:${s*1.4}px;background:${colors[i%colors.length]};animation:fall ${1.8+Math.random()*1.6}s linear ${Math.random()*.8}s forwards;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),4500);
+  }
+}
+
+/* ===== 힌트 목록 ===== */
+function buildSheet(){
+  const la=$('listA'), ld=$('listD'); la.innerHTML=''; ld.innerHTML='';
+  WORDS.forEach((w,i)=>{
+    const row=document.createElement('div');
+    row.className='hint-row '+(w.dir==='D'?'d ':'')+(doneWords.has(i)?'done':'');
+    row.innerHTML=`<span class="mark">${doneWords.has(i)?'✔':'▫️'}</span><span class="hnum">${w.num}.</span><span class="hint-clue">${w.clue}</span>`;
+    row.addEventListener('click',()=>{ $('hintSheet').classList.remove('on'); selectWord(i); });
+    (w.dir==='A'?la:ld).appendChild(row);
+  });
+}
+
+/* ===== 화면 전환 ===== */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $(id).classList.add('on');
+}
+
+function resetGame(){
+  filled={}; confirmed=new Set(); doneWords=new Set(); wrongChecks=0;
+  $('progress').textContent='0 / 10';
+  buildGrid();
+  show('gameScreen');
+  selectWord(0);
+}
+
+/* ===== 버튼 ===== */
+$('btnStart').addEventListener('click',()=>{ initAudio(); resetGame(); });
+$('btnReplay').addEventListener('click',()=>{ initAudio(); resetGame(); });
+$('btnSpeak').addEventListener('click',()=>{
+  initAudio();
+  const w=WORDS[selIdx]; if(!w) return;
+  speak((w.dir==='A'?'가로 ':'세로 ')+w.num+'번. '+w.clue);
+});
+$('btnSheet').addEventListener('click',()=>{ buildSheet(); $('hintSheet').classList.add('on'); });
+$('btnCloseSheet').addEventListener('click',()=>$('hintSheet').classList.remove('on'));
+$('hintSheet').addEventListener('click',e=>{ if(e.target.id==='hintSheet') $('hintSheet').classList.remove('on'); });
+</script>
+</body>
+</html>

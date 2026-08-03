@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>그림 단어 짝짓기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Jua', sans-serif;
+  }
+
+  body {
+    background: linear-gradient(160deg, #fff4d6 0%, #ffe0ec 50%, #d9f0ff 100%);
+    display: flex;
+    flex-direction: column;
+    color: #5a4a3a;
+  }
+
+  /* 떠다니는 배경 장식 */
+  .bg-deco {
+    position: fixed;
+    font-size: 40px;
+    opacity: 0.35;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-8deg); }
+    50% { transform: translateY(-18px) rotate(8deg); }
+  }
+
+  /* 상단 바 */
+  header {
+    position: relative;
+    z-index: 2;
+    padding: 14px 18px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .title {
+    font-size: 24px;
+    color: #ff8a3d;
+    text-shadow: 2px 2px 0 #fff;
+  }
+
+  .score-box {
+    background: #fff;
+    border: 3px solid #ffce4a;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 20px;
+    color: #ff9a3c;
+    box-shadow: 0 4px 0 #f0c040;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .level-badge {
+    background: #ffe9a8;
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 16px;
+    color: #c07a2a;
+    margin: 0 auto 4px;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    width: fit-content;
+  }
+
+  /* 게임판 */
+  #board {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 8px 16px 16px;
+    gap: 8px;
+    min-height: 0;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 10px;
+    width: 42%;
+    z-index: 2;
+  }
+
+  .card {
+    flex: 1;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 4px solid #fff;
+    min-height: 0;
+  }
+
+  .pic-card {
+    background: #fff;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.08);
+    font-size: clamp(40px, 13vw, 80px);
+  }
+
+  .word-card {
+    background: #ffd9e6;
+    box-shadow: 0 6px 0 #f3aec5;
+    font-size: clamp(26px, 8vw, 46px);
+    color: #d6457f;
+  }
+
+  .card:active {
+    transform: scale(0.95);
+  }
+
+  .card.selected {
+    transform: scale(1.06);
+    border-color: #ffb300;
+    box-shadow: 0 0 0 5px #ffe082, 0 6px 0 rgba(0,0,0,0.1);
+  }
+
+  .card.matched {
+    pointer-events: none;
+    opacity: 0.9;
+  }
+  .pic-card.matched { border-color: #9be29b; }
+  .word-card.matched {
+    background: #c8f0c8;
+    color: #3c9a3c;
+    box-shadow: 0 6px 0 #9bd99b;
+    border-color: #9be29b;
+  }
+
+  /* 선을 그리는 캔버스 영역 */
+  #lines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* 메시지 풍선 */
+  #toast {
+    position: fixed;
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: #fff;
+    border: 5px solid #ffce4a;
+    border-radius: 30px;
+    padding: 18px 32px;
+    font-size: 30px;
+    color: #ff8a3d;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+    transition: transform 0.25s, opacity 0.25s;
+    white-space: nowrap;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  #toast.wrong {
+    border-color: #9ccaff;
+    color: #4a90e2;
+  }
+
+  /* 결과 화면 */
+  #result {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 250, 235, 0.96);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    text-align: center;
+    padding: 24px;
+  }
+  #result.show { display: flex; }
+
+  .result-emoji {
+    font-size: 90px;
+    animation: pop 0.6s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+
+  .result-title {
+    font-size: 38px;
+    color: #ff8a3d;
+    text-shadow: 2px 2px 0 #fff;
+  }
+  .result-text {
+    font-size: 24px;
+    color: #7a6a5a;
+  }
+
+  .btn {
+    font-family: 'Jua', sans-serif;
+    font-size: 28px;
+    color: #fff;
+    background: #ff9a3c;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 44px;
+    box-shadow: 0 6px 0 #d97a20;
+    cursor: pointer;
+    transition: transform 0.1s;
+    margin-top: 6px;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d97a20; }
+
+  /* 색종이(confetti) */
+  .confetti {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    z-index: 90;
+    pointer-events: none;
+    top: -20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">🎈 짝짓기 놀이</div>
+  <div class="score-box">⭐ <span id="score">0</span></div>
+</header>
+<div class="level-badge" id="levelBadge">그림 3개</div>
+
+<div id="board">
+  <svg id="lines"></svg>
+  <div class="column" id="picCol"></div>
+  <div class="column" id="wordCol"></div>
+</div>
+
+<div id="toast"></div>
+
+<div id="result">
+  <div class="result-emoji">🎉</div>
+  <div class="result-title">참 잘했어요!</div>
+  <div class="result-text" id="resultText"></div>
+  <button class="btn" id="nextBtn">다시 하기</button>
+</div>
+
+<script>
+  // ====== 그림 단어 데이터 ======
+  const ITEMS = [
+    { emoji: "🍎", word: "사과" },
+    { emoji: "🐶", word: "강아지" },
+    { emoji: "🚗", word: "자동차" },
+    { emoji: "🐱", word: "고양이" },
+    { emoji: "🍌", word: "바나나" },
+    { emoji: "🌸", word: "꽃" },
+    { emoji: "🐰", word: "토끼" },
+    { emoji: "🚌", word: "버스" },
+    { emoji: "🍓", word: "딸기" },
+    { emoji: "🐻", word: "곰" },
+    { emoji: "🦋", word: "나비" },
+    { emoji: "🌟", word: "별" },
+  ];
+
+  // 배경 장식 뿌리기
+  const decoEmojis = ["⭐","☁️","🌈","🎈","💛","🌷"];
+  for (let i = 0; i < 6; i++) {
+    const d = document.createElement("div");
+    d.className = "bg-deco";
+    d.textContent = decoEmojis[i];
+    d.style.left = (Math.random() * 85 + 5) + "%";
+    d.style.top = (Math.random() * 80 + 5) + "%";
+    d.style.animationDelay = (Math.random() * 4) + "s";
+    document.body.appendChild(d);
+  }
+
+  // ====== 상태 ======
+  let score = 0;
+  let level = 0;          // 0 = 3개, 1 = 4개, 2 = 5개, 이후 5개 유지
+  const levelCounts = [3, 4, 5];
+  let selectedPic = null;
+  let matchedCount = 0;
+  let roundItems = [];
+
+  const picCol = document.getElementById("picCol");
+  const wordCol = document.getElementById("wordCol");
+  const linesSvg = document.getElementById("lines");
+  const scoreEl = document.getElementById("score");
+  const levelBadge = document.getElementById("levelBadge");
+  const toast = document.getElementById("toast");
+  const result = document.getElementById("result");
+  const resultText = document.getElementById("resultText");
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getCount() {
+    return levelCounts[Math.min(level, levelCounts.length - 1)];
+  }
+
+  // ====== 소리 (Web Audio) ======
+  let audioCtx = null;
+  function beep(freqs, type = "sine") {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      let t = audioCtx.currentTime;
+      freqs.forEach((f) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.value = f;
+        o.connect(g); g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        o.start(t); o.stop(t + 0.2);
+        t += 0.13;
+      });
+    } catch (e) {}
+  }
+  function speak(text) {
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR";
+      u.rate = 0.95;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ====== 라운드 만들기 ======
+  function buildRound() {
+    picCol.innerHTML = "";
+    wordCol.innerHTML = "";
+    linesSvg.innerHTML = "";
+    selectedPic = null;
+    matchedCount = 0;
+
+    const count = getCount();
+    roundItems = shuffle(ITEMS).slice(0, count);
+    levelBadge.textContent = "그림 " + count + "개";
+
+    // 왼쪽: 그림 카드 (원래 순서)
+    roundItems.forEach((item, idx) => {
+      const c = document.createElement("div");
+      c.className = "card pic-card";
+      c.textContent = item.emoji;
+      c.dataset.id = idx;
+      c.addEventListener("click", () => onPicClick(c, idx));
+      picCol.appendChild(c);
+    });
+
+    // 오른쪽: 단어 카드 (뒤섞기)
+    const shuffledWords = shuffle(roundItems.map((it, i) => ({ ...it, id: i })));
+    shuffledWords.forEach((item) => {
+      const c = document.createElement("div");
+      c.className = "card word-card";
+      c.textContent = item.word;
+      c.dataset.id = item.id;
+      c.addEventListener("click", () => onWordClick(c, item.id));
+      wordCol.appendChild(c);
+    });
+  }
+
+  function onPicClick(el, id) {
+    if (el.classList.contains("matched")) return;
+    // 이전 선택 해제
+    document.querySelectorAll(".pic-card.selected").forEach(e => e.classList.remove("selected"));
+    selectedPic = { el, id };
+    el.classList.add("selected");
+    beep([520]);
+  }
+
+  function onWordClick(el, id) {
+    if (el.classList.contains("matched")) return;
+    if (!selectedPic) {
+      // 그림을 먼저 누르라고 살짝 안내
+      el.classList.add("selected");
+      setTimeout(() => el.classList.remove("selected"), 200);
+      return;
+    }
+
+    const picEl = selectedPic.el;
+
+    if (selectedPic.id === id) {
+      // 정답!
+      picEl.classList.remove("selected");
+      picEl.classList.add("matched");
+      el.classList.add("matched");
+      drawLine(picEl, el, true);
+      score++;
+      scoreEl.textContent = score;
+      matchedCount++;
+      selectedPic = null;
+      beep([660, 880], "triangle");
+      showToast("딩동! 맞았어요 🎉", false);
+
+      if (matchedCount === roundItems.length) {
+        setTimeout(endRound, 900);
+      }
+    } else {
+      // 오답 — 잠깐 선을 그렸다가 사라지게
+      const tempLine = drawLine(picEl, el, false);
+      picEl.classList.remove("selected");
+      selectedPic = null;
+      beep([300, 230], "sine");
+      showToast("다시 이어 볼까요? 🙂", true);
+      setTimeout(() => { if (tempLine) tempLine.remove(); }, 700);
+    }
+  }
+
+  // ====== 선 그리기 ======
+  function drawLine(picEl, wordEl, permanent) {
+    const board = document.getElementById("board");
+    const bRect = board.getBoundingClientRect();
+    const p = picEl.getBoundingClientRect();
+    const w = wordEl.getBoundingClientRect();
+
+    const x1 = p.right - bRect.left;
+    const y1 = p.top + p.height / 2 - bRect.top;
+    const x2 = w.left - bRect.left;
+    const y2 = w.top + w.height / 2 - bRect.top;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+    line.setAttribute("stroke", permanent ? "#5bc85b" : "#ff9aa2");
+    line.setAttribute("stroke-width", "8");
+    line.setAttribute("stroke-linecap", "round");
+    if (!permanent) line.setAttribute("stroke-dasharray", "10 8");
+    linesSvg.appendChild(line);
+    return line;
+  }
+
+  // ====== 메시지 ======
+  let toastTimer = null;
+  function showToast(msg, wrong) {
+    toast.textContent = msg;
+    toast.className = wrong ? "show wrong" : "show";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.className = wrong ? "wrong" : "", 1100);
+  }
+
+  // ====== 색종이 ======
+  function confettiBurst() {
+    const colors = ["#ff8a3d","#ffce4a","#5bc85b","#4a90e2","#ff6fa5","#a06fff"];
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+      document.body.appendChild(c);
+      const fall = 100 + Math.random() * 30;
+      const drift = (Math.random() - 0.5) * 200;
+      c.animate([
+        { transform: "translate(0,0) rotate(0)", opacity: 1 },
+        { transform: `translate(${drift}px, ${fall}vh) rotate(${Math.random()*720}deg)`, opacity: 0.9 }
+      ], { duration: 1800 + Math.random() * 800, easing: "ease-in" });
+      setTimeout(() => c.remove(), 2600);
+    }
+  }
+
+  // ====== 라운드 끝 ======
+  function endRound() {
+    confettiBurst();
+    beep([660, 880, 1046], "triangle");
+    resultText.textContent = "이번 판에서 " + roundItems.length + "개를 모두 이었어요!";
+    result.classList.add("show");
+    speak("참 잘했어요");
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    result.classList.remove("show");
+    level++; // 다음 판은 그림 수 늘리기 (최대 5개)
+    buildRound();
+  });
+
+  // 화면 회전 등 크기 변할 때 선 다시 그리기 (맞은 것만)
+  window.addEventListener("resize", () => {
+    linesSvg.innerHTML = "";
+    const pics = [...picCol.children];
+    const words = [...wordCol.children];
+    pics.forEach(pc => {
+      if (pc.classList.contains("matched")) {
+        const id = pc.dataset.id;
+        const wc = words.find(w => w.dataset.id === id && w.classList.contains("matched"));
+        if (wc) drawLine(pc, wc, true);
+      }
+    });
+  });
+
+  // 시작!
+  buildRound();
+</script>
+</body>
+</html>

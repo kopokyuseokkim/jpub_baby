@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>알파벳 자동차 경주</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Jua', sans-serif;
+    background: linear-gradient(180deg, #aee4ff 0%, #d4f3e0 60%, #c8e6a0 100%);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  #game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 구름 장식 */
+  .cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50px;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50%;
+  }
+  .cloud1 { width: 90px; height: 30px; top: 60px; left: 20px; animation: drift 30s linear infinite; }
+  .cloud1::before { width: 45px; height: 45px; top: -22px; left: 12px; }
+  .cloud1::after { width: 35px; height: 35px; top: -16px; right: 14px; }
+  .cloud2 { width: 70px; height: 24px; top: 110px; right: 30px; animation: drift 40s linear infinite reverse; }
+  .cloud2::before { width: 36px; height: 36px; top: -18px; left: 10px; }
+  .cloud2::after { width: 28px; height: 28px; top: -12px; right: 10px; }
+  @keyframes drift {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(25px); }
+    100% { transform: translateX(0); }
+  }
+
+  /* 상단 바 */
+  #topbar {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px 6px;
+  }
+  #title {
+    font-size: 22px;
+    color: #ff7043;
+    text-shadow: 2px 2px 0 #fff;
+  }
+  #score {
+    background: #fff;
+    border: 4px solid #ffca28;
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 20px;
+    color: #f57f17;
+    box-shadow: 0 3px 0 #e0a800;
+  }
+
+  /* 모드 선택 버튼 */
+  #modes {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 12px 8px;
+    flex-wrap: wrap;
+  }
+  .mode-btn {
+    font-family: 'Jua', sans-serif;
+    font-size: 16px;
+    padding: 8px 16px;
+    border: 3px solid #4db6ac;
+    background: #fff;
+    color: #00897b;
+    border-radius: 24px;
+    box-shadow: 0 3px 0 #80cbc4;
+    transition: transform 0.1s;
+  }
+  .mode-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #80cbc4; }
+  .mode-btn.active {
+    background: #4db6ac;
+    color: #fff;
+    border-color: #00897b;
+  }
+
+  /* 트랙 영역 */
+  #track-wrap {
+    position: relative;
+    z-index: 3;
+    flex: 1;
+    overflow: hidden;
+  }
+  #track-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  .pad {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #5d4037;
+    background: #fff;
+    border: 5px solid #bcaaa4;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+    z-index: 4;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .pad.done {
+    background: #a5d6a7;
+    border-color: #66bb6a;
+    color: #2e7d32;
+  }
+  .pad.next {
+    background: #fff59d;
+    border-color: #fbc02d;
+    color: #f57f17;
+    animation: glow 1s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(251,192,45,0.7), 0 4px 8px rgba(0,0,0,0.18); transform: translate(-50%,-50%) scale(1); }
+    50% { box-shadow: 0 0 0 12px rgba(251,192,45,0), 0 4px 8px rgba(0,0,0,0.18); transform: translate(-50%,-50%) scale(1.08); }
+  }
+  .pad:active { transform: translate(-50%,-50%) scale(0.92); }
+
+  #car {
+    position: absolute;
+    font-size: 46px;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    transition: left 0.5s cubic-bezier(0.4,0,0.2,1), top 0.5s cubic-bezier(0.4,0,0.2,1);
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+  }
+  .flag {
+    position: absolute;
+    font-size: 34px;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+  }
+
+  /* 안내 말풍선 */
+  #hint {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #fff;
+    border: 4px solid #ff8a65;
+    border-radius: 30px;
+    padding: 12px 24px;
+    font-size: 22px;
+    color: #e64a19;
+    z-index: 20;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: transform 0.35s, opacity 0.35s;
+    text-align: center;
+    max-width: 90vw;
+  }
+  #hint.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* 완주 화면 */
+  #win {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    text-align: center;
+  }
+  #win.show { display: flex; }
+  #win-card {
+    background: #fff;
+    border-radius: 40px;
+    padding: 40px 34px;
+    border: 6px solid #ffca28;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes pop {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  #win-card .trophy { font-size: 70px; }
+  #win-card h2 {
+    font-size: 30px;
+    color: #ff7043;
+    margin: 10px 0 6px;
+  }
+  #win-card p { font-size: 20px; color: #8d6e63; margin-bottom: 22px; }
+  #restart {
+    font-family: 'Jua', sans-serif;
+    font-size: 24px;
+    padding: 16px 40px;
+    background: #66bb6a;
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    box-shadow: 0 5px 0 #43a047;
+    transition: transform 0.1s;
+  }
+  #restart:active { transform: translateY(3px); box-shadow: 0 2px 0 #43a047; }
+
+  .confetti {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    z-index: 25;
+    pointer-events: none;
+    will-change: transform;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="cloud cloud1"></div>
+  <div class="cloud cloud2"></div>
+
+  <div id="topbar">
+    <div id="title">🏁 알파벳 자동차</div>
+    <div id="score">⭐ <span id="score-num">0</span></div>
+  </div>
+
+  <div id="modes">
+    <button class="mode-btn" data-mode="half1">A~M</button>
+    <button class="mode-btn" data-mode="half2">N~Z</button>
+    <button class="mode-btn active" data-mode="full">A~Z</button>
+  </div>
+
+  <div id="track-wrap">
+    <svg id="track-svg" preserveAspectRatio="none"></svg>
+    <div id="hint"></div>
+    <div id="car">🚗</div>
+  </div>
+
+  <div id="win">
+    <div id="win-card">
+      <div class="trophy">🏆</div>
+      <h2 id="win-title">완주!</h2>
+      <p>정말 잘했어요!</p>
+      <button id="restart">다시 하기 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+let mode = "full";
+let letters = [];
+let positions = [];   // 각 발판의 화면 좌표 {x,y}
+let current = 0;      // 다음에 눌러야 할 인덱스
+let score = 0;
+let busy = false;
+
+const wrap = document.getElementById("track-wrap");
+const svg = document.getElementById("track-svg");
+const car = document.getElementById("car");
+const hintEl = document.getElementById("hint");
+const winEl = document.getElementById("win");
+const scoreNum = document.getElementById("score-num");
+
+// 음성 안내 (한국어)
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR";
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}
+
+// 발판 좌표 계산: 위에서 아래로 내려오는 구불구불한 S자 트랙
+function buildPositions(n) {
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  const padR = Math.min(W, H) * 0.072; // 발판 반지름
+  const marginX = padR + 14;
+  const usableW = W - marginX * 2;
+  const topPad = padR + 20;
+  const bottomPad = padR + 20;
+  const usableH = H - topPad - bottomPad;
+
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const t = n === 1 ? 0 : i / (n - 1);
+    const y = topPad + t * usableH;
+    // 좌우로 부드럽게 흔들리는 곡선
+    const wave = Math.sin(t * Math.PI * 3.2);
+    const x = marginX + (0.5 + wave * 0.42) * usableW;
+    pts.push({ x, y });
+  }
+  return { pts, padR };
+}
+
+function render() {
+  // 기존 발판/깃발 제거
+  document.querySelectorAll(".pad, .flag").forEach(e => e.remove());
+
+  const n = letters.length;
+  const built = buildPositions(n);
+  positions = built.pts;
+  const padR = built.padR;
+  const padSize = padR * 2;
+
+  // 트랙 곡선 그리기 (부드러운 곡선)
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  let d = `M ${positions[0].x} ${positions[0].y}`;
+  for (let i = 1; i < n; i++) {
+    const p0 = positions[i-1], p1 = positions[i];
+    const mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+    d += ` Q ${p0.x} ${p0.y} ${mx} ${my}`;
+  }
+  d += ` L ${positions[n-1].x} ${positions[n-1].y}`;
+  svg.innerHTML = `
+    <path d="${d}" stroke="#7e7e7e" stroke-width="${padR*1.5}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+    <path d="${d}" stroke="#ffffff" stroke-width="4" fill="none" stroke-dasharray="14 14" stroke-linecap="round" opacity="0.9"/>
+  `;
+
+  // 발판 생성
+  positions.forEach((p, i) => {
+    const pad = document.createElement("div");
+    pad.className = "pad";
+    pad.textContent = letters[i];
+    pad.style.left = p.x + "px";
+    pad.style.top = p.y + "px";
+    pad.style.width = padSize + "px";
+    pad.style.height = padSize + "px";
+    pad.style.fontSize = (padR * 0.85) + "px";
+    pad.dataset.index = i;
+    pad.addEventListener("click", () => onPad(i));
+    wrap.appendChild(pad);
+  });
+
+  // 결승선 깃발
+  const last = positions[n-1];
+  const flag = document.createElement("div");
+  flag.className = "flag";
+  flag.textContent = "🏁";
+  flag.style.left = (last.x + padR + 18) + "px";
+  flag.style.top = last.y + "px";
+  flag.style.fontSize = (padR * 1.1) + "px";
+  wrap.appendChild(flag);
+
+  // 차를 시작 지점으로
+  current = 0;
+  placeCarBeforeStart();
+  updatePads();
+}
+
+function placeCarBeforeStart() {
+  // 첫 발판 살짝 위쪽에서 출발
+  const p0 = positions[0];
+  car.style.transition = "none";
+  car.style.left = p0.x + "px";
+  car.style.top = (p0.y - 40) + "px";
+  car.style.fontSize = (Math.min(wrap.clientWidth, wrap.clientHeight) * 0.11) + "px";
+  // transition 복구
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { car.style.transition = ""; });
+  });
+}
+
+function moveCarTo(i) {
+  const p = positions[i];
+  car.style.left = p.x + "px";
+  car.style.top = (p.y - 4) + "px";
+}
+
+function updatePads() {
+  document.querySelectorAll(".pad").forEach(pad => {
+    const idx = +pad.dataset.index;
+    pad.classList.remove("done", "next");
+    if (idx < current) pad.classList.add("done");
+    else if (idx === current) pad.classList.add("next");
+  });
+}
+
+function onPad(i) {
+  if (busy) return;
+  if (i === current) {
+    busy = true;
+    moveCarTo(i);
+    speak(letters[i]);
+    current++;
+    setTimeout(() => {
+      updatePads();
+      busy = false;
+      if (current >= letters.length) win();
+    }, 520);
+  } else {
+    // 순서 틀림 → 부드러운 안내
+    showHint(`다음은 ${letters[current]} 이에요`);
+    speak(`다음은 ${letters[current]}`);
+  }
+}
+
+let hintTimer;
+function showHint(text) {
+  hintEl.textContent = text;
+  hintEl.classList.add("show");
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => hintEl.classList.remove("show"), 2000);
+}
+
+function win() {
+  score++;
+  scoreNum.textContent = score;
+  // 차를 결승선 너머로
+  const last = positions[positions.length - 1];
+  car.style.left = (last.x + 60) + "px";
+  document.getElementById("win-title").textContent =
+    (mode === "full") ? "A부터 Z까지 완주!" : "완주 성공!";
+  speak("완주! 정말 잘했어요");
+  setTimeout(() => {
+    winEl.classList.add("show");
+    launchConfetti();
+  }, 500);
+}
+
+function launchConfetti() {
+  const colors = ["#ff7043","#ffca28","#66bb6a","#42a5f5","#ab47bc","#ec407a"];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.top = "-20px";
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+    const dur = 2 + Math.random() * 2;
+    c.style.animation = `fall ${dur}s linear ${Math.random()*0.6}s forwards`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), (dur + 1) * 1000);
+  }
+}
+
+function startGame() {
+  winEl.classList.remove("show");
+  if (mode === "half1") letters = ALL.slice(0, 13);      // A~M
+  else if (mode === "half2") letters = ALL.slice(13);    // N~Z
+  else letters = ALL.slice();                            // A~Z
+  render();
+}
+
+// 모드 버튼
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    mode = btn.dataset.mode;
+    startGame();
+  });
+});
+
+document.getElementById("restart").addEventListener("click", startGame);
+
+window.addEventListener("resize", () => { if (letters.length) render(); });
+
+// 시작
+startGame();
+</script>
+</body>
+</html>
