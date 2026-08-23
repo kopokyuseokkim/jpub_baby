@@ -64,7 +64,6 @@
     margin-bottom:28px;
     text-align:center;
   }
-
   .plate-wrap{
     position:relative;
     width:280px;
@@ -134,7 +133,6 @@
     font-size:19px;
     letter-spacing:0.02em;
     text-shadow:0 1px 3px rgba(0,0,0,0.25);
-    transform:translate(-50%,-50%);
     white-space:nowrap;
   }
   .hub{
@@ -149,7 +147,6 @@
     display:flex;align-items:center;justify-content:center;
     font-size:20px;
   }
-
   .legend{
     display:flex;
     gap:18px;
@@ -161,7 +158,6 @@
   .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
   .dot.h{background:var(--husband);}
   .dot.w{background:var(--wife);}
-
   button#spinBtn{
     appearance:none;
     border:none;
@@ -183,7 +179,6 @@
     cursor:default;
     box-shadow:none;
   }
-
   .result{
     margin-top:22px;
     text-align:center;
@@ -210,7 +205,6 @@
     font-size:22px;
     font-weight:700;
   }
-
   canvas#fx{
     position:fixed;
     inset:0;
@@ -229,22 +223,22 @@
   <div class="eyebrow">DISHWASHING ROULETTE</div>
   <h1>오늘의 설거지 당번은?</h1>
   <div class="subtitle">버튼을 누르면 접시가 돌아갑니다</div>
-
   <div class="plate-wrap">
     <div class="plate-shadow"></div>
     <div class="plate-rim"></div>
     <div class="pointer"></div>
     <div class="wheel" id="wheel">
-      <div class="seg-label" style="transform:rotate(162deg);">
-        <span style="left:96px; top:0;">남편</span>
+      <!-- 초록 90% 영역 중앙: conic 162° → CSS 좌표계 72° -->
+      <div class="seg-label" style="transform:rotate(72deg);">
+        <span style="left:96px; top:0; transform:translate(-50%,-50%) rotate(-72deg);">남편</span>
       </div>
-      <div class="seg-label" style="transform:rotate(342deg);">
-        <span style="left:112px; top:0; font-size:15px;">아내</span>
+      <!-- 빨강 10% 영역 중앙: conic 342° → CSS 좌표계 252° -->
+      <div class="seg-label" style="transform:rotate(252deg);">
+        <span style="left:112px; top:0; font-size:15px; transform:translate(-50%,-50%) rotate(-252deg);">아내</span>
       </div>
     </div>
     <div class="hub">🧽</div>
   </div>
-
   <div class="legend">
     <span><i class="dot h"></i>남편 90%</span>
     <span><i class="dot w"></i>아내 10%</span>
@@ -259,7 +253,6 @@
 </div>
 
 <canvas id="fx"></canvas>
-
 <script>
   const wheel = document.getElementById('wheel');
   const spinBtn = document.getElementById('spinBtn');
@@ -271,7 +264,6 @@
 
   let currentRotation = 0;
   let spinning = false;
-
   function resizeCanvas(){
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -287,17 +279,14 @@
     spinning = true;
     spinBtn.disabled = true;
     resultBox.classList.remove('show');
-
-    // 0~360 사이 균일 난수 → 부채꼴 크기가 곧 확률이 되도록 함
     const targetAngle = Math.random() * FULL;
     const isHusband = targetAngle < HUSBAND_RANGE;
 
-    const extraSpins = 6 + Math.floor(Math.random() * 3); // 6~8바퀴
+    const extraSpins = 6 + Math.floor(Math.random() * 3);
     const delta = (FULL - targetAngle) % FULL;
     currentRotation += extraSpins * FULL + delta - (currentRotation % FULL);
 
     wheel.style.transform = `rotate(${currentRotation}deg)`;
-
     setTimeout(() => {
       showResult(isHusband);
       spinning = false;
@@ -305,7 +294,6 @@
       spinBtn.textContent = '다시 돌리기';
     }, 4300);
   }
-
   function showResult(isHusband){
     if(isHusband){
       badge.textContent = 'HUSBAND';
@@ -320,15 +308,12 @@
     burstConfetti(isHusband);
   }
 
-  // ---- 축하 효과: 비눗방울 느낌의 컨페티 ----
   const palette = ['#3B6E71', '#E8735C', '#D9A441', '#F1E5CF', '#FFFFFF'];
-
   function burstConfetti(isHusband){
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight * 0.35;
     const particles = [];
     const count = 90;
-
     for(let i = 0; i < count; i++){
       const angle = Math.random() * Math.PI * 2;
       const speed = 4 + Math.random() * 7;
@@ -346,18 +331,16 @@
 
     let frame = 0;
     const maxFrames = 140;
-
     function tick(){
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frame++;
 
       particles.forEach(p => {
-        p.vy += 0.12; // 중력
+        p.vy += 0.12;
         p.vx *= 0.99;
         p.x += p.vx;
         p.y += p.vy;
         p.life = Math.max(0, 1 - frame / maxFrames);
-
         ctx.globalAlpha = p.life;
         ctx.beginPath();
         if(p.bubble){
@@ -377,7 +360,6 @@
         }
       });
       ctx.globalAlpha = 1;
-
       if(frame < maxFrames){
         requestAnimationFrame(tick);
       } else {
