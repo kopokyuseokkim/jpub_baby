@@ -5,93 +5,107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>자유 도화지 🎨</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
-  html, body { height: 100%; overflow: hidden; }
-  html, body { height: 100%; overflow: hidden; }
-  body { background: #eef6ff; font-family: 'Segoe UI','Apple SD Gothic Neo',sans-serif; display: flex; justify-content: center; }
-  #app { width: 100%; max-width: 480px; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-
-  /* ── START ── */
-  #cv-start {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 14px; padding: 24px; background: #eef6ff;
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    overscroll-behavior: none; -webkit-text-size-adjust: 100%;
   }
-  #cv-deco { display: flex; gap: 12px; }
-  #cv-deco div { width: 44px; height: 44px; }
-  .start-title { font-size: 24px; font-weight: 700; color: #0c447c; }
-  .start-desc  { font-size: 14px; color: #185fa5; text-align: center; line-height: 1.7; }
+  body {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #eef6ff;
+    font-family: 'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  }
+  @supports (height: 100dvh) { html, body { height: 100dvh; } }
+
+  #app {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; overflow: hidden;
+    padding:
+      env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* ── 시작 화면 ── */
+  #cv-start {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: clamp(10px,2.3vh,28px); padding: clamp(14px,3vh,40px); background: #eef6ff;
+  }
+  #cv-deco { display: flex; gap: clamp(8px,2.5vw,26px); }
+  #cv-deco div { width: clamp(36px,7vh,80px); height: clamp(36px,7vh,80px); }
+  .start-title { font-size: clamp(22px,min(4.6vh,7.4vw),58px); font-weight: 700; color: #0c447c; }
+  .start-desc  { font-size: clamp(12px,min(2.3vh,3.8vw),25px); color: #185fa5; text-align: center; line-height: 1.7; }
   #cv-go {
     margin-top: 6px; background: #5b9cff; color: #042c53;
-    border: none; border-radius: 18px; font-size: 18px; font-weight: 600;
-    padding: 13px 38px; cursor: pointer;
+    border: none; border-radius: clamp(14px,2.6vh,28px);
+    font-size: clamp(16px,min(2.9vh,4.8vw),34px); font-weight: 600;
+    padding: clamp(11px,2vh,24px) clamp(30px,7vw,72px); cursor: pointer; font-family: inherit;
   }
   #cv-go:active { transform: scale(.96); }
 
-  /* ── PLAY ── */
+  /* ── 그리기 화면 ── */
   #cv-play {
-    flex: 1; display: none; flex-direction: column;
+    flex: 1 1 auto; display: none; flex-direction: column;
     min-height: 0; background: #f4f8ff;
   }
 
   /* 도화지 — 남은 공간 모두 차지 */
   #cv-stage {
-    flex: 1; min-height: 0; position: relative;
-    background: #fff; margin: 8px 8px 0;
-    border-radius: 16px; border: 3px solid #d9e3ef;
+    flex: 1 1 auto; min-height: 0; position: relative;
+    background: #fff; margin: clamp(6px,1.2vh,16px) clamp(6px,1.8vw,26px) 0;
+    border-radius: clamp(12px,2.4vh,24px); border: 3px solid #d9e3ef;
     box-shadow: 0 4px 0 #c5d4e8; overflow: hidden;
   }
   #cv-paper {
-    position: absolute; inset: 0;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100%; height: 100%;
     display: block; touch-action: none;
   }
   #cv-layer {
-    position: absolute; inset: 0; pointer-events: none;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
   }
 
-  /* 하단 컨트롤 — 고정 */
+  /* ── 아래쪽 도구 ── */
   #cv-controls {
     flex-shrink: 0; display: flex; flex-direction: column;
-    gap: 7px; padding: 8px 8px 12px; background: #f4f8ff;
+    gap: clamp(4px,1vh,12px);
+    padding: clamp(6px,1.2vh,16px) clamp(6px,1.8vw,26px) clamp(8px,1.6vh,20px);
+    background: #f4f8ff;
   }
 
-  /* 색상 팔레트 */
-  #cv-colors {
-    display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
-  }
+  #cv-colors { display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(4px,1vw,12px); }
   .cv-sw {
-    aspect-ratio: 1/1; border-radius: 50%;
+    aspect-ratio: 1/1; max-height: clamp(28px,5.6vh,66px); width: 100%; justify-self: center;
+    border-radius: 50%;
     border: 3px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.12); cursor: pointer;
   }
   .cv-sw.on { box-shadow: 0 0 0 3px #ffcf3f; }
 
-  /* 굵기 + 지우개 */
-  .ctrl-row { display: flex; gap: 7px; align-items: stretch; }
+  .ctrl-row { display: flex; gap: clamp(5px,1.5vw,14px); align-items: stretch; }
   #cv-sizes {
-    display: flex; gap: 5px; background: #e6f1fb;
-    border-radius: 12px; padding: 5px; flex-shrink: 0;
+    display: flex; gap: clamp(3px,1vw,10px); background: #e6f1fb;
+    border-radius: clamp(10px,2vh,18px); padding: clamp(4px,0.8vh,10px); flex-shrink: 0;
   }
   .cv-size {
-    width: 40px; display: flex; align-items: center; justify-content: center;
-    border-radius: 8px; background: #fff; cursor: pointer;
+    width: clamp(34px,6.6vw,80px); display: flex; align-items: center; justify-content: center;
+    border-radius: clamp(7px,1.4vh,12px); background: #fff; cursor: pointer;
   }
   .cv-size.on { background: #ffe6a3; }
   .cv-size .d { background: #5f5e5a; border-radius: 50%; }
   #cv-erase {
     flex: 1; background: #e6f1fb; color: #0c447c;
-    border: none; border-radius: 12px; font-size: 14px;
-    font-weight: 600; cursor: pointer; padding: 8px 0;
+    border: none; border-radius: clamp(10px,2vh,18px);
+    font-size: clamp(12px,min(2.2vh,3.6vw),24px);
+    font-weight: 600; cursor: pointer; padding: clamp(7px,1.4vh,16px) 0; font-family: inherit;
   }
   #cv-erase.on { background: #ff8fcf; color: #4b1528; }
   #cv-erase:active { transform: scale(.96); }
 
-  /* 스티커 행 */
-  .stk-row { display: flex; align-items: center; gap: 6px; }
-  .stk-label { font-size: 12px; color: #4a7ab5; flex-shrink: 0; font-weight: 600; }
-  #cv-stickers { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+  .stk-row { display: flex; align-items: center; gap: clamp(4px,1.4vw,14px); }
+  .stk-label { font-size: clamp(11px,min(1.9vh,3vw),21px); color: #4a7ab5; flex-shrink: 0; font-weight: 600; }
+  #cv-stickers { display: flex; flex-wrap: wrap; gap: clamp(3px,1vw,10px); flex: 1; }
   .cv-stk {
-    width: 44px; height: 44px; border-radius: 10px;
+    width: clamp(34px,6.6vh,76px); height: clamp(34px,6.6vh,76px); border-radius: clamp(8px,1.6vh,14px);
     background: #ddeeff; border: 2px solid transparent;
     cursor: pointer; padding: 4px;
   }
@@ -99,40 +113,44 @@
   .cv-stk svg { width: 100%; height: 100%; display: block; pointer-events: none; }
   .cv-stk:active { transform: scale(.94); }
 
-  /* 스티커 빼기 + 완성 */
-  .action-row { display: flex; gap: 7px; }
+  .action-row { display: flex; gap: clamp(5px,1.5vw,14px); }
   #cv-undo {
-    flex: 0 0 110px; background: #e6f1fb; color: #0c447c;
-    border: none; border-radius: 12px; font-size: 14px;
-    font-weight: 600; cursor: pointer; padding: 12px 0;
+    flex: 0 0 auto; padding-left: clamp(14px,4vw,40px); padding-right: clamp(14px,4vw,40px);
+    background: #e6f1fb; color: #0c447c;
+    border: none; border-radius: clamp(10px,2vh,18px);
+    font-size: clamp(12px,min(2.2vh,3.6vw),24px);
+    font-weight: 600; cursor: pointer; padding-top: clamp(10px,2vh,22px); padding-bottom: clamp(10px,2vh,22px);
+    font-family: inherit; white-space: nowrap;
   }
   #cv-undo:active { transform: scale(.96); }
   #cv-done {
     flex: 1; background: #6fd36f; color: #173404;
-    border: none; border-radius: 12px; font-size: 17px;
-    font-weight: 600; padding: 12px 0; cursor: pointer;
+    border: none; border-radius: clamp(10px,2vh,18px);
+    font-size: clamp(15px,min(2.7vh,4.4vw),32px);
+    font-weight: 600; padding: clamp(10px,2vh,22px) 0; cursor: pointer; font-family: inherit;
   }
   #cv-done:active { transform: scale(.96); }
 
-  /* ── RESULT ── */
+  /* ── 결과 화면 ── */
   #cv-result {
-    flex: 1; display: none; flex-direction: column;
+    flex: 1 1 auto; min-height: 0; display: none; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 14px; padding: 20px; background: #fff8e8;
+    gap: clamp(10px,2.2vh,26px); padding: clamp(12px,2.6vh,34px); background: #fff8e8;
   }
   .result-title {
-    font-size: 22px; font-weight: 700; color: #854f0b;
+    font-size: clamp(19px,min(3.8vh,6.2vw),48px); font-weight: 700; color: #854f0b;
     display: flex; align-items: center; gap: 8px;
   }
   #cv-out {
-    width: 100%; flex: 1; min-height: 0;
+    width: 100%; flex: 1 1 auto; min-height: 0;
     display: flex; align-items: center; justify-content: center;
   }
   #cv-out canvas { max-width: 100%; max-height: 100%; border-radius: 12px; border: 3px solid #fff; box-shadow: 0 4px 0 #eadcae; }
   #cv-again {
     background: #ffd23f; color: #633806;
-    border: none; border-radius: 14px; font-size: 16px;
-    font-weight: 600; padding: 12px 34px; cursor: pointer;
+    border: none; border-radius: clamp(11px,2.2vh,22px);
+    font-size: clamp(14px,min(2.6vh,4.2vw),30px);
+    font-weight: 600; padding: clamp(10px,2vh,22px) clamp(26px,6vw,60px); cursor: pointer; font-family: inherit;
   }
   #cv-again:active { transform: scale(.96); }
 </style>
@@ -210,7 +228,9 @@
   var pctx=paper.getContext('2d');
   var dpr=Math.max(1,window.devicePixelRatio||1);
   var mode='draw',current='#5b9cff',size=14,drawing=false,last=null,selStk=null,stickers=[];
-  var STK_SIZE=54;
+  var STK_BASE=54, STK_SIZE=54;
+  var uiScale=1;                       // 도화지가 클수록 붓과 스티커도 커진다
+  function bw(){ return size*uiScale; }
 
   function resize(){
     var r=stage.getBoundingClientRect();
@@ -221,6 +241,9 @@
     paper.height=Math.round(r.height*dpr);
     pctx.setTransform(dpr,0,0,dpr,0,0);
     pctx.lineCap='round';pctx.lineJoin='round';
+    // 기준 도화지(짧은 변 360px) 대비 배율
+    uiScale=Math.max(1,Math.min(2.4,Math.min(r.width,r.height)/360));
+    STK_SIZE=Math.round(STK_BASE*uiScale);
     pctx.save();pctx.setTransform(1,0,0,1,0,0);
     pctx.fillStyle='#ffffff';pctx.fillRect(0,0,paper.width,paper.height);
     if(save.width)pctx.drawImage(save,0,0,paper.width,paper.height);
@@ -230,7 +253,7 @@
   /* 시작 화면 데코 */
   var deco=document.getElementById('cv-deco');
   ['star','heart','flower','butterfly'].forEach(function(k){
-    var d=document.createElement('div');d.style.width='44px';d.style.height='44px';
+    var d=document.createElement('div');
     d.innerHTML=wrap(k);deco.appendChild(d);
   });
 
@@ -254,7 +277,8 @@
     var b=document.createElement('div');
     b.className='cv-size'+(i===1?' on':'');b.dataset.size=p[0];
     var d=document.createElement('div');d.className='d';
-    d.style.width=p[1]+'px';d.style.height=p[1]+'px';b.appendChild(d);
+    d.style.width='clamp('+Math.round(p[1]*0.66)+'px,'+(p[1]/5.2).toFixed(2)+'vh,'+Math.round(p[1]*2.1)+'px)';
+    d.style.height=d.style.width;b.appendChild(d);
     b.addEventListener('pointerdown',function(){
       size=+b.dataset.size;
       document.querySelectorAll('.cv-size').forEach(function(x){x.classList.remove('on');});
@@ -290,9 +314,9 @@
   function pos(e){var r=paper.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
 
   function addSticker(x,y,key){
-    var st={x:x,y:y,key:key};stickers.push(st);
+    var st={x:x,y:y,key:key,size:STK_SIZE};stickers.push(st);
     var d=document.createElement('div');st.el=d;
-    d.style.cssText='position:absolute;width:'+STK_SIZE+'px;height:'+STK_SIZE+'px;pointer-events:auto;touch-action:none;cursor:grab;left:'+(x-STK_SIZE/2)+'px;top:'+(y-STK_SIZE/2)+'px';
+    d.style.cssText='position:absolute;width:'+st.size+'px;height:'+st.size+'px;pointer-events:auto;touch-action:none;cursor:grab;left:'+(x-st.size/2)+'px;top:'+(y-st.size/2)+'px';
     d.innerHTML=wrap(key);
     var dragging=false,ox=0,oy=0;
     d.addEventListener('pointerdown',function(e){
@@ -305,7 +329,7 @@
       if(!dragging)return;e.stopPropagation();
       var r=stage.getBoundingClientRect();
       st.x=e.clientX-r.left-ox;st.y=e.clientY-r.top-oy;
-      d.style.left=(st.x-STK_SIZE/2)+'px';d.style.top=(st.y-STK_SIZE/2)+'px';
+      d.style.left=(st.x-st.size/2)+'px';d.style.top=(st.y-st.size/2)+'px';
     });
     d.addEventListener('pointerup',function(){dragging=false;});
     layer.appendChild(d);
@@ -318,13 +342,13 @@
   function drawSeg(a,b){
     pctx.globalCompositeOperation=(mode==='erase')?'destination-out':'source-over';
     pctx.strokeStyle=(mode==='erase')?'#000':current;
-    pctx.lineWidth=(mode==='erase')?size*1.6:size;
+    pctx.lineWidth=(mode==='erase')?bw()*1.6:bw();
     pctx.beginPath();pctx.moveTo(a.x,a.y);pctx.lineTo(b.x,b.y);pctx.stroke();
   }
   function drawDot(p){
     pctx.globalCompositeOperation=(mode==='erase')?'destination-out':'source-over';
     pctx.fillStyle=(mode==='erase')?'#000':current;
-    pctx.beginPath();pctx.arc(p.x,p.y,((mode==='erase')?size*1.6:size)/2,0,Math.PI*2);pctx.fill();
+    pctx.beginPath();pctx.arc(p.x,p.y,((mode==='erase')?bw()*1.6:bw())/2,0,Math.PI*2);pctx.fill();
   }
 
   paper.addEventListener('pointerdown',function(e){
@@ -360,11 +384,11 @@
       return new Promise(function(res){
         var img=new Image();
         img.onload=function(){
-          var sp=STK_SIZE*dpr;
+          var sp=(st.size||STK_SIZE)*dpr;
           octx.drawImage(img,(st.x*dpr)-sp/2,(st.y*dpr)-sp/2,sp,sp);res();
         };
         img.onerror=function(){res();};
-        img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(wrapPx(st.key,Math.round(STK_SIZE*dpr)));
+        img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(wrapPx(st.key,Math.round((st.size||STK_SIZE)*dpr)));
       });
     });
     Promise.all(jobs).then(function(){
@@ -380,6 +404,8 @@
   });
 
   window.addEventListener('resize',resize);
+  window.addEventListener('orientationchange',function(){setTimeout(resize,250);});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',resize);
   show('cv-start');
 })();
 </script>

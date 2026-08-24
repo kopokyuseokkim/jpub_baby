@@ -6,77 +6,117 @@
 <title>패션 디자이너 👗</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:#fff0f7;}
-body{display:flex;justify-content:center;align-items:stretch;}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#fff0f7;
+  overscroll-behavior:none;-webkit-text-size-adjust:100%;
+}
+body{position:fixed;top:0;left:0;right:0;bottom:0;}
+@supports (height:100dvh){ html,body{height:100dvh;} }
+
 #fd-root{
-  width:100%;max-width:480px;height:100dvh;
-  font-family:"Segoe UI","Apple SD Gothic Neo",sans-serif;
+  width:100%;height:100%;
+  font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   display:flex;flex-direction:column;
+  user-select:none;-webkit-user-select:none;
+  padding:
+    calc(env(safe-area-inset-top) + clamp(4px,0.9vh,14px))
+    calc(env(safe-area-inset-right) + clamp(6px,1.8vw,26px))
+    calc(env(safe-area-inset-bottom) + clamp(6px,1.2vh,18px))
+    calc(env(safe-area-inset-left) + clamp(6px,1.8vw,26px));
 }
-/* START */
+
+/* ── 시작 화면 ── */
 #fd-start{
-  flex:1;display:flex;flex-direction:column;
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  gap:14px;background:#fff0f7;padding:18px;overflow-y:auto;
+  gap:clamp(9px,2vh,24px);background:#fff0f7;padding:clamp(10px,2vh,26px);
 }
-/* PLAY */
+#fd-pre{width:auto;height:clamp(150px,30vh,420px);aspect-ratio:2/3;flex-shrink:1;min-height:0;}
+.fd-title{font-size:clamp(20px,min(4.2vh,7vw),54px);font-weight:600;color:#993556;}
+.fd-desc{font-size:clamp(12px,min(2.2vh,3.7vw),24px);color:#72243e;text-align:center;line-height:1.6;}
+#fd-go{
+  margin-top:4px;background:#ff8fcf;color:#4b1528;border:none;
+  border-radius:clamp(13px,2.4vh,26px);font-family:inherit;
+  font-size:clamp(16px,min(2.9vh,4.8vw),34px);font-weight:600;
+  padding:clamp(11px,2vh,24px) clamp(28px,7vw,68px);cursor:pointer;
+}
+
+/* ── 꾸미기 화면 ── */
 #fd-play{
-  display:none;flex:1;flex-direction:column;
-  gap:8px;min-height:0;padding:8px 8px 10px;
+  display:none;flex:1 1 auto;flex-direction:column;
+  gap:clamp(5px,1.1vh,14px);min-height:0;padding:clamp(4px,0.9vh,12px) 0 clamp(4px,0.8vh,10px);
 }
 #fd-stage{
-  flex:1;min-height:0;background:#f3f8ff;
-  border-radius:16px;display:flex;
-  align-items:center;justify-content:center;padding:6px;overflow:hidden;
+  flex:1 1 auto;min-height:0;background:#f3f8ff;
+  border-radius:clamp(12px,2.4vh,24px);display:flex;
+  align-items:center;justify-content:center;padding:clamp(5px,1vh,14px);overflow:hidden;
 }
-#fd-cats{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex-shrink:0;}
-#fd-items{display:flex;gap:10px;justify-content:center;flex-shrink:0;}
-/* RESULT */
+#fd-cats{display:flex;flex-wrap:wrap;gap:clamp(4px,1.2vw,12px);justify-content:center;flex-shrink:0;}
+#fd-items{display:flex;gap:clamp(6px,2vw,22px);justify-content:center;flex-shrink:0;flex-wrap:wrap;}
+.fd-actions{display:flex;gap:clamp(5px,1.5vw,14px);flex-shrink:0;}
+
+/* ── 결과 화면 ── */
 #fd-result{
-  display:none;flex:1;flex-direction:column;
-  gap:10px;min-height:0;padding:8px 8px 10px;
+  display:none;flex:1 1 auto;flex-direction:column;
+  gap:clamp(6px,1.3vh,16px);min-height:0;padding:clamp(4px,0.9vh,12px) 0 clamp(4px,0.8vh,10px);
 }
 #fd-stage2{
-  flex:1;min-height:0;background:#fff7e8;
-  border-radius:16px;display:flex;
-  align-items:center;justify-content:center;padding:6px;overflow:hidden;
+  flex:1 1 auto;min-height:0;background:#fff7e8;
+  border-radius:clamp(12px,2.4vh,24px);display:flex;
+  align-items:center;justify-content:center;padding:clamp(5px,1vh,14px);overflow:hidden;
 }
+#fd-plate{
+  display:none;text-align:center;background:#ffe6f3;
+  border-radius:clamp(11px,2vh,20px);padding:clamp(9px,1.7vh,20px);
+  color:#993556;font-size:clamp(15px,min(2.8vh,4.6vw),32px);font-weight:500;flex-shrink:0;
+}
+#fd-namebox{display:flex;flex-direction:column;gap:clamp(5px,1.1vh,13px);flex-shrink:0;}
+.fd-namelbl{text-align:center;font-size:clamp(12px,min(2.1vh,3.5vw),23px);color:#888;}
+/* 입력 글씨는 16px 이상이라야 iOS에서 화면이 확대되지 않는다 */
+#fd-name{
+  width:100%;text-align:center;
+  font-size:max(16px,clamp(16px,2.4vh,26px));font-family:inherit;
+  border:1.5px solid #eec;border-radius:clamp(8px,1.6vh,14px);
+  padding:clamp(7px,1.4vh,16px);
+  -webkit-user-select:text;user-select:text;
+}
+
 #fd-root button:active{transform:scale(.96)}
-.fd-chip{font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:2px solid transparent;background:#eef0f4;color:#444441;cursor:pointer}
+.fd-chip{font-size:clamp(12px,min(2.1vh,3.4vw),23px);font-weight:500;padding:clamp(6px,1.3vh,15px) clamp(10px,2.6vw,26px);border-radius:999px;border:2px solid transparent;background:#eef0f4;color:#444441;cursor:pointer;font-family:inherit;}
 .fd-chip.on{background:#ffe6f3;color:#993556;border-color:#ed93b1}
 .fd-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
-.fd-sw{width:48px;height:48px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #e6e3da;display:flex;align-items:center;justify-content:center;color:#888780}
+.fd-sw{width:clamp(38px,7vh,84px);height:clamp(38px,7vh,84px);border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #e6e3da;display:flex;align-items:center;justify-content:center;color:#888780;font-size:clamp(15px,2.8vh,32px);}
 .fd-item.on .fd-sw{box-shadow:0 0 0 3px #ffcf3f}
-.fd-cap{font-size:12px;color:#888}
-.fd-btn{border:none;border-radius:14px;font-family:"Segoe UI",sans-serif;font-size:15px;font-weight:500;padding:11px 0;cursor:pointer;}
+.fd-cap{font-size:clamp(10px,min(1.8vh,2.9vw),20px);color:#888}
+.fd-btn{border:none;border-radius:clamp(11px,2.1vh,20px);font-family:inherit;font-size:clamp(13px,min(2.4vh,4vw),28px);font-weight:500;padding:clamp(9px,1.8vh,22px) 0;cursor:pointer;}
 </style>
 </head>
 <body>
 <div id="fd-root">
 
   <div id="fd-start">
-    <div id="fd-pre" style="width:150px;height:225px"></div>
-    <div style="font-size:22px;font-weight:600;color:#993556">패션 디자이너</div>
-    <div style="font-size:14px;color:#72243e;text-align:center">옷과 신발, 모자와 가방을 골라<br>나만의 멋진 패션을 만들어 보아요</div>
-    <button id="fd-go" style="margin-top:4px;background:#ff8fcf;color:#4b1528;border:none;border-radius:16px;font-family:inherit;font-size:18px;font-weight:600;padding:13px 36px;cursor:pointer">시작하기</button>
+    <div id="fd-pre"></div>
+    <div class="fd-title">패션 디자이너</div>
+    <div class="fd-desc">옷과 신발, 모자와 가방을 골라<br>나만의 멋진 패션을 만들어 보아요</div>
+    <button id="fd-go">시작하기</button>
   </div>
 
   <div id="fd-play">
     <div id="fd-stage"></div>
     <div id="fd-cats"></div>
     <div id="fd-items"></div>
-    <div style="display:flex;gap:8px;flex-shrink:0;">
-      <button id="fd-rand" class="fd-btn" style="flex:0 0 90px;background:#cdeafe;color:#0c447c;">랜덤 코디</button>
-      <button id="fd-done" class="fd-btn" style="flex:1;background:#ffd23f;color:#633806;font-size:17px;">완성!</button>
+    <div class="fd-actions">
+      <button id="fd-rand" class="fd-btn" style="flex:0 0 auto;padding-left:clamp(12px,3vw,30px);padding-right:clamp(12px,3vw,30px);background:#cdeafe;color:#0c447c;">랜덤 코디</button>
+      <button id="fd-done" class="fd-btn" style="flex:1;background:#ffd23f;color:#633806;">완성!</button>
     </div>
   </div>
 
   <div id="fd-result">
     <div id="fd-stage2"></div>
-    <div id="fd-plate" style="display:none;text-align:center;background:#ffe6f3;border-radius:14px;padding:12px;color:#993556;font-size:18px;font-weight:500"></div>
-    <div id="fd-namebox" style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-      <div style="text-align:center;font-size:14px;color:#888">오늘의 패션 이름을 지어 주세요</div>
-      <input id="fd-name" type="text" placeholder="예: 햇님 공주 패션" maxlength="20" style="width:100%;text-align:center;font-size:16px;border:1.5px solid #eec;border-radius:10px;padding:8px;" />
+    <div id="fd-plate"></div>
+    <div id="fd-namebox">
+      <div class="fd-namelbl">오늘의 패션 이름을 지어 주세요</div>
+      <input id="fd-name" type="text" placeholder="예: 햇님 공주 패션" maxlength="20" />
       <button id="fd-name-ok" class="fd-btn" style="background:#9be7c4;color:#085041;">이름 정하기</button>
     </div>
     <button id="fd-again" class="fd-btn" style="background:#6fd36f;color:#173404;flex-shrink:0;">다시 꾸미기</button>
@@ -171,7 +211,7 @@ body{display:flex;justify-content:center;align-items:stretch;}
     ITEMS[active].forEach(function(it){
       var el=document.createElement('div');el.className='fd-item'+(state[active]===it.id?' on':'');
       var sw=document.createElement('div');sw.className='fd-sw';
-      if(it.id==='none'){sw.innerHTML='<i class="ti ti-ban" style="font-size:22px"></i>';}
+      if(it.id==='none'){sw.textContent='✕';}
       else{sw.style.background=it.color;sw.style.color='#fff';}
       var cap=document.createElement('div');cap.className='fd-cap';cap.textContent=it.label;
       el.appendChild(sw);el.appendChild(cap);
@@ -205,7 +245,7 @@ body{display:flex;justify-content:center;align-items:stretch;}
   document.getElementById('fd-name-ok').addEventListener('pointerdown',function(){
     var v=document.getElementById('fd-name').value.trim()||'나의 멋진 패션';
     var p=document.getElementById('fd-plate');
-    p.innerHTML='<i class="ti ti-star" style="font-size:18px;vertical-align:-2px;margin-right:6px"></i>오늘의 패션: '+v;
+    p.textContent='⭐ 오늘의 패션: '+v;
     p.style.display='block';
     document.getElementById('fd-namebox').style.display='none';
   });

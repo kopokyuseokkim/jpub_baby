@@ -6,39 +6,59 @@
 <title>기타 코드 튕기기 🎸</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:#FDF6E8;}
-body{display:flex;justify-content:center;}
-#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#FDF6E8;
+  overscroll-behavior:none;-webkit-text-size-adjust:100%;
+}
+body{position:fixed;top:0;left:0;right:0;bottom:0;}
+@supports (height:100dvh){ html,body{height:100dvh;} }
 
-/* START */
-#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;overflow-y:auto;}
-.stit{font-size:22px;font-weight:900;text-align:center;color:#6B3A10;line-height:1.35;}
-.ssub{font-size:13px;color:#9B6A30;text-align:center;}
-#sbtn{background:#E8A040;color:#fff;border:none;border-radius:18px;padding:13px 42px;font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #A06010;}
+#app{
+  width:100%;height:100%;
+  display:flex;flex-direction:column;
+  font-family:'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  user-select:none;-webkit-user-select:none;
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* ── 시작 화면 ── */
+#ss{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,24px);padding:clamp(10px,2vh,26px);}
+#ss svg{width:min(42vw,30vh);height:auto;flex-shrink:1;min-height:0;}
+.stit{font-size:clamp(20px,min(4.2vh,7vw),52px);font-weight:900;text-align:center;color:#6B3A10;line-height:1.35;}
+.ssub{font-size:clamp(12px,min(2.1vh,3.7vw),23px);color:#9B6A30;text-align:center;padding:0 8px;}
+#sbtn{background:#E8A040;color:#fff;border:none;border-radius:clamp(13px,2.2vh,24px);padding:clamp(11px,2vh,22px) clamp(28px,7vw,66px);font-size:clamp(16px,min(2.9vh,4.8vw),30px);font-weight:800;cursor:pointer;box-shadow:0 4px 0 #A06010;font-family:inherit;}
 #sbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #A06010;}
 
-/* GAME */
-#gs{display:none;flex:1;flex-direction:column;gap:6px;padding:8px 8px 10px;min-height:0;}
-#cbrow{display:flex;gap:5px;flex-shrink:0;}
-.cb{flex:1;padding:8px 3px 6px;border:none;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:4px solid rgba(0,0,0,.18);line-height:1.4;}
+/* ── 게임 화면 ── */
+#gs{display:none;flex:1 1 auto;flex-direction:column;gap:clamp(4px,0.9vh,12px);padding:clamp(6px,1.2vh,16px) clamp(8px,2vw,28px) clamp(8px,1.4vh,18px);min-height:0;}
+
+/* 코드 선택 버튼 */
+#cbrow{display:flex;gap:clamp(4px,1.2vw,12px);flex-shrink:0;}
+.cb{flex:1;min-width:0;padding:clamp(7px,1.3vh,16px) clamp(3px,1vw,10px) clamp(6px,1.1vh,14px);border:none;border-radius:clamp(9px,1.8vh,16px);font-size:clamp(11px,min(1.9vh,3.1vw),21px);font-weight:700;cursor:pointer;border-bottom:clamp(3px,0.7vh,7px) solid rgba(0,0,0,.18);line-height:1.35;font-family:inherit;}
 .cb:active{transform:translateY(2px);border-bottom-width:2px;}
 .cb.on{border-bottom-width:2px;filter:brightness(1.08);box-shadow:0 0 0 2.5px rgba(0,0,0,.18);}
-#cinfo{text-align:center;font-size:12px;font-weight:700;padding:7px 10px;border-radius:11px;background:#F5ECD8;color:#7A5020;flex-shrink:0;}
+.cb .cbsub{font-size:clamp(9px,min(1.4vh,2.4vw),16px);opacity:.65;}
+
+#cinfo{text-align:center;font-size:clamp(11px,min(1.9vh,3.1vw),21px);font-weight:700;padding:clamp(6px,1.1vh,14px) clamp(8px,2vw,18px);border-radius:clamp(9px,1.8vh,16px);background:#F5ECD8;color:#7A5020;flex-shrink:0;}
 
 /* 기타 SVG — 남은 공간 모두 차지 */
-#gwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;touch-action:none;}
+#gwrap{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;touch-action:none;}
 #gsvg{width:100%;height:100%;max-height:100%;display:block;touch-action:none;}
 
-#fb{text-align:center;font-size:15px;font-weight:700;height:34px;line-height:34px;border-radius:11px;color:#9B6A30;transition:all .2s;flex-shrink:0;}
+#fb{text-align:center;font-size:clamp(13px,min(2.3vh,3.8vw),26px);font-weight:700;height:clamp(32px,5.5vh,64px);display:flex;align-items:center;justify-content:center;border-radius:clamp(9px,1.8vh,16px);color:#9B6A30;transition:background .2s,color .2s,border-color .2s;flex-shrink:0;white-space:nowrap;overflow:hidden;padding:0 clamp(6px,1.5vw,16px);}
 #fb.p{color:#6B3A10;background:#FFF4D0;border:2px solid #FFD080;animation:fpop .2s ease;}
 @keyframes fpop{0%{transform:scale(.92);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
-#cnt{font-size:11px;font-weight:600;color:#9B6A30;text-align:center;flex-shrink:0;}
+#cnt{font-size:clamp(10px,min(1.6vh,2.7vw),18px);font-weight:600;color:#9B6A30;text-align:center;flex-shrink:0;}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="ss">
-    <svg width="150" height="170" viewBox="0 0 340 380">
+    <svg viewBox="0 0 340 380" preserveAspectRatio="xMidYMid meet">
       <rect x="153" y="10" width="34" height="85" rx="3" fill="#C8A058"/>
       <rect x="142" y="2" width="56" height="14" rx="5" fill="#A07838"/>
       <line x1="153" y1="26" x2="187" y2="26" stroke="#E8CC88" stroke-width="1.5"/>
@@ -64,9 +84,9 @@ body{display:flex;justify-content:center;}
 
   <div id="gs">
     <div id="cbrow">
-      <button class="cb on" id="cb0" onclick="setChord(0)" style="background:#FFD54F;color:#5D3E00;border-color:#CCA000;">밝은 소리<br><span style="font-size:10px;opacity:.65">C 코드</span></button>
-      <button class="cb"    id="cb1" onclick="setChord(1)" style="background:#FF8A65;color:#400A00;border-color:#CC3800;">신나는 소리<br><span style="font-size:10px;opacity:.65">G 코드</span></button>
-      <button class="cb"    id="cb2" onclick="setChord(2)" style="background:#9FA8DA;color:#111840;border-color:#3848A8;">차분한 소리<br><span style="font-size:10px;opacity:.65">Am 코드</span></button>
+      <button class="cb on" id="cb0" onclick="setChord(0)" style="background:#FFD54F;color:#5D3E00;border-color:#CCA000;">밝은 소리<br><span class="cbsub">C 코드</span></button>
+      <button class="cb"    id="cb1" onclick="setChord(1)" style="background:#FF8A65;color:#400A00;border-color:#CC3800;">신나는 소리<br><span class="cbsub">G 코드</span></button>
+      <button class="cb"    id="cb2" onclick="setChord(2)" style="background:#9FA8DA;color:#111840;border-color:#3848A8;">차분한 소리<br><span class="cbsub">Am 코드</span></button>
     </div>
     <div id="cinfo">✨ 밝은 소리 (C) — 밝고 행복한 느낌이에요!</div>
     <div id="gwrap">

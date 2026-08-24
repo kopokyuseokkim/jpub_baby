@@ -6,53 +6,68 @@
 <title>에코 노래 부르기 🎵</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-html,body{height:100%;overflow:hidden;background:#F3F0FF;}
-body{display:flex;justify-content:center;}
-#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;user-select:none;}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#F3F0FF;
+  overscroll-behavior:none;-webkit-text-size-adjust:100%;
+}
+body{position:fixed;top:0;left:0;right:0;bottom:0;}
+@supports (height:100dvh){ html,body{height:100dvh;} }
 
-/* START */
-#ss{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:14px;overflow-y:auto;}
-.sttl{font-size:24px;font-weight:900;color:#1a1a1a;text-align:center;line-height:1.35;}
-.ssub{font-size:13px;color:#666;text-align:center;line-height:1.7;}
-.bnotes{display:flex;gap:8px;justify-content:center;}
-.bn{font-size:30px;animation:nFl ease-in-out infinite;}
+#app{
+  width:100%;height:100%;
+  display:flex;flex-direction:column;
+  font-family:'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  user-select:none;-webkit-user-select:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ── 시작 화면 ── */
+#ss{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(9px,2.2vh,26px);padding:clamp(10px,2vh,26px);}
+.sttl{font-size:clamp(22px,min(4.6vh,7.6vw),60px);font-weight:900;color:#1a1a1a;text-align:center;line-height:1.35;}
+.ssub{font-size:clamp(12px,min(2.2vh,3.7vw),24px);color:#666;text-align:center;line-height:1.7;padding:0 10px;}
+.bnotes{display:flex;gap:clamp(5px,1.6vw,16px);justify-content:center;}
+.bn{font-size:clamp(24px,min(5vh,8vw),64px);animation:nFl ease-in-out infinite;line-height:1;}
 @keyframes nFl{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.sbtn{background:#7C6BFF;color:#fff;border:none;border-radius:20px;padding:14px 50px;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #3C2BC9;}
+.sbtn{background:#7C6BFF;color:#fff;border:none;border-radius:clamp(16px,2.8vh,30px);padding:clamp(12px,2.2vh,24px) clamp(34px,8vw,80px);font-size:clamp(18px,min(3.2vh,5.4vw),38px);font-weight:900;cursor:pointer;box-shadow:0 5px 0 #3C2BC9;font-family:inherit;}
 .sbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #3C2BC9;}
-.diff-row{display:flex;gap:8px;}
-.dbtn{padding:9px 18px;border:2px solid #ccc;border-radius:12px;background:#f5f5f5;color:#666;font-size:13px;font-weight:700;cursor:pointer;}
+.diff-row{display:flex;gap:clamp(6px,1.8vw,18px);flex-wrap:wrap;justify-content:center;}
+.dbtn{padding:clamp(8px,1.5vh,18px) clamp(14px,3.5vw,34px);border:2px solid #ccc;border-radius:clamp(10px,2vh,18px);background:#f5f5f5;color:#666;font-size:clamp(12px,min(2.1vh,3.5vw),23px);font-weight:700;cursor:pointer;font-family:inherit;}
 .dbtn.on{background:#7C6BFF;color:#fff;border-color:#7C6BFF;}
 
-/* GAME */
-#gs{display:none;flex:1;flex-direction:column;gap:6px;padding:8px 8px 10px;min-height:0;}
-#hud{display:flex;justify-content:space-between;align-items:center;padding:0 2px;flex-shrink:0;}
-.hlvl{font-size:12px;font-weight:700;background:#EDE7FF;color:#5E35B1;border-radius:8px;padding:3px 10px;}
-.hscore{font-size:12px;font-weight:700;color:#666;}
-#status{text-align:center;font-size:16px;font-weight:900;min-height:42px;line-height:42px;border-radius:12px;color:#666;flex-shrink:0;}
+/* ── 게임 화면 ── */
+#gs{display:none;flex:1 1 auto;flex-direction:column;gap:clamp(4px,1vh,13px);padding:clamp(6px,1.2vh,16px) clamp(8px,2vw,28px) clamp(8px,1.4vh,18px);min-height:0;}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:0 2px;flex-shrink:0;gap:8px;}
+.hlvl{font-size:clamp(11px,min(1.9vh,3vw),21px);font-weight:700;background:#EDE7FF;color:#5E35B1;border-radius:8px;padding:clamp(2px,0.5vh,7px) clamp(8px,2vw,18px);white-space:nowrap;}
+.hscore{font-size:clamp(11px,min(1.9vh,3vw),21px);font-weight:700;color:#666;white-space:nowrap;}
+
+#status{text-align:center;font-size:clamp(14px,min(2.7vh,4.4vw),32px);font-weight:900;min-height:clamp(38px,6.2vh,76px);display:flex;align-items:center;justify-content:center;border-radius:clamp(10px,2vh,18px);color:#666;flex-shrink:0;padding:0 clamp(6px,1.5vw,16px);}
 #status.pl{color:#5E35B1;background:#EDE7FF;border:2px solid #B39DDB;}
 #status.li{color:#1E8C3A;background:#EAFAF1;border:2px solid #52C97A;}
 #status.ok{color:#1E8C3A;background:#EAFAF1;border:2px solid #52C97A;animation:sPop .35s ease;}
 #status.ng{color:#C62828;background:#FFEBEE;border:2px solid #EF9A9A;animation:sPop .3s ease;}
 @keyframes sPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
-#dots-wrap{background:#f0eeff;border-radius:14px;padding:9px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
-#dots-lbl{font-size:10px;font-weight:700;color:#666;}
-#dots-row{display:flex;gap:8px;justify-content:center;min-height:28px;align-items:center;}
-.mdot{width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid #ccc;}
+
+#dots-wrap{background:#f0eeff;border-radius:clamp(11px,2.2vh,20px);padding:clamp(7px,1.3vh,16px) clamp(10px,2.5vw,24px);display:flex;flex-direction:column;align-items:center;gap:clamp(4px,0.9vh,10px);flex-shrink:0;}
+#dots-lbl{font-size:clamp(10px,min(1.6vh,2.6vw),18px);font-weight:700;color:#666;}
+#dots-row{display:flex;gap:clamp(6px,1.8vw,18px);justify-content:center;min-height:clamp(24px,4vh,48px);align-items:center;flex-wrap:wrap;}
+.mdot{width:clamp(18px,3.4vh,40px);height:clamp(18px,3.4vh,40px);border-radius:50%;background:#fff;border:2.5px solid #ccc;flex:0 0 auto;}
 .mdot.pd{background:#BBAAFF;border-color:#7C6BFF;transform:scale(1.25);}
 .mdot.ok{background:#52C97A;border-color:#2EA85A;}
 .mdot.ng{background:#FF6B6B;border-color:#CC3A3A;animation:wShake .3s ease;}
 @keyframes wShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+
 /* 음표 그리드 — 남은 공간 모두 차지 */
-#note-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;flex:1;min-height:0;}
-.nb{border:none;border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-bottom:5px solid rgba(0,0,0,.2);padding:6px 4px;}
+#note-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(4px,1.2vw,14px);flex:1 1 auto;min-height:0;}
+.nb{border:none;border-radius:clamp(11px,2.2vh,22px);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,0.7vh,9px);border-bottom:clamp(4px,0.9vh,9px) solid rgba(0,0,0,.2);padding:clamp(5px,1vh,14px) 4px;min-height:0;font-family:inherit;}
 .nb:active{transform:scale(.88);border-bottom-width:2px;filter:brightness(.82);}
 .nb.playing{transform:scale(1.12);filter:brightness(1.28);box-shadow:0 0 14px rgba(255,255,255,.55);border-bottom-width:3px;}
 .nb.pressed{transform:scale(.9);border-bottom-width:2px;}
-.ne{font-size:20px;line-height:1;}
-.nn{font-size:16px;font-weight:900;color:rgba(255,255,255,.95);text-shadow:0 1px 3px rgba(0,0,0,.3);line-height:1;}
-/* 하단 컨트롤 */
-#ctrl-row{display:flex;gap:6px;flex-shrink:0;}
-.cbtn{flex:1;padding:10px 4px;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid rgba(0,0,0,.18);}
+.ne{font-size:clamp(17px,min(3.6vh,5.6vw),46px);line-height:1;}
+.nn{font-size:clamp(14px,min(2.8vh,4.5vw),36px);font-weight:900;color:rgba(255,255,255,.95);text-shadow:0 1px 3px rgba(0,0,0,.3);line-height:1;}
+
+/* 하단 버튼 */
+#ctrl-row{display:flex;gap:clamp(5px,1.5vw,14px);flex-shrink:0;}
+.cbtn{flex:1;min-width:0;padding:clamp(9px,1.7vh,20px) 4px;border:none;border-radius:clamp(10px,2vh,18px);font-size:clamp(11px,min(2vh,3.2vw),22px);font-weight:700;cursor:pointer;border-bottom:3px solid rgba(0,0,0,.18);font-family:inherit;}
 .cbtn:active{transform:translateY(2px);border-bottom-width:1px;}
 .cbtn.off{opacity:.45;cursor:not-allowed;}
 </style>
