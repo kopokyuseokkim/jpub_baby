@@ -26,7 +26,7 @@ footer{text-align:center;padding:25px;color:#777}
 <div class="container">
 <div class="chapter">
 <h2>📘 1장</h2>
-<a href="1장/예제1.4_설거지룰렛_수정.html">🎡 예제 1.4 설거지 룰렛</a>
+<a href="./예제1.4_설거지룰렛_수정.html" onclick="return openExample14(event)">🎡 예제 1.4 설거지 룰렛</a>
 </div>
 <div class="chapter">
 <h2>📗 2장</h2>
@@ -75,5 +75,26 @@ footer{text-align:center;padding:25px;color:#777}
 </div>
 </div>
 <footer>jpub_baby HTML 실습 예제</footer>
+
+<script>
+async function openExample14(event){
+  event.preventDefault();
+  const candidates = [
+    './예제1.4_설거지룰렛_수정.html',
+    './1장/예제1.4_설거지룰렛_수정.html',
+    './예제1.4_설거지룰렛.html',
+    './1장/예제1.4_설거지룰렛.html',
+    './예제1.4_설거지룰렛%20(13).html'
+  ];
+  for (const url of candidates){
+    try {
+      const r = await fetch(url, {method:'HEAD', cache:'no-store'});
+      if (r.ok){ location.href = url; return false; }
+    } catch(e) {}
+  }
+  alert('예제 1.4 파일을 찾지 못했습니다. index.html과 예제 HTML 파일을 같은 저장소에 올려 주세요.');
+  return false;
+}
+</script>
 </body>
 </html>
