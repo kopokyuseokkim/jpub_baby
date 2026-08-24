@@ -1,111 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>jpub_baby 예제 실행</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>jpub_baby 예제</title>
 <style>
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
-  background:#f5f7fb;
-  color:#222;
-}
-header{
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-  color:#fff;
-  text-align:center;
-  padding:42px 18px;
-}
-header h1{margin:0 0 10px;font-size:30px}
-header p{margin:0;opacity:.92}
-.container{max-width:850px;margin:28px auto;padding:0 16px 40px}
-.chapter{
-  background:#fff;
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:0 3px 15px rgba(0,0,0,.08);
-}
-.chapter h2{margin:0 0 14px}
-a{
-  display:block;
-  text-decoration:none;
-  background:#f3f4f6;
-  color:#222;
-  padding:14px 16px;
-  margin:9px 0;
-  border-radius:10px;
-  font-weight:700;
-  line-height:1.45;
-  -webkit-tap-highlight-color:transparent;
-}
-a:hover,a:focus{background:#e0e7ff;color:#4338ca}
-footer{text-align:center;padding:24px;color:#777}
+body{margin:0;background:#f5f6fa;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+header{padding:32px 18px;background:#5b4df1;color:#fff;text-align:center}
+h1{margin:0 0 8px;font-size:28px} header p{margin:0;opacity:.9}
+main{max-width:820px;margin:20px auto;padding:0 14px 40px}
+section{background:#fff;border-radius:16px;padding:18px;margin:0 0 18px;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+h2{margin:0 0 12px;font-size:21px}
+.game{display:block;padding:14px 15px;margin:8px 0;border-radius:11px;background:#f0f2f7;text-decoration:none;color:#202124;font-weight:700}
+.game:active{transform:scale(.99);background:#e4e7f1}
+.note{font-size:13px;color:#666;text-align:center;margin-top:20px}
 </style>
 </head>
 <body>
-<header>
-  <h1>🎮 HTML 실습 예제</h1>
-  <p>예제를 선택하면 바로 실행할 수 있습니다.</p>
-</header>
-
-<main class="container">
-  <section class="chapter">
-    <h2>📘 1부</h2>
-    <a href="./1부/3-2game.html">🎡 예제 1.4 설거지 룰렛</a>
-  </section>
-
-  <section class="chapter">
-    <h2>📗 2부</h2>
-    <a href="./2부/4-1game.html">🐶 동물 수 세기</a>
-    <a href="./2부/4-2game.html">🔢 더 많은 쪽 찾기</a>
-    <a href="./2부/4-3game.html">🚂 숫자 기차 점 잇기</a>
-    <a href="./2부/4-4game.html">🔺 그림 속 도형 찾기</a>
-    <a href="./2부/4-5game.html">🎈 덧셈 풍선 터뜨리기</a>
-    <a href="./2부/4-6game.html">➕ 더하기·빼기 팡팡</a>
-    <a href="./2부/4-7game.html">🏰 구구단 던전 탈출하기</a>
-    <a href="./2부/4-8game.html">🍕 나눗셈 피자 나누기</a>
-    <a href="./2부/5-1game.html">🃏 낱말 카드 짝짝</a>
-    <a href="./2부/5-2game.html">🔊 누구의 소리일까</a>
-    <a href="./2부/5-3game.html">🎣 내 이름 글자 낚시</a>
-    <a href="./2부/5-4game.html">🎣 한글 자음모음 낚시</a>
-    <a href="./2부/5-5game.html">🤖 끝말잇기 봇</a>
-    <a href="./2부/5-6game.html">🏎️ 알파벳 A to Z 레이싱</a>
-    <a href="./2부/5-7game.html">🀄 하늘에서 내려오는 한자</a>
-    <a href="./2부/5-8game.html">🧩 가로세로 낱말 퍼즐</a>
-    <a href="./2부/6-1game.html">👥 그림자 짝꿍</a>
-    <a href="./2부/6-2game.html">🧠 뒤집기 메모리</a>
-    <a href="./2부/6-3game.html">🔎 그림자-낱말 짝 맞추기</a>
-    <a href="./2부/6-4game.html">📖 전래동화 순서맞추기</a>
-    <a href="./2부/6-5game.html">↔️ 반대말 찾기</a>
-  </section>
-
-  <section class="chapter">
-    <h2>📙 3부</h2>
-    <a href="./3부/7-1game.html">🎹 내 손안의 도레미 피아노</a>
-    <a href="./3부/7-2game.html">🎵 터치 실로폰</a>
-    <a href="./3부/7-3game.html">🥁 두둥탁! 리듬 드럼</a>
-    <a href="./3부/7-4game.html">🎸 기타 코드 튕기기</a>
-    <a href="./3부/7-5game.html">🎼 나만의 작곡가</a>
-    <a href="./3부/8-1game.html">🎈 풍선 팡팡</a>
-    <a href="./3부/8-2game.html">🔨 두더지 팡팡</a>
-    <a href="./3부/8-3game.html">🏃 장애물 피하기</a>
-    <a href="./3부/8-4game.html">🧠 기억력 끝판왕</a>
-    <a href="./3부/8-5game.html">🃏 디지털 할리갈리</a>
-    <a href="./3부/8-6game.html">🎤 에코 노래 부르기</a>
-    <a href="./3부/8-7game.html">✊ 가위바위보 대결</a>
-    <a href="./3부/9-1game.html">🎨 매직 드로잉</a>
-    <a href="./3부/9-2game.html">😀 얼굴 꾸미기</a>
-    <a href="./3부/9-3game.html">👕 패션 디자이너</a>
-    <a href="./3부/9-4game.html">🖍️ 디지털 컬러링 북</a>
-    <a href="./3부/9-5game.html">🖼️ 자유 도화지</a>
-    <a href="./3부/9-6game.html">🔵 도형으로 얼굴 만들기</a>
-  </section>
+<header><h1>HTML 실습 예제</h1><p>예제를 누르면 바로 실행됩니다.</p></header>
+<main>
+<section><h2>1부</h2><a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/1%EB%B6%80/3-2game.html">예제 1.4 설거지 룰렛</a></section><section><h2>2부</h2><a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-1game.html">동물 수 세기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-2game.html">더 많은 쪽 찾기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-3game.html">숫자 기차 점 잇기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-4game.html">그림 속 도형 찾기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-5game.html">덧셈 풍선 터뜨리기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-6game.html">더하기·빼기 팡팡</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-7game.html">구구단 던전 탈출하기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-8game.html">나눗셈 피자 나누기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-1game.html">낱말 카드 짝짝</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-2game.html">누구의 소리일까</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-3game.html">내 이름 글자 낚시</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-4game.html">한글 자음모음 낚시</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-5game.html">끝말잇기 봇</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-6game.html">알파벳 A to Z 레이싱</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-7game.html">하늘에서 내려오는 한자</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/5-8game.html">가로세로 낱말 퍼즐</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/6-1game.html">그림자 짝꿍</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/6-2game.html">뒤집기 메모리</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/6-3game.html">그림자-낱말 짝 맞추기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/6-4game.html">전래동화 순서맞추기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/6-5game.html">반대말 찾기</a></section><section><h2>3부</h2><a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/7-1game.html">내 손안의 도레미 피아노</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/7-2game.html">터치 실로폰</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/7-3game.html">두둥탁! 리듬 드럼</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/7-4game.html">기타 코드 튕기기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/7-5game.html">나만의 작곡가</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-1game.html">풍선 팡팡</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-2game.html">두더지 팡팡</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-3game.html">장애물 피하기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-4game.html">기억력 끝판왕</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-5game.html">디지털 할리갈리</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-6game.html">에코 노래 부르기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/8-7game.html">가위바위보 대결</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-1game.html">매직 드로잉</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-2game.html">얼굴 꾸미기</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-3game.html">패션 디자이너</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-4game.html">디지털 컬러링 북</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-5game.html">자유 도화지</a>
+<a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/3%EB%B6%80/9-6game.html">도형으로 얼굴 만들기</a></section>
+<div class="note">GitHub Pages 절대주소 방식 · UTF-8</div>
 </main>
-
-<footer>jpub_baby HTML 실습 예제</footer>
 </body>
 </html>
