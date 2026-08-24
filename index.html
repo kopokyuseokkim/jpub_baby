@@ -2,99 +2,110 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>jpub_baby 예제 실행</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,"Noto Sans KR",sans-serif;background:#f5f7fb;color:#222}
-header{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-align:center;padding:45px 20px}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
+  background:#f5f7fb;
+  color:#222;
+}
+header{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  color:#fff;
+  text-align:center;
+  padding:42px 18px;
+}
 header h1{margin:0 0 10px;font-size:30px}
-header p{margin:0;opacity:.9}
-.container{max-width:850px;margin:30px auto;padding:0 18px 40px}
-.chapter{background:#fff;border-radius:16px;padding:22px;margin-bottom:20px;box-shadow:0 3px 15px rgba(0,0,0,.08)}
-.chapter h2{margin-top:0}
-a{display:block;text-decoration:none;background:#f3f4f6;color:#333;padding:14px 16px;margin:9px 0;border-radius:10px;font-weight:bold}
-a:hover{background:#e0e7ff;color:#4338ca}
-footer{text-align:center;padding:25px;color:#777}
+header p{margin:0;opacity:.92}
+.container{max-width:850px;margin:28px auto;padding:0 16px 40px}
+.chapter{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
+.chapter h2{margin:0 0 14px}
+a{
+  display:block;
+  text-decoration:none;
+  background:#f3f4f6;
+  color:#222;
+  padding:14px 16px;
+  margin:9px 0;
+  border-radius:10px;
+  font-weight:700;
+  line-height:1.45;
+  -webkit-tap-highlight-color:transparent;
+}
+a:hover,a:focus{background:#e0e7ff;color:#4338ca}
+footer{text-align:center;padding:24px;color:#777}
 </style>
 </head>
 <body>
 <header>
-<h1>🎮 HTML 실습 예제</h1>
-<p>예제를 선택하면 바로 실행할 수 있습니다.</p>
+  <h1>🎮 HTML 실습 예제</h1>
+  <p>예제를 선택하면 바로 실행할 수 있습니다.</p>
 </header>
-<div class="container">
-<div class="chapter">
-<h2>📘 1장</h2>
-<a href="./예제1.4_설거지룰렛_수정.html" onclick="return openExample14(event)">🎡 예제 1.4 설거지 룰렛</a>
-</div>
-<div class="chapter">
-<h2>📗 2장</h2>
-<a href="2장/예제2.2.1_동물 수 세기.html">🐶 동물 수 세기</a>
-<a href="2장/예제2.2.2_더 많은 쪽 찾기.html">🔢 더 많은 쪽 찾기</a>
-<a href="2장/예제2.2.3_숫자 기차 점 잇기.html">🚂 숫자 기차 점 잇기</a>
-<a href="2장/예제2.2.4_그림 속 도형 찾기.html">🔺 그림 속 도형 찾기</a>
-<a href="2장/예제2.2.5_덧셈 풍선 터뜨리기.html">🎈 덧셈 풍선 터뜨리기</a>
-<a href="2장/예제2.2.6_더하기-빼기 팡팡.html">➕ 더하기·빼기 팡팡</a>
-<a href="2장/예제2.2.7_구구단 던전 탈출하기.html">🏰 구구단 던전 탈출하기</a>
-<a href="2장/예제2.2.8_나눗셈 피자 나누기.html">🍕 나눗셈 피자 나누기</a>
-<a href="2장/예제2.3.1_낱말 카드 짝짝.html">🃏 낱말 카드 짝짝</a>
-<a href="2장/예제2.3.2_누구의 소리일까.html">🔊 누구의 소리일까</a>
-<a href="2장/예제2.3.3_내 이름 글자 낚시.html">🎣 내 이름 글자 낚시</a>
-<a href="2장/예제2.3.4_한글 자음모음 낚시.html">🎣 한글 자음모음 낚시</a>
-<a href="2장/예제2.3.5_끝말잇기 봇.html">🤖 끝말잇기 봇</a>
-<a href="2장/예제2.3.6_알파벳 A to Z 레이싱.html">🏎️ 알파벳 A to Z 레이싱</a>
-<a href="2장/예제2.3.7_하늘에서 내려오는 한자.html">🀄 하늘에서 내려오는 한자</a>
-<a href="2장/예제2.3.8_가로세로 낱말 퍼즐.html">🧩 가로세로 낱말 퍼즐</a>
-<a href="2장/예제2.4.1_그림자 짝꿍.html">👥 그림자 짝꿍</a>
-<a href="2장/예제2.4.2_뒤집기 메모리.html">🧠 뒤집기 메모리</a>
-<a href="2장/예제2.4.3_그림자-낱말 짝 맞추기.html">🔎 그림자-낱말 짝 맞추기</a>
-<a href="2장/예제2.4.4_전래동화 순서맞추기.html">📖 전래동화 순서맞추기</a>
-<a href="2장/예제2.4.5_반대말 찾기.html">↔️ 반대말 찾기</a>
-</div>
-<div class="chapter">
-<h2>📙 3장</h2>
-<a href="3장/예제3.2.1_내 손안의 도레미 피아노.html">🎹 내 손안의 도레미 피아노</a>
-<a href="3장/예제3.2.2_터치 실로폰.html">🎵 터치 실로폰</a>
-<a href="3장/예제3.2.3_두둥탁! 리듬 드럼.html">🥁 두둥탁! 리듬 드럼</a>
-<a href="3장/예제3.2.4_기타 코드 튕기기.html">🎸 기타 코드 튕기기</a>
-<a href="3장/예제3.2.5_나만의 작곡가.html">🎼 나만의 작곡가</a>
-<a href="3장/예제3.3.1_풍선 팡팡.html">🎈 풍선 팡팡</a>
-<a href="3장/예제3.3.2_두더지 팡팡.html">🔨 두더지 팡팡</a>
-<a href="3장/예제3.3.3_장애물 피하기.html">🏃 장애물 피하기</a>
-<a href="3장/예제3.3.4_기억력 끝판왕.html">🧠 기억력 끝판왕</a>
-<a href="3장/예제3.3.5_디지털 할리갈리.html">🃏 디지털 할리갈리</a>
-<a href="3장/예제3.3.6_에코 노래 부르기.html">🎤 에코 노래 부르기</a>
-<a href="3장/예제3.3.7_가위바위보 대결.html">✊ 가위바위보 대결</a>
-<a href="3장/예제3.4.1_매직 드로잉.html">🎨 매직 드로잉</a>
-<a href="3장/예제3.4.2_얼굴 꾸미기.html">😀 얼굴 꾸미기</a>
-<a href="3장/예제3.4.3_패션 디자이너.html">👕 패션 디자이너</a>
-<a href="3장/예제3.4.4_디지털 컬러링 북.html">🖍️ 디지털 컬러링 북</a>
-<a href="3장/예제3.4.5_자유 도화지.html">🖼️ 자유 도화지</a>
-<a href="3장/예제3.4.6_도형으로 얼굴 만들기.html">🔵 도형으로 얼굴 만들기</a>
-</div>
-</div>
-<footer>jpub_baby HTML 실습 예제</footer>
 
-<script>
-async function openExample14(event){
-  event.preventDefault();
-  const candidates = [
-    './예제1.4_설거지룰렛_수정.html',
-    './1장/예제1.4_설거지룰렛_수정.html',
-    './예제1.4_설거지룰렛.html',
-    './1장/예제1.4_설거지룰렛.html',
-    './예제1.4_설거지룰렛%20(13).html'
-  ];
-  for (const url of candidates){
-    try {
-      const r = await fetch(url, {method:'HEAD', cache:'no-store'});
-      if (r.ok){ location.href = url; return false; }
-    } catch(e) {}
-  }
-  alert('예제 1.4 파일을 찾지 못했습니다. index.html과 예제 HTML 파일을 같은 저장소에 올려 주세요.');
-  return false;
-}
-</script>
+<main class="container">
+  <section class="chapter">
+    <h2>📘 1부</h2>
+    <a href="./1부/3-2game.html">🎡 예제 1.4 설거지 룰렛</a>
+  </section>
+
+  <section class="chapter">
+    <h2>📗 2부</h2>
+    <a href="./2부/4-1game.html">🐶 동물 수 세기</a>
+    <a href="./2부/4-2game.html">🔢 더 많은 쪽 찾기</a>
+    <a href="./2부/4-3game.html">🚂 숫자 기차 점 잇기</a>
+    <a href="./2부/4-4game.html">🔺 그림 속 도형 찾기</a>
+    <a href="./2부/4-5game.html">🎈 덧셈 풍선 터뜨리기</a>
+    <a href="./2부/4-6game.html">➕ 더하기·빼기 팡팡</a>
+    <a href="./2부/4-7game.html">🏰 구구단 던전 탈출하기</a>
+    <a href="./2부/4-8game.html">🍕 나눗셈 피자 나누기</a>
+    <a href="./2부/5-1game.html">🃏 낱말 카드 짝짝</a>
+    <a href="./2부/5-2game.html">🔊 누구의 소리일까</a>
+    <a href="./2부/5-3game.html">🎣 내 이름 글자 낚시</a>
+    <a href="./2부/5-4game.html">🎣 한글 자음모음 낚시</a>
+    <a href="./2부/5-5game.html">🤖 끝말잇기 봇</a>
+    <a href="./2부/5-6game.html">🏎️ 알파벳 A to Z 레이싱</a>
+    <a href="./2부/5-7game.html">🀄 하늘에서 내려오는 한자</a>
+    <a href="./2부/5-8game.html">🧩 가로세로 낱말 퍼즐</a>
+    <a href="./2부/6-1game.html">👥 그림자 짝꿍</a>
+    <a href="./2부/6-2game.html">🧠 뒤집기 메모리</a>
+    <a href="./2부/6-3game.html">🔎 그림자-낱말 짝 맞추기</a>
+    <a href="./2부/6-4game.html">📖 전래동화 순서맞추기</a>
+    <a href="./2부/6-5game.html">↔️ 반대말 찾기</a>
+  </section>
+
+  <section class="chapter">
+    <h2>📙 3부</h2>
+    <a href="./3부/7-1game.html">🎹 내 손안의 도레미 피아노</a>
+    <a href="./3부/7-2game.html">🎵 터치 실로폰</a>
+    <a href="./3부/7-3game.html">🥁 두둥탁! 리듬 드럼</a>
+    <a href="./3부/7-4game.html">🎸 기타 코드 튕기기</a>
+    <a href="./3부/7-5game.html">🎼 나만의 작곡가</a>
+    <a href="./3부/8-1game.html">🎈 풍선 팡팡</a>
+    <a href="./3부/8-2game.html">🔨 두더지 팡팡</a>
+    <a href="./3부/8-3game.html">🏃 장애물 피하기</a>
+    <a href="./3부/8-4game.html">🧠 기억력 끝판왕</a>
+    <a href="./3부/8-5game.html">🃏 디지털 할리갈리</a>
+    <a href="./3부/8-6game.html">🎤 에코 노래 부르기</a>
+    <a href="./3부/8-7game.html">✊ 가위바위보 대결</a>
+    <a href="./3부/9-1game.html">🎨 매직 드로잉</a>
+    <a href="./3부/9-2game.html">😀 얼굴 꾸미기</a>
+    <a href="./3부/9-3game.html">👕 패션 디자이너</a>
+    <a href="./3부/9-4game.html">🖍️ 디지털 컬러링 북</a>
+    <a href="./3부/9-5game.html">🖼️ 자유 도화지</a>
+    <a href="./3부/9-6game.html">🔵 도형으로 얼굴 만들기</a>
+  </section>
+</main>
+
+<footer>jpub_baby HTML 실습 예제</footer>
 </body>
 </html>
