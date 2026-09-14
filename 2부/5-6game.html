@@ -149,7 +149,7 @@
     position: absolute;
     font-size: 46px;
     transform: translate(-50%, -50%);
-    z-index: 6;
+    z-index: 100;
     transition: left 0.5s cubic-bezier(0.4,0,0.2,1), top 0.5s cubic-bezier(0.4,0,0.2,1);
     filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
   }
@@ -303,20 +303,27 @@ function speak(text) {
 function buildPositions(n) {
   const W = wrap.clientWidth;
   const H = wrap.clientHeight;
-  const padR = Math.min(W, H) * 0.072; // 발판 반지름
-  const marginX = padR + 14;
-  const usableW = W - marginX * 2;
-  const topPad = padR + 20;
-  const bottomPad = padR + 20;
+  // 발판이 많을수록(A~Z=26) 세로 간격이 좁아지므로 개수에 맞춰 크기 축소
+  let padR = Math.min(W, H) * 0.072;
+  const topPad = 34, bottomPad = 34;
   const usableH = H - topPad - bottomPad;
+  // 세로로 이웃한 발판끼리 최소 간격을 확보 (겹침 방지)
+  const vGap = usableH / (n - 1 || 1);
+  const maxByGap = vGap * 0.46;        // 세로 간격의 절반 이하로 반지름 제한
+  padR = Math.min(padR, maxByGap);
+  padR = Math.max(padR, 16);           // 너무 작아지지 않게 하한
+
+  const marginX = padR + 12;
+  const usableW = W - marginX * 2;
+  const waveCount = n > 16 ? 2.2 : 3.2; // 발판 많으면 곡선을 더 완만하게
+  const waveAmp = n > 16 ? 0.34 : 0.42;
 
   const pts = [];
   for (let i = 0; i < n; i++) {
     const t = n === 1 ? 0 : i / (n - 1);
     const y = topPad + t * usableH;
-    // 좌우로 부드럽게 흔들리는 곡선
-    const wave = Math.sin(t * Math.PI * 3.2);
-    const x = marginX + (0.5 + wave * 0.42) * usableW;
+    const wave = Math.sin(t * Math.PI * waveCount);
+    const x = marginX + (0.5 + wave * waveAmp) * usableW;
     pts.push({ x, y });
   }
   return { pts, padR };
@@ -358,6 +365,7 @@ function render() {
     pad.style.height = padSize + "px";
     pad.style.fontSize = (padR * 0.85) + "px";
     pad.dataset.index = i;
+    pad.style.zIndex = 4 + i; // 뒤 순서 발판이 위에 겹쳐 보이도록
     pad.addEventListener("click", () => onPad(i));
     wrap.appendChild(pad);
   });
