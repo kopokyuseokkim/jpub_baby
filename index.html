@@ -573,23 +573,79 @@ section:nth-of-type(3) .game-row::before{
   }
 }
 
+
+/* 책 표지를 오른쪽에, 헤더 문구를 왼쪽에 배치 */
+.hero-layout{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:32px;
+  width:min(100%,1000px);
+  margin:0 auto;
+}
+.hero-left{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
+}
+.hero-left h1,
+.hero-left p{ text-align:left; }
+.hero-left p{ margin-left:0; margin-right:0; }
+.hero-left .book-info-card{ align-items:flex-start; text-align:left; }
+.hero-left .book-info-meta{ justify-content:flex-start; }
+.hero-right{
+  flex:0 0 230px;
+  min-width:0;
+  display:flex;
+  justify-content:flex-end;
+}
+.hero-right img{
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:10px;
+  box-shadow:0 12px 30px rgba(51,33,96,.25);
+}
+@media (max-width:600px){
+  header{ padding:30px 14px; }
+  .hero-layout{ gap:12px; align-items:center; }
+  .hero-left h1{font-size:clamp(18px,5vw,25px);line-height:1.28;letter-spacing:-.7px;}
+  .hero-left .hero-badge{font-size:9px;padding:5px 8px;}
+  .hero-left .hero-icons{font-size:16px;letter-spacing:3px;}
+  .hero-left p{font-size:12px;line-height:1.5;}
+  .hero-left .book-info-card{width:100%;padding:8px 9px;margin-top:11px;}
+  .hero-left .book-info-title{font-size:11px;}
+  .hero-left .book-info-meta{font-size:10px;}
+  .hero-right{flex:0 0 35%;}
+  .hero-right img{border-radius:7px;}
+}
+
 </style>
 
 </head>
 <body>
 <header>
-  <div class="hero-badge">PLAY · MAKE · LEARN</div>
-  <div class="hero-icons" aria-hidden="true">★ ● ✦</div>
-  <h1>우리 아이 미니게임 놀이터</h1>
-  <p>게임을 바로 실행하고, 어떤 프롬프트로 만들었는지도 함께 살펴보세요.</p>
-  <div class="book-info-card">
-  <div class="book-info-title">《아빠의 바이브 코딩》 독자용 실습 페이지</div>
-  <div class="book-info-meta">
-    <span>김규석·정태양·박연구 지음</span>
-    <span class="book-info-dot">·</span>
-    <span>제이펍</span>
+  <div class="hero-layout">
+    <div class="hero-left">
+      <div class="hero-badge">PLAY · MAKE · LEARN</div>
+      <div class="hero-icons" aria-hidden="true">★ ● ✦</div>
+      <h1>우리 아이 미니게임 놀이터</h1>
+      <p>게임을 바로 실행하고, 어떤 프롬프트로 만들었는지도 함께 살펴보세요.</p>
+      <div class="book-info-card">
+        <div class="book-info-title">《아빠의 바이브 코딩》 독자용 실습 페이지</div>
+        <div class="book-info-meta">
+          <span>김규석·정태양·박연구 지음</span>
+          <span class="book-info-dot">·</span>
+          <span>제이펍</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <img src="book_cover.jpg" alt="아빠의 바이브 코딩 책 표지" width="300" height="400" fetchpriority="high">
+    </div>
   </div>
-</div>
 </header>
 <main>
 <section><h2>1부</h2><a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/1%EB%B6%80/3-2game.html">설거지 룰렛</a></section><section><h2>2부</h2><a class="game" href="https://kopokyuseokkim.github.io/jpub_baby/2%EB%B6%80/4-1game.html">동물 수 세기</a>
