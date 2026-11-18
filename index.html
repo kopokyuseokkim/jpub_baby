@@ -579,14 +579,14 @@ section:nth-of-type(3) .game-row::before{
   position:relative;
   z-index:1;
   display:flex;
-  justify-content:space-between;
+  justify-content:center;
   align-items:center;
-  gap:32px;
-  width:min(100%,1000px);
+  gap:18px;
+  width:min(100%,850px);
   margin:0 auto;
 }
 .hero-left{
-  flex:1 1 auto;
+  flex:0 1 500px;
   min-width:0;
   text-align:left;
 }
@@ -596,7 +596,7 @@ section:nth-of-type(3) .game-row::before{
 .hero-left .book-info-card{ align-items:flex-start; text-align:left; }
 .hero-left .book-info-meta{ justify-content:flex-start; }
 .hero-right{
-  flex:0 0 230px;
+  flex:0 0 210px;
   min-width:0;
   display:flex;
   justify-content:flex-end;
@@ -610,7 +610,8 @@ section:nth-of-type(3) .game-row::before{
 }
 @media (max-width:600px){
   header{ padding:30px 14px; }
-  .hero-layout{ gap:12px; align-items:center; }
+  .hero-layout{ gap:10px; align-items:center; justify-content:center; }
+  .hero-left{ flex:1 1 0; }
   .hero-left h1{font-size:clamp(18px,5vw,25px);line-height:1.28;letter-spacing:-.7px;}
   .hero-left .hero-badge{font-size:9px;padding:5px 8px;}
   .hero-left .hero-icons{font-size:16px;letter-spacing:3px;}
@@ -618,7 +619,7 @@ section:nth-of-type(3) .game-row::before{
   .hero-left .book-info-card{width:100%;padding:8px 9px;margin-top:11px;}
   .hero-left .book-info-title{font-size:11px;}
   .hero-left .book-info-meta{font-size:10px;}
-  .hero-right{flex:0 0 35%;}
+  .hero-right{flex:0 0 32%;}
   .hero-right img{border-radius:7px;}
 }
 
